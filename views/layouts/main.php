@@ -37,9 +37,9 @@ AppAsset::register($this);
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav'],
         'items' => [
-            ['label' => 'Home', 'url' => ['/site/index']],
-            ['label' => 'About', 'url' => ['/site/about']],
-            ['label' => 'Contact', 'url' => ['/site/contact']],
+            ['label' => 'Home', 'url' => \app\helpers\OrganizationUrl::to(['/site/index'])],
+            ['label' => 'About', 'url' => \app\helpers\OrganizationUrl::to(['/site/about'])],
+            ['label' => 'Contact', 'url' => \app\helpers\OrganizationUrl::to(['/site/contact'])],
             [
                 'label' => 'Dropdown',
                 'items' => [

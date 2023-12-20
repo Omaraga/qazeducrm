@@ -2,10 +2,11 @@
 
 namespace app\models;
 
+use app\traits\AttributesToInfoTrait;
 use Yii;
 use yii\base\NotSupportedException;
 use yii\behaviors\TimestampBehavior;
-use yii\db\ActiveRecord;
+use app\components\ActiveRecord;
 use yii\web\IdentityInterface;
 
 /**
@@ -25,6 +26,7 @@ use yii\web\IdentityInterface;
  */
 class User extends ActiveRecord implements IdentityInterface
 {
+    use AttributesToInfoTrait;
     const STATUS_DELETED = 0;
     const STATUS_INACTIVE = 9;
     const STATUS_ACTIVE = 10;
@@ -36,6 +38,13 @@ class User extends ActiveRecord implements IdentityInterface
     public static function tableName()
     {
         return '{{%user}}';
+    }
+
+    public function attributesToInfo(){
+        return [
+            'active_organization_id',
+            'active_role',
+        ];
     }
 
     /**

@@ -48,6 +48,20 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                '<oid:\d+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => '<controller>/<action>',
+                '<oid:\d+>/<module:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => '<module>/<controller>/<action>',
+                '<oid:\d+>/<module:\w+-\w+|\w+>/<module2:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => '<module>/<module2>/<controller>/<action>',
+                '<oid:\d+>/<module:\w+-\w+|\w+>/<module2:\w+-\w+|\w+>/<module3:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => '<module>/<module2>/<module3>/<controller>/<action>',
+                '<oid:\d+>/<module:\w+-\w+|\w+>/<module2:\w+-\w+|\w+>/<module3:\w+-\w+|\w+>/<module4:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => '<module>/<module2>/<module3>/<module4>/<controller>/<action>',
+
+
+                '<module:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>'=>'<module>/<controller>',
+                '<module:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>'=>'<module>/<controller>/<action>',
+                '<module:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>/*'=>'<module>/<controller>/<action>',
+
+                '<controller:\w+-\w+|\w+>'=>'<controller>',
+                '<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>'=>'<controller>/<action>',
+                '<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>/*'=>'<controller>/<action>',
             ],
         ],
 
