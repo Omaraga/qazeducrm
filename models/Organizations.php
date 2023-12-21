@@ -110,12 +110,12 @@ class Organizations extends ActiveRecord
 
         if (static::$_current_organization === -1) {
             if (static::getCurrentOrganizationId()) {
-                static::$_current_organization = static::find()->byPk(static::getCurrentOrganizationId())->one();
+                static::$_current_organization = static::find()->where(['id' =>static::getCurrentOrganizationId()])->one();
             } else {
                 $organizations = Yii::$app->user->identity->organizations ?? [];
                 if (!Yii::$app->user->isGuest and $organizations) {
                     $currentOrgId = OrganizationHelper::getUnblockedOrganizationId($organizations);
-                    static::$_current_organization = $currentOrgId ? static::find()->byPk($currentOrgId)->one() : null;
+                    static::$_current_organization = $currentOrgId ? static::find()->where(['id' => $currentOrgId])->one() : null;
                 } else {
                     static::$_current_organization = null;
                 }

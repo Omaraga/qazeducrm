@@ -2,9 +2,15 @@
 
 namespace app\controllers;
 
+use app\helpers\OrganizationRoles;
+use app\helpers\OrganizationUrl;
+use app\helpers\SystemRoles;
+use app\models\Organizations;
+use app\models\relations\UserOrganization;
 use Yii;
 use yii\filters\AccessControl;
-use yii\web\Controller;
+use app\components\BaseController as Controller;
+use yii\helpers\Url;
 use yii\web\Response;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
@@ -124,5 +130,15 @@ class SiteController extends Controller
     public function actionAbout()
     {
         return $this->render('about');
+    }
+
+    public function actionChangeRole(){
+        $user = Yii::$app->user->identity;
+        $userOrganization = UserOrganization::findOne(Yii::$app->request->get('id'));
+        $user->active_organization_id = $userOrganization->target_id;
+        $user->active_role = $userOrganization->role;
+        $user->save(false);
+
+        return $this->redirect(Url::to(['/site/index', 'oid' => $userOrganization->target_id]));
     }
 }

@@ -3,6 +3,11 @@
 namespace app\models;
 
 use app\traits\AttributesToInfoTrait;
+use app\models\Organizations;
+use app\models\relations\UserOrganization;
+use app\helpers\Lists;
+use app\helpers\OrganizationRoles;
+use app\helpers\SystemRoles;
 use Yii;
 use yii\base\NotSupportedException;
 use yii\behaviors\TimestampBehavior;
@@ -31,6 +36,7 @@ class User extends ActiveRecord implements IdentityInterface
     const STATUS_INACTIVE = 9;
     const STATUS_ACTIVE = 10;
 
+    const ROLE_SUPER = 'SUPER';
 
     /**
      * {@inheritdoc}
@@ -67,6 +73,72 @@ class User extends ActiveRecord implements IdentityInterface
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
         ];
     }
+
+    private $_role = null;
+
+    public function getOrganization()
+    {
+        return $this->hasOne(UserOrganization::class, ['related_id' => 'id']);
+    }
+
+    public function getCurrentOrganizationRole()
+    {
+        if ($this->system_role === self::ROLE_SUPER) {
+            return self::ROLE_SUPER;
+        }
+
+        if ($this->_role === null) {
+            if ($this->active_role) {
+                return $this->active_role;
+            }
+
+            $organization = Organizations::getCurrentOrganization();
+            if ($organization) {
+                $role = $organization->users[$this->id];
+                if ($role) {
+                    $this->_role = $role->role;
+                }
+            }
+            if ($this->_role === null) {
+                $this->_role = false;
+            }
+        }
+
+        return $this->_role;
+    }private $_list = null;
+
+    public function getOrganizationsList($query = false)
+    {
+        if ($this->_list === null) {
+            if (Yii::$app->user->can("SUPER")) {
+                if ($this->_list === null) {
+                    $organizations = Organizations::find()->indexBy('id')->orderBy("name");
+                    $moderation = $this->infoJson['moderation'];
+                    if ($moderation and $moderation['organization_types']) {
+                        $organizations->andWhere([
+                            'in',
+                            'type',
+                            $moderation['organization_types']
+                        ]);
+                    }
+                    $this->_list = $query ? $organizations : $organizations->all();
+                }
+            } else {
+                $orgs = $query ? $this->getOrganizations() : $this->organizations;
+                if ($orgs and !$query) {
+                    foreach ($orgs as $org) {
+                        $this->_list[$org->role][$org->target_id] = $org->organization;
+                    }
+                } elseif ($query) {
+                    return $orgs;
+                } else {
+                    $this->_list = [];
+                }
+            }
+        }
+        return $this->_list;
+    }
+
 
     /**
      * {@inheritdoc}
@@ -218,5 +290,56 @@ class User extends ActiveRecord implements IdentityInterface
     public function removePasswordResetToken()
     {
         $this->password_reset_token = null;
+    }
+
+    /**
+     *
+     * @param \app\models\Organizations $organization
+     *
+     * @return mixed
+     */
+    public static function getRoles($organization = null)
+    {
+
+            $roles = [
+                SystemRoles::PARENT,
+                OrganizationRoles::ADMIN,
+                OrganizationRoles::DIRECTOR,
+                OrganizationRoles::TEACHER,
+            ];
+
+        $roles[] = OrganizationRoles::NO_ROLE;
+
+        $data = [];
+        $roleList = Lists::getRoles();
+        foreach ($roles as $role) {
+            if (!isset($roleList[$role])) {
+                $data[$role] = Yii::t('main', 'Роль `{role}` не определена', [
+                    'role' => $role
+                ]);
+                continue;
+            }
+            $data[$role] = $roleList[$role];
+        }
+        return $data;
+    }
+
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUserOrganizations()
+    {
+        return $this->hasMany(UserOrganization::class, ['related_id' => 'id']);
+    }
+
+    public function getRolesMap(){
+        $userOrgs = $this->userOrganizations;
+        $result = [];
+        $roleList = Lists::getRoles();
+        foreach ($userOrgs as $userOrg){
+            $result[$userOrg->id] = $userOrg->organization->name.' ('.$roleList[$userOrg->role].')';
+        }
+        return $result;
     }
 }

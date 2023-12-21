@@ -7,8 +7,7 @@ use app\assets\AppAsset;
 use app\widgets\Alert;
 use yii\bootstrap4\Breadcrumbs;
 use yii\bootstrap4\Html;
-use yii\bootstrap4\Nav;
-use yii\bootstrap4\NavBar;
+
 
 AppAsset::register($this);
 ?>
@@ -25,45 +24,7 @@ AppAsset::register($this);
 <body class="d-flex flex-column h-100">
 <?php $this->beginBody() ?>
 
-<header>
-    <?php
-    NavBar::begin([
-        'brandLabel' =>'<img src="/images/logo-text.svg" style="width: 10rem;">',
-        'brandUrl' => Yii::$app->homeUrl,
-        'options' => [
-            'class' => 'navbar navbar-expand-md navbar-dark bg-dark fixed-top',
-        ],
-    ]);
-    echo Nav::widget([
-        'options' => ['class' => 'navbar-nav'],
-        'items' => [
-            ['label' => 'Home', 'url' => \app\helpers\OrganizationUrl::to(['/site/index'])],
-            ['label' => 'About', 'url' => \app\helpers\OrganizationUrl::to(['/site/about'])],
-            ['label' => 'Contact', 'url' => \app\helpers\OrganizationUrl::to(['/site/contact'])],
-            [
-                'label' => 'Dropdown',
-                'items' => [
-                    ['label' => 'Level 1 - Dropdown A', 'url' => '#'],
-                    ['label' => 'Level 1 - Dropdown B', 'url' => '#'],
-                ],
-            ],
-            Yii::$app->user->isGuest ? (
-                ['label' => 'Login', 'url' => ['/site/login']]
-            ) : (
-                '<li>'
-                . Html::beginForm(['/site/logout'], 'post', ['class' => 'form-inline'])
-                . Html::submitButton(
-                    'Logout (' . Yii::$app->user->identity->username . ')',
-                    ['class' => 'btn btn-link logout']
-                )
-                . Html::endForm()
-                . '</li>'
-            )
-        ],
-    ]);
-    NavBar::end();
-    ?>
-</header>
+<?=$this->render('header');?>
 
 <main role="main" class="flex-shrink-0">
     <div class="container">
