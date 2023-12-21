@@ -165,18 +165,7 @@ class Lists
         ];
     }
 
-    public static function getSchoolEducationForm()
-    {
-        return [
-            1 => Yii::t('main', 'ГУ - Государственное учреждение'),
-            2 => Yii::t('main', 'КГУ - Коммунальное государственное учреждение'),
-            3 => Yii::t('main', 'КГКП - Казенное государственное коммунальное предприятие'),
-            4 => Yii::t('main', 'Республиканское государственное учреждение'),
-            5 => Yii::t('main', 'ТОО - Товарищество с ограниченной ответственностью'),
-            6 => Yii::t('main', 'ИП - Индивидуальный предприниматель'),
-            7 => Yii::t('main', 'ЧУ - Частное учреждение'),
-        ];
-    }
+
 
     public static function getRoles()
     {
@@ -444,17 +433,20 @@ class Lists
         ];
     }
 
-    /**
-     * Возвращает роли для журнала оценок
-     * @return string[]
-     * @author Alexander Mityukhin  <almittt@mail.ru>
-     */
-    public static function getJournalRoles(): array
-    {
-        $journalRoles[OrganizationRoles::CONCERTMASTER] = Yii::t('main', 'Концертмейстер');
-        $journalRoles[OrganizationRoles::TEACHER] = Yii::t('main', 'Преподаватель');
+   public static function getTariffDurations(){
+        return [
+            1 => Yii::t('main', 'Одно занятие'),
+            2 => Yii::t('main', 'Один месяц'),
+            3 => Yii::t('main', 'Фиксированное количество занятий'),
+        ];
+   }
 
-        return $journalRoles;
-    }
+   public static function getTariffTypes(){
+        return [
+            1 => Yii::t('main', 'Оплата за обучение'),
+            2 => Yii::t('main', 'Оплата за материалы'),
+            3 => Yii::t('main', 'Простой платеж'),
+        ];
+   }
 
 }
