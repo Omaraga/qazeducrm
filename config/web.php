@@ -60,6 +60,11 @@ $config = [
                 ],
             ],
         ],
+        'formatter' => [
+            'dateFormat' => 'dd.MM.yyyy',
+            'decimalSeparator' => ',',
+            'thousandSeparator' => ' ',
+        ],
         'db' => $db,
 
         'urlManager' => [

@@ -82,3 +82,8 @@ a.desc:after {
 .nav > li > form > button.logout:focus {
     outline: none;
 }
+
+.navbar-dark .navbar-nav .role-label .nav-link{
+    color: lightyellow;
+    font-weight: bold;
+}

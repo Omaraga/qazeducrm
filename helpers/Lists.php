@@ -49,8 +49,8 @@ class Lists
     public static function getGenders()
     {
         return [
-            '1' => Yii::t('main', 'Муж.'),
-            '2' => Yii::t('main', 'Жен.')
+            '1' => Yii::t('main', 'Мужской'),
+            '2' => Yii::t('main', 'Женский')
         ];
     }
 
@@ -446,6 +446,27 @@ class Lists
             1 => Yii::t('main', 'Оплата за обучение'),
             2 => Yii::t('main', 'Оплата за материалы'),
             3 => Yii::t('main', 'Простой платеж'),
+        ];
+   }
+
+    /**
+     * @return array
+     */
+   public static function getGrades(){
+        return [
+            0 => Yii::t('main', '0 класс'),
+            1 => Yii::t('main', '1 класс'),
+            2 => Yii::t('main', '2 класс'),
+            3 => Yii::t('main', '3 класс'),
+            4 => Yii::t('main', '4 класс'),
+            5 => Yii::t('main', '5 класс'),
+            6 => Yii::t('main', '6 класс'),
+            7 => Yii::t('main', '7 класс'),
+            8 => Yii::t('main', '8 класс'),
+            9 => Yii::t('main', '9 класс'),
+            10 => Yii::t('main', '10 класс'),
+            11 => Yii::t('main', '11 класс'),
+            12 => Yii::t('main', '12 класс'),
         ];
    }
 

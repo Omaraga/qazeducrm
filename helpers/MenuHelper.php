@@ -1,6 +1,7 @@
 <?php
 
 namespace app\helpers;
+use app\models\Organizations;
 use app\models\Settings;
 use yii\base\Model;
 use yii\bootstrap4\Html;
@@ -42,6 +43,7 @@ class MenuHelper extends Model
             $items[] = ['label' => 'Login', 'url' => \app\helpers\OrganizationUrl::to(['/site/login'])];
         }else{
             $user = \Yii::$app->user->identity;
+            $organization = Organizations::getCurrentOrganization();
             $roles = $user->rolesMap;
             $menuRoles = [];
             foreach ($roles as $roleId => $name){
@@ -49,17 +51,22 @@ class MenuHelper extends Model
             }
             if (\Yii::$app->user->can(OrganizationRoles::ADMIN)){
                 $items[] = ['label' => 'Тарифы', 'url' => \app\helpers\OrganizationUrl::to(['/tariff/index'])];
+                $items[] = ['label' => 'Ученики', 'url' => \app\helpers\OrganizationUrl::to(['/pupil/index'])];
+                $items[] = ['label' => 'Преподаватели', 'url' => \app\helpers\OrganizationUrl::to(['/user/index'])];
+                $items[] = ['label' => 'Группы', 'url' => \app\helpers\OrganizationUrl::to(['/group/index'])];
             }
 
-            $items[] = ['label' => 'Роли', 'items' => $menuRoles, 'options' => ['class' => 'ml-4']];
+            $items[] = ['label' => Lists::getRoles()[$user->getCurrentOrganizationRole()].'('.$organization->name.')', 'items' => $menuRoles, 'options' => ['class' => 'ml-sm-4 role-label']];
             $items[] = '<li>'
-                . Html::beginForm(['/site/logout'], 'post', ['class' => 'form-inline ml-4'])
+                . Html::beginForm(['/site/logout'], 'post', ['class' => 'form-inline ml-sm-4'])
                 . Html::submitButton(
-                    'Logout (' . \Yii::$app->user->identity->username . ')',
+                    '<i class="fa fa-sign-out" aria-hidden="true"></i> Выйти',
                     ['class' => 'btn btn-link logout']
                 )
                 . Html::endForm()
                 . '</li>';
+
+
         }
 
         return $items;
