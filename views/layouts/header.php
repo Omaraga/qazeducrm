@@ -14,6 +14,7 @@ use yii\bootstrap4\NavBar;
         'options' => [
             'class' => 'navbar navbar-expand-md navbar-dark bg-dark fixed-top',
         ],
+        'innerContainerOptions' => ['class' => 'container-fluid px-4'],
     ]);
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav'],

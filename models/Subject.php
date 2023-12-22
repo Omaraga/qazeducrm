@@ -2,30 +2,33 @@
 
 namespace app\models;
 
+use app\traits\AttributesToInfoTrait;
+use app\traits\UpdateInsteadOfDeleteTrait;
 use Yii;
 use yii\db\Expression;
+use app\components\ActiveRecord;
 
 /**
- * This is the model class for table "group".
+ * This is the model class for table "subject".
  *
  * @property int $id
- * @property int|null $subject_id
- * @property string $code
  * @property string|null $name
- * @property int|null $category_id
- * @property int|null $type
- * @property string|null $color
- * @property int|null $is_deleted
+ * @property int $is_deleted
+ * @property int|null $order_col
+ * @property string $created_at
+ * @property string $updated_at
  * @property string|null $info
  */
-class Group extends \yii\db\ActiveRecord
+class Subject extends ActiveRecord
 {
+    use UpdateInsteadOfDeleteTrait;
+
     /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
-        return 'group';
+        return 'subject';
     }
 
     /**
@@ -49,14 +52,12 @@ class Group extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['subject_id', 'category_id', 'type', 'is_deleted'], 'integer'],
-            [['code'], 'required'],
+            [['is_deleted', 'order_col'], 'integer'],
+            [['created_at', 'updated_at'], 'safe'],
             [['info'], 'string'],
-            [['code', 'name', 'color'], 'string', 'max' => 255],
+            [['name'], 'string', 'max' => 255],
         ];
     }
-
-
 
     /**
      * {@inheritdoc}
@@ -65,13 +66,11 @@ class Group extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'subject_id' => 'Subject ID',
-            'code' => 'Code',
-            'name' => 'Name',
-            'category_id' => 'Category ID',
-            'type' => 'Type',
-            'color' => 'Color',
+            'name' => 'Название',
             'is_deleted' => 'Is Deleted',
+            'order_col' => 'Order Col',
+            'created_at' => 'Дата создания',
+            'updated_at' => 'Дата редактирования',
             'info' => 'Info',
         ];
     }

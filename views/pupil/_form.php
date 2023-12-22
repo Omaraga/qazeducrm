@@ -2,10 +2,18 @@
 
 use yii\bootstrap4\Html;
 use yii\bootstrap4\ActiveForm;
+use kartik\date\DatePicker;
 
 /** @var yii\web\View $this */
 /** @var app\models\Pupil $model */
 /** @var yii\widgets\ActiveForm $form */
+
+$js = <<<JS
+    $('#birth_date_input').mask('99.99.9999');
+    $('#pupil-phone').mask("+7(999)9999999");
+    $('#pupil-home_phone').mask("+7(999)9999999");
+JS;
+$this->registerJs($js);
 ?>
 
 <div class="">
@@ -28,8 +36,13 @@ use yii\bootstrap4\ActiveForm;
             <?= $form->field($model, 'last_name', ['options' =>['class' => 'col-12 col-sm-4']])->textInput() ?>
             <?= $form->field($model, 'middle_name', ['options' =>['class' => 'col-12 col-sm-4']])->textInput() ?>
             <?= $form->field($model, 'sex', ['options' =>['class' => 'col-12 col-sm-4']])->dropDownList(\app\helpers\Lists::getGenders()) ?>
-            <?= $form->field($model, 'birth_date', ['options' =>['class' => 'col-12 col-sm-4']])->widget(\yii\jui\DatePicker::className(), [
-                'options' => ['class' => 'form-control'],
+            <?= $form->field($model, 'birth_date', ['options' =>['class' => 'col-12 col-sm-4']])->widget(\kartik\date\DatePicker::className(), [
+                    'type' => DatePicker::TYPE_INPUT,
+                    'pluginOptions' => [
+                        'autoclose' => true,
+                        'format' => 'dd.m.yyyy'
+                    ],
+                    'options' => ['autocomplete' => 'off', 'id' => 'birth_date_input']
             ]) ?>
         </div>
     </div>

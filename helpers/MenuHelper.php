@@ -54,6 +54,9 @@ class MenuHelper extends Model
                 $items[] = ['label' => 'Ученики', 'url' => \app\helpers\OrganizationUrl::to(['/pupil/index'])];
                 $items[] = ['label' => 'Преподаватели', 'url' => \app\helpers\OrganizationUrl::to(['/user/index'])];
                 $items[] = ['label' => 'Группы', 'url' => \app\helpers\OrganizationUrl::to(['/group/index'])];
+                $items[] = ['label' => 'Справочники', 'items' => [
+                    ['label' => 'Предметы', 'url' => \app\helpers\OrganizationUrl::to(['subject/index'])],
+                ]];
             }
 
             $items[] = ['label' => Lists::getRoles()[$user->getCurrentOrganizationRole()].'('.$organization->name.')', 'items' => $menuRoles, 'options' => ['class' => 'ml-sm-4 role-label']];

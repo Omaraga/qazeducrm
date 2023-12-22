@@ -48,6 +48,8 @@ $this->params['breadcrumbs'][] = $this->title;
                     'genderLabel',
                     'birth_date',
                     'statusLabel',
+                    'created_at',
+                    'updated_at',
                 ],
             ]) ?>
         </div>

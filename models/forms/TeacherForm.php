@@ -2,6 +2,7 @@
 
 namespace app\models\forms;
 
+use app\components\PhoneNumberValidator;
 use app\helpers\OrganizationRoles;
 use app\models\Organizations;
 use app\models\relations\UserOrganization;
@@ -34,6 +35,7 @@ class TeacherForm extends \yii\base\Model
             [['first_name', 'last_name', 'username','phone', 'email', 'address', 'sex', 'birth_date', 'iin', 'home_phone', 'middle_name'], 'safe'],
             [['sex'], 'integer'],
             [['birth_date'], 'date', 'format' => 'php:d.m.Y'],
+            [['phone', 'home_phone'], PhoneNumberValidator::class],
         ];
     }
 

@@ -22,6 +22,8 @@ class m231222_185855_create_group_table extends Migration
             'color' => $this->string(255),
             'is_deleted' => $this->integer(1)->defaultValue(0),
             'info' => $this->text(),
+            'created_at' => $this->timestamp()->notNull()->defaultValue(new \yii\db\Expression('NOW()')),
+            'updated_at' => $this->timestamp()->notNull()->defaultValue(new \yii\db\Expression('NOW()')),
         ]);
 
     }

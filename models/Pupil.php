@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use app\components\PhoneNumberValidator;
 use app\helpers\Lists;
 use app\traits\AttributesToInfoTrait;
 use app\traits\UpdateInsteadOfDeleteTrait;
@@ -64,6 +65,8 @@ class Pupil extends ActiveRecord
             [['sex', 'class_id', 'status', 'created_at', 'updated_at'], 'integer'],
             [['iin', 'email', 'phone', 'home_phone', 'address', 'first_name', 'last_name', 'middle_name', 'parent_fio', 'parent_phone', 'birth_date', 'school_name'], 'string', 'max' => 255],
             [['iin'], 'unique'],
+            [['phone', 'home_phone', 'parent_phone'], PhoneNumberValidator::class],
+            ['email', 'email'],
         ];
     }
 
