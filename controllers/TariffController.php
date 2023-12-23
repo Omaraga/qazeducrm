@@ -3,9 +3,12 @@
 namespace app\controllers;
 
 use app\helpers\OrganizationRoles;
+use app\helpers\OrganizationUrl;
+use app\models\forms\TariffForm;
 use app\models\Organizations;
 use app\models\Tariff;
 use app\helpers\SystemRoles;
+use yii\base\BaseObject;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\web\Controller;
@@ -91,11 +94,11 @@ class TariffController extends Controller
      */
     public function actionCreate()
     {
-        $model = new Tariff();
+        $model = new TariffForm();
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+                return $this->redirect(OrganizationUrl::to(['tariff/index']));
             }
         } else {
             $model->loadDefaultValues();
@@ -115,10 +118,11 @@ class TariffController extends Controller
      */
     public function actionUpdate($id)
     {
-        $model = $this->findModel($id);
+
+        $model = new TariffForm();
 
         if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+            return $this->redirect(OrganizationUrl::to(['tariff/index']));
         }
 
         return $this->render('update', [

@@ -26,6 +26,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
+        'layout' => '{summary}{items}',
         'columns' => [
             'id',
             'username',
@@ -56,6 +57,10 @@ $this->params['breadcrumbs'][] = $this->title;
             ]
         ],
     ]); ?>
+
+    <?= \yii\bootstrap4\LinkPager::widget([
+        'pagination' => $dataProvider->pagination
+    ]) ?>
 
 
 </div>

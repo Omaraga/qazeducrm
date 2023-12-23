@@ -17,8 +17,8 @@ class GroupSearch extends Group
     public function rules()
     {
         return [
-            [['id', 'subject_id', 'category_id', 'type', 'is_deleted'], 'integer'],
-            [['code', 'name', 'color', 'info'], 'safe'],
+            [['id', 'subject_id', 'category_id', 'type',], 'integer'],
+            [['code', 'name'], 'safe'],
         ];
     }
 
@@ -40,12 +40,15 @@ class GroupSearch extends Group
      */
     public function search($params)
     {
-        $query = Group::find();
+        $query = Group::find()->byOrganization();
 
         // add conditions that should always apply here
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
+            'pagination' => [
+                'pageSize' => 20
+            ],
         ]);
 
         $this->load($params);
@@ -56,19 +59,22 @@ class GroupSearch extends Group
             return $dataProvider;
         }
 
-        // grid filtering conditions
-        $query->andFilterWhere([
-            'id' => $this->id,
-            'subject_id' => $this->subject_id,
-            'category_id' => $this->category_id,
-            'type' => $this->type,
-            'is_deleted' => $this->is_deleted,
-        ]);
 
-        $query->andFilterWhere(['like', 'code', $this->code])
-            ->andFilterWhere(['like', 'name', $this->name])
-            ->andFilterWhere(['like', 'color', $this->color])
-            ->andFilterWhere(['like', 'info', $this->info]);
+        if ($this->category_id && $this->category_id > 0){
+            $query->andFilterWhere(['category_id' => $this->category_id]);
+        }
+
+        if ($this->subject_id && $this->subject_id > 0){
+            $query->andFilterWhere(['subject_id' => $this->subject_id]);
+        }
+
+        if ($this->name && strlen($this->name) > 0){
+            $query->andFilterWhere(['like', 'name', $this->name]);
+        }
+        if ($this->code && strlen($this->code) > 0){
+            $query->andFilterWhere(['like', 'code', $this->code]);
+        }
+
 
         return $dataProvider;
     }

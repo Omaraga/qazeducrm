@@ -2,9 +2,19 @@
 
 namespace app\controllers;
 
+use app\helpers\OrganizationRoles;
+use app\helpers\OrganizationUrl;
+use app\helpers\SystemRoles;
 use app\models\Group;
+use app\models\relations\TeacherGroup;
 use app\models\search\GroupSearch;
+use app\models\Subject;
+use vsk\modalForm\actions\ModalFormAction;
+use yii\base\BaseObject;
+use yii\data\ActiveDataProvider;
+use yii\filters\AccessControl;
 use yii\web\Controller;
+use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
@@ -27,8 +37,60 @@ class GroupController extends Controller
                         'delete' => ['POST'],
                     ],
                 ],
+                'access' => [
+                    'class' => AccessControl::className(),
+                    'rules' => [
+                        [
+                            'allow' => true,
+                            'roles' => [
+                                SystemRoles::SUPER,
+                                OrganizationRoles::ADMIN,
+                                OrganizationRoles::DIRECTOR,
+                            ]
+                        ],
+                        [
+                            'allow' => false,
+                            'roles' => ['?']
+                        ]
+                    ],
+                ],
             ]
         );
+    }
+
+    public function actions()
+    {
+        return [
+            'modal-form' => [
+                'class' => ModalFormAction::class,
+                'getBody' => function ($action) {
+                    return $this->render('@vendor/vsk/modal-form/src/test/views/modal-list');
+                },
+                'getTitle' => function() {
+                    return 'Список тестовых данных';
+                },
+            ],
+            'modal-form-update' => [
+                'class' => ModalFormAction::class,
+                'getBody' => function ($action) {
+                    return $this->render('@vendor/vsk/modal-form/src/test/views/update', [
+                        'model' => $action->getModel(),
+                    ]);
+                },
+                'getTitle' => function() {
+                    return 'title';
+                },
+                'getModel' => function () {
+                    $id = \Yii::$app->request->get('id');
+                    return Group::findOne($id);
+                },
+                'submitForm' => function ($action) {
+                    $model = $action->getModel();
+                    $model->load(\Yii::$app->request->post());
+                    return $model->save();
+                }
+            ],
+        ];
     }
 
     /**
@@ -57,6 +119,26 @@ class GroupController extends Controller
     {
         return $this->render('view', [
             'model' => $this->findModel($id),
+        ]);
+    }
+
+    /**
+     * Displays a single Group model.
+     * @param int $id ID
+     * @return string
+     * @throws NotFoundHttpException if the model cannot be found
+     */
+    public function actionTeachers($id){
+        $model = $this->findModel($id);
+        $dataProvider = new ActiveDataProvider([
+            'query' => TeacherGroup::find()->byOrganization(),
+            'pagination' => [
+                'pageSize' => 20
+            ],
+        ]);
+        return $this->render('teacher', [
+            'model' => $model,
+            'dataProvider' => $dataProvider
         ]);
     }
 
@@ -114,6 +196,52 @@ class GroupController extends Controller
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);
+    }
+
+    /**
+     * Deletes an existing Group model.
+     * If deletion is successful, the browser will be redirected to the 'index' page.
+     * @param int $id ID
+     * @return \yii\web\Response
+     * @throws NotFoundHttpException if the model cannot be found
+     */
+    public function actionDeleteTeacher($id)
+    {
+        $model = TeacherGroup::findOne($id);
+        $model->delete();
+
+        return $this->redirect(OrganizationUrl::to(['group/teachers', 'id' => $model->target_id]));
+    }
+
+    /**
+     * @throws ForbiddenHttpException
+     */
+    public function actionCreateTeacher(){
+        $model = new TeacherGroup();
+        if ($groupId =\Yii::$app->request->get('group_id')){
+            $model->target_id = $groupId;
+            if ($this->request->isPost) {
+                if ($model->load($this->request->post()) && $model->save()) {
+                    return $this->redirect(OrganizationUrl::to(['group/teachers', 'id' => $model->id]));
+                }
+            }
+
+            if (\Yii::$app->request->isAjax){
+                return $this->renderAjax('teacher/form', [
+                    'model' => $model,
+                ]);
+            }
+
+
+            return $this->render('teacher/form', [
+                'model' => $model,
+            ]);
+        }else{
+            throw new ForbiddenHttpException;
+        }
+
+
+
     }
 
     /**

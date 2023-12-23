@@ -470,4 +470,13 @@ class Lists
         ];
    }
 
+   public static function getGroupCategories(){
+       return [
+           1 => Yii::t('main', '1-4 класс'),
+           2 => Yii::t('main', '5-6 класс'),
+           3 => Yii::t('main', '7-9 класс'),
+           4 => Yii::t('main', '10-12 класс'),
+       ];
+   }
+
 }

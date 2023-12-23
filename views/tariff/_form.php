@@ -26,7 +26,7 @@ $this->registerJs($js);
 
     <div class="row">
         <?= $form->field($model, 'name', ['options' =>['class' => 'col-12 col-sm-4']])->textInput() ?>
-        <?= $form->field($model, 'duration', ['options' =>['class' => 'col-12 col-sm-4']])->dropDownList(\app\helpers\Lists::getTariffDurations()) ?>
+        <?= $form->field($model, 'duration', ['options' =>['class' => 'col-12 col-sm-4']])->dropDownList(\app\helpers\Lists::getTariffDurations(),['id' => 'tariff-duration']) ?>
         <?= $form->field($model, 'lesson_amount', ['options' =>['class' => 'col-12 col-sm-4 d-none', 'id' => 'lesson_amount_block']])->textInput(['type' => 'number']) ?>
     </div>
     <div class="row">

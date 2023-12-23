@@ -15,3 +15,8 @@ const callback = function(mutationsList, observer) {
 
 const observer = new MutationObserver(callback);
 observer.observe(targetNode, config);
+
+$('#modalButton').click(function (e){
+    $('#modal-form').find('#modalContent').load($(this).attr('value'));
+    $('#modal-form').modal('show')
+})

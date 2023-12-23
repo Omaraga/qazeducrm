@@ -10,6 +10,7 @@ use app\helpers\OrganizationRoles;
 use app\models\relations\UserOrganization;
 use Yii;
 use yii\console\Application;
+use yii\helpers\ArrayHelper;
 
 /**
  * This is the model class for table "organization".
@@ -84,6 +85,17 @@ class Organizations extends ActiveRecord
     public function getUsers()
     {
         return $this->hasMany(UserOrganization::class, ['target_id' => 'id'])->indexBy("related_id");
+    }
+
+    public function getTeachers(){
+        return $this->hasMany(User::class, ['id', 'related_id'])->via('users')->onCondition(['user_organization.role' => OrganizationRoles::TEACHER]);
+    }
+
+    public static function getOrganizationTeachersMap(){
+        $users = User::find()->innerJoinWith(['currentUserOrganizations' => function($q){
+            $q->andWhere(['<>','user_organization.is_deleted', ActiveRecord::DELETED])->andWhere(['in', 'user_organization.role', [OrganizationRoles::TEACHER]]);
+        }])->all();
+        return ArrayHelper::map($users, 'id', 'fio');
     }
 
 
