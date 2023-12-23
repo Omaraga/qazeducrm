@@ -5,10 +5,13 @@ namespace app\models\forms;
 use app\components\PhoneNumberValidator;
 use app\helpers\OrganizationRoles;
 use app\models\Organizations;
+use app\models\relations\TariffSubject;
 use app\models\relations\UserOrganization;
+use app\models\Subject;
 use app\models\User;
 use app\models\Tariff;
 use yii\db\Expression;
+use yii\helpers\ArrayHelper;
 
 class TariffForm extends \yii\base\Model
 {
@@ -29,6 +32,7 @@ class TariffForm extends \yii\base\Model
             [['name', 'description'], 'string'],
             [['status', 'duration', 'lesson_amount', 'type', 'price'], 'integer'],
             [['duration', 'type', 'name'], 'required'],
+            [['subjects', 'name', 'description', 'duration', 'lesson_amount', 'type', 'price'], 'safe'],
             [['lesson_amount'], 'integer', 'min' => 0, 'when' => function($model){
                 return $model->duration === 3;
             }]
@@ -52,6 +56,7 @@ class TariffForm extends \yii\base\Model
             $this->type = $tariff->type;
             $this->price = $tariff->price;
             $this->description = $tariff->description;
+            $this->subjects = $tariff->subjectsRelation ? : [];
         }
     }
 
@@ -59,6 +64,7 @@ class TariffForm extends \yii\base\Model
         if (!$this->validate()){
             return  false;
         }
+
         $transaction = \Yii::$app->db->beginTransaction();
         if ($this->id){
             $model = Tariff::findOne($this->id);
@@ -69,6 +75,25 @@ class TariffForm extends \yii\base\Model
         if (!$model->save()){
             $transaction->rollBack();
             return false;
+        }
+        $createdTariffSubjectIds = [];
+        foreach ($this->subjects as $item){
+            $tariffSubject = TariffSubject::find()->where(['tariff_id' => $model->id, 'subject_id' => $item['subject_id'], 'lesson_amount' => $item['lesson_amount']])->one();
+            if (!$tariffSubject){
+                $tariffSubject = new TariffSubject();
+                $tariffSubject->tariff_id = $model->id;
+            }
+            $tariffSubject->subject_id = $item['subject_id'];
+            $tariffSubject->lesson_amount = $item['lesson_amount'];
+            if (!$tariffSubject->save()){
+                $transaction->rollBack();
+                return false;
+            }
+            $createdTariffSubjectIds[] = $tariffSubject->id;
+        }
+        $forDeleteTariffSubjects = TariffSubject::find()->where(['not in', 'id', $createdTariffSubjectIds])->andWhere(['tariff_id' => $model->id])->all();
+        foreach ($forDeleteTariffSubjects as $deleteTariffSubject){
+            $deleteTariffSubject->delete();
         }
         $this->id = $model->id;
 
@@ -95,5 +120,7 @@ class TariffForm extends \yii\base\Model
             'info' => 'Info',
         ];
     }
+
+
 
 }

@@ -24,15 +24,23 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
-
-//            'id',
             'name',
-            'durationLabel',
-            'price',
-            'typeLabel',
+            [
+                'attribute' => 'duration',
+                'value' => 'durationLabel',
+            ],
+            [
+                'attribute' => 'price',
+                'value' => function($model){
+                    return number_format($model->price, 0, '.', ' ');
+                }
+            ],
+            'subjectsLabel',
             'description:ntext',
-            'statusLabel',
+            [
+                'attribute' => 'type',
+                'value' => 'typeLabel',
+            ],
             [
                 'class' => ActionColumn::className(),
                 'urlCreator' => function ($action, Tariff $model, $key, $index, $column) {

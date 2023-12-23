@@ -3,10 +3,13 @@
 namespace app\models;
 
 use app\helpers\Lists;
+use app\models\relations\TariffSubject;
 use app\traits\AttributesToInfoTrait;
 use Yii;
 use app\components\ActiveRecord;
 use app\traits\UpdateInsteadOfDeleteTrait;
+use yii\helpers\ArrayHelper;
+
 /**
  * This is the model class for table "tariff".
  *
@@ -21,6 +24,7 @@ use app\traits\UpdateInsteadOfDeleteTrait;
  * @property string|null $info
  * @property int $organization_id [int(11)]
  * @property int $is_deleted [int(1)]
+ * @property TariffSubject $subjectsRelation
  */
 class Tariff extends ActiveRecord
 {
@@ -65,6 +69,7 @@ class Tariff extends ActiveRecord
             'durationLabel' => 'Продолжительность',
             'lesson_amount' => 'Кол-во занятий',
             'type' => 'Тип тарифа',
+            'subjectsLabel' => 'Предмет',
             'typeLabel' => 'Тип тарифа',
             'price' => 'Стоимость',
             'description' => 'Описание',
@@ -101,5 +106,46 @@ class Tariff extends ActiveRecord
      */
     public function getTypeLabel(){
         return Lists::getTariffTypes()[$this->type];
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getSubjectsRelation(){
+        return $this->hasMany(TariffSubject::class, ['tariff_id' => 'id']);
+    }
+
+    /**
+     * @return string
+     */
+    public function getSubjectsLabel(){
+        $subjects = TariffSubject::find()->where(['tariff_id' => $this->id])->all();
+        $result = [];
+        foreach ($subjects as $subject){
+            $result[] = $subject->getSubjectName().'('.self::getAmounts()[$subject->lesson_amount].')';
+        }
+        return implode(', ', $result);
+    }
+
+    public static function getSubjectsMap(){
+        return ArrayHelper::merge([-1 => \Yii::t('main', 'Любой предмет')],ArrayHelper::map(Subject::find()->all(), 'id', 'name'));
+    }
+
+    public static function getAmounts(){
+        return [
+            1  => \Yii::t('main', '1 раз в неделю'),
+            2  => \Yii::t('main', '2 раза в неделю'),
+            3  => \Yii::t('main', '3 раза в неделю'),
+            4  => \Yii::t('main', '4 раза в неделю'),
+            5  => \Yii::t('main', '5 раз в неделю'),
+            6  => \Yii::t('main', '6 раз в неделю'),
+            7  => \Yii::t('main', '7 раз в неделю'),
+            8  => \Yii::t('main', '8 раз в неделю'),
+            9  => \Yii::t('main', '9 раз в неделю'),
+            10  => \Yii::t('main', '10 раз в неделю'),
+            11  => \Yii::t('main', '11 раз в неделю'),
+            12  => \Yii::t('main', '12 раз в неделю'),
+        ];
+
     }
 }
