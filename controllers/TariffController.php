@@ -144,6 +144,62 @@ class TariffController extends Controller
         return $this->redirect(['index']);
     }
 
+    public function actionGetInfo(){
+        if (\Yii::$app->request->isPost){
+            $id = \Yii::$app->request->post('id');
+            $dateStart = \Yii::$app->request->post('date_start') ? : date('d.m.Y');
+            $dateEnd = \Yii::$app->request->post('date_end') ? : date('d.m.Y', time() + (30*24*60*60));
+            $sale = \Yii::$app->request->post('sale') ? intval(\Yii::$app->request->post('sale')) : 0;
+            $result = [];
+            if ($id){
+                $tariff = Tariff::findOne($id);
+                if ($tariff->type == 2){
+                    $pricePerDay = $tariff->price / 31;
+                    $days = (strtotime($dateEnd) - strtotime($dateStart)) / (24 * 60 * 60);
+                    $periodPrice = intval(($days + 1) * $pricePerDay);
+
+                }else{
+                    $periodPrice = $tariff->price;
+                }
+                if ($sale > 0){
+                    $salePrice = intval($periodPrice * $sale / 100);
+                }else{
+                    $salePrice = 0;
+                }
+                $totalPrice = $periodPrice - $salePrice;
+
+                $infoText = 'Стоимость по тарифу '.$tariff->price.'тг. ';
+                if ($periodPrice != $tariff->price){
+                    $infoText .= 'Стоимость за выбранный период '.$periodPrice.'тг. ';
+                }
+                if ($sale > 0){
+                    $infoText .= 'Скидка '.$sale.'% составляет '.$salePrice.'тг.';
+                }
+                $infoText .= '<br><b>Итого к оплате '.$totalPrice.'тг. </b>';
+                $subjects = [];
+                foreach ($tariff->subjectsRelation as $subject){
+                    $subjects[] = $subject->subject_id;
+                }
+                $result = [
+                    'id' => $tariff->id,
+                    'name' => $tariff->name,
+                    'info_text' => $infoText,
+                    'price' => $tariff->price,
+                    'sale' => $sale,
+                    'period_price' => $periodPrice,
+                    'sale_price' => $salePrice,
+                    'total_price' => $totalPrice,
+                    'type' => $tariff->type,
+                    'duration' => $tariff->duration,
+                    'subjects' => $subjects
+                ];
+            }
+
+            return json_encode($result, true);
+
+        }
+    }
+
     /**
      * Finds the Tariff model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.

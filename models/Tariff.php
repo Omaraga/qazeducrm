@@ -22,9 +22,12 @@ use yii\helpers\ArrayHelper;
  * @property int|null $price
  * @property string|null $description
  * @property string|null $info
+ * @property string $durationLabel
+ * @property string $subjectsLabel
+ * @property string $nameFull
  * @property int $organization_id [int(11)]
  * @property int $is_deleted [int(1)]
- * @property TariffSubject $subjectsRelation
+ * @property TariffSubject[] $subjectsRelation
  */
 class Tariff extends ActiveRecord
 {
@@ -127,10 +130,23 @@ class Tariff extends ActiveRecord
         return implode(', ', $result);
     }
 
+    /**
+     * @return array
+     */
     public static function getSubjectsMap(){
         return ArrayHelper::merge([-1 => \Yii::t('main', 'Любой предмет')],ArrayHelper::map(Subject::find()->all(), 'id', 'name'));
     }
 
+    /**
+     * @return string
+     */
+    public function getNameFull(){
+        return $this->name.' ('.$this->durationLabel.'); '.$this->price.'; Предмет: '.$this->subjectsLabel;;
+    }
+
+    /**
+     * @return array
+     */
     public static function getAmounts(){
         return [
             1  => \Yii::t('main', '1 раз в неделю'),

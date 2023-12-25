@@ -35,6 +35,8 @@ use app\components\ActiveRecord;
  * @property string $fio
  * @property int $is_deleted [smallint(6)]
  * @property int $organization_id [int(11)]
+ *
+ * @property PupilEducation[] $educations
  */
 class Pupil extends ActiveRecord
 {
@@ -114,5 +116,9 @@ class Pupil extends ActiveRecord
 
     public function getGenderLabel(){
         return Lists::getGenders()[$this->sex];
+    }
+
+    public function getEducations(){
+        return $this->hasMany(PupilEducation::class, ['pupil_id' => 'id'])->onCondition(['!=','pupil_education.is_deleted', 1])->orderBy('id DESC');
     }
 }

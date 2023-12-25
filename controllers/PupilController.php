@@ -3,9 +3,13 @@
 namespace app\controllers;
 
 use app\helpers\OrganizationRoles;
+use app\helpers\OrganizationUrl;
 use app\helpers\SystemRoles;
+use app\models\forms\EducationForm;
 use app\models\Pupil;
+use app\models\PupilEducation;
 use app\models\search\PupilSearch;
+use yii\base\BaseObject;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -28,6 +32,7 @@ class PupilController extends Controller
                     'class' => VerbFilter::className(),
                     'actions' => [
                         'delete' => ['POST'],
+                        'delete-edu' => ['POST']
                     ],
                 ],
                 'access' => [
@@ -141,6 +146,60 @@ class PupilController extends Controller
             'model' => $this->findModel($id),
         ]);
     }
+
+    public function actionCreateEdu($pupil_id){
+        $model = new EducationForm();
+        $model->scenario = EducationForm::TYPE_ADD;
+        $model->loadDefaultValues();
+        if ($this->request->isPost) {
+            if ($model->load($this->request->post()) && $model->save()) {
+                return $this->redirect(OrganizationUrl::to(['pupil/edu', 'id' => $model->pupil_id]));
+            }
+        }
+
+        return $this->render('edu/form', [
+            'model' => $model,
+        ]);
+    }
+
+    public function actionUpdateEdu(){
+        $model = new EducationForm();
+        $model->scenario = EducationForm::TYPE_EDIT;
+        $model->loadDefaultValues();
+        if ($this->request->isPost) {
+            if ($model->load($this->request->post()) && $model->save()) {
+                return $this->redirect(OrganizationUrl::to(['pupil/edu', 'id' => $model->pupil_id]));
+            }
+        }
+
+        return $this->render('edu/form', [
+            'model' => $model,
+        ]);
+    }
+
+    public function actionCopyEdu(){
+        $model = new EducationForm();
+        $model->scenario = EducationForm::TYPE_COPY;
+        $model->loadDefaultValues();
+        if ($this->request->isPost) {
+            if ($model->load($this->request->post()) && $model->save()) {
+                return $this->redirect(OrganizationUrl::to(['pupil/edu', 'id' => $model->pupil_id]));
+            }
+        }
+
+        return $this->render('edu/form', [
+            'model' => $model,
+        ]);
+    }
+
+    public function actionDeleteEdu($id)
+    {
+        $model = PupilEducation::findOne($id);
+        $model->delete();
+
+        return $this->redirect(['index']);
+    }
+
 
     /**
      * Finds the Pupil model based on its primary key value.

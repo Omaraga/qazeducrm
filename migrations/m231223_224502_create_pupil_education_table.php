@@ -14,6 +14,7 @@ class m231223_224502_create_pupil_education_table extends Migration
     {
         $this->createTable('{{%pupil_education}}', [
             'id' => $this->primaryKey(),
+            'organization_id' => $this->integer(11),
             'pupil_id' => $this->integer(11)->notNull(),
             'tariff_id' => $this->integer(11)->notNull(),
             'sale' => $this->integer(5)->defaultValue(0),

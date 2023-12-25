@@ -39,7 +39,7 @@ $this->registerJs($js);
                     'type' => DatePicker::TYPE_INPUT,
                     'pluginOptions' => [
                         'autoclose' => true,
-                        'format' => 'dd.m.yyyy'
+                        'format' => 'dd.mm.yyyy'
                     ],
                     'options' => ['autocomplete' => 'off', 'id' => 'birth_date_input']
                 ]) ?>

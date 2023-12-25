@@ -37,7 +37,11 @@ $this->params['breadcrumbs'][] = $this->title;
             </p>
             <div class="row">
                 <div id="divTuitionList" class="col-12">
-
+                    <?foreach ($model->educations as $education):?>
+                        <?=$this->render('_card', [
+                            'model' => $education,
+                        ]);?>
+                    <?endforeach;?>
                 </div>
             </div>
         </div>

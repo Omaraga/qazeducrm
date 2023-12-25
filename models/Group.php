@@ -127,4 +127,11 @@ class Group extends ActiveRecord
     public function getCategoryLabel(){
         return Lists::getGroupCategories()[$this->category_id];
     }
+
+    /**
+     * @return string
+     */
+    public function getNameFull(){
+        return $this->code.' - '.$this->name;
+    }
 }
