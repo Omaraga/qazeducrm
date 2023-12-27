@@ -4,9 +4,9 @@ namespace app\controllers;
 
 use app\helpers\OrganizationRoles;
 use app\helpers\SystemRoles;
-use app\models\Subject;
-use richardfan\sortable\SortableAction;
+use app\models\PayMethod;
 use yii\data\ActiveDataProvider;
+use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -15,7 +15,7 @@ use yii\filters\VerbFilter;
 /**
  * SubjectController implements the CRUD actions for Subject model.
  */
-class SubjectController extends Controller
+class PayMethodController extends Controller
 {
     /**
      * @inheritDoc
@@ -51,17 +51,6 @@ class SubjectController extends Controller
         );
     }
 
-    public function actions()
-    {
-        return [
-            'sort' => [
-                'class' => SortableAction::className(),
-                'activeRecordClassName' => Subject::class,
-                'orderColumn' => 'order_col',
-            ],
-            // your other actions
-        ];
-    }
 
     /**
      * Lists all Subject models.
@@ -71,14 +60,14 @@ class SubjectController extends Controller
     public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
-            'query' => Subject::find(),
+            'query' => PayMethod::find(),
 
             'pagination' => [
                 'pageSize' => 50
             ],
             'sort' => [
                 'defaultOrder' => [
-                    'order_col' => SORT_ASC,
+                    'id' => SORT_ASC,
                 ]
             ],
 
@@ -109,7 +98,7 @@ class SubjectController extends Controller
      */
     public function actionCreate()
     {
-        $model = new Subject();
+        $model = new PayMethod();
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
@@ -162,12 +151,12 @@ class SubjectController extends Controller
      * Finds the Subject model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param int $id ID
-     * @return Subject the loaded model
+     * @return PayMethod the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
     protected function findModel($id)
     {
-        if (($model = Subject::findOne(['id' => $id])) !== null) {
+        if (($model = PayMethod::findOne(['id' => $id])) !== null) {
             return $model;
         }
 

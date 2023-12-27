@@ -6,6 +6,7 @@ use app\helpers\OrganizationUrl;
 use app\models\Pupil;
 use app\models\PupilEducation;
 use app\models\relations\EducationGroup;
+use app\models\services\PupilService;
 use app\models\Tariff;
 use Yii;
 
@@ -132,6 +133,7 @@ class EducationForm extends \yii\base\Model
         }
         $this->id = $model->id;
 
+        PupilService::updateBalance($model->pupil_id);
         $transaction->commit();
         return true;
     }

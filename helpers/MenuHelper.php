@@ -50,13 +50,14 @@ class MenuHelper extends Model
                 $menuRoles[] = ['label' => $name, 'url' => \app\helpers\OrganizationUrl::to(['site/change-role', 'id' => $roleId])];
             }
             if (\Yii::$app->user->can(OrganizationRoles::ADMIN)){
-                $items[] = ['label' => 'Тарифы', 'url' => \app\helpers\OrganizationUrl::to(['/tariff/index'])];
-                $items[] = ['label' => 'Ученики', 'url' => \app\helpers\OrganizationUrl::to(['/pupil/index'])];
-                $items[] = ['label' => 'Преподаватели', 'url' => \app\helpers\OrganizationUrl::to(['/user/index'])];
-                $items[] = ['label' => 'Группы', 'url' => \app\helpers\OrganizationUrl::to(['/group/index'])];
+                $items[] = ['label' => 'Тарифы', 'url' => \app\helpers\OrganizationUrl::to(['/tariff/index']), 'active' => in_array(\Yii::$app->controller->id, ['tariff']),];
+                $items[] = ['label' => 'Ученики', 'url' => \app\helpers\OrganizationUrl::to(['/pupil/index']), 'active' => in_array(\Yii::$app->controller->id, ['pupil'])];
+                $items[] = ['label' => 'Преподаватели', 'url' => \app\helpers\OrganizationUrl::to(['/user/index']), 'active' => in_array(\Yii::$app->controller->id, ['user'])];
+                $items[] = ['label' => 'Группы', 'url' => \app\helpers\OrganizationUrl::to(['/group/index']), 'active' => in_array(\Yii::$app->controller->id, ['group'])];
                 $items[] = ['label' => 'Справочники', 'items' => [
                     ['label' => 'Предметы', 'url' => \app\helpers\OrganizationUrl::to(['subject/index'])],
-                ]];
+                    ['label' => 'Методы оплат', 'url' => \app\helpers\OrganizationUrl::to(['pay-method/index'])],
+                ], 'active' => in_array(\Yii::$app->controller->id, ['subject', 'pay-method'])];
             }
 
             $items[] = ['label' => Lists::getRoles()[$user->getCurrentOrganizationRole()].'('.$organization->name.')', 'items' => $menuRoles, 'options' => ['class' => 'ml-sm-4 role-label']];

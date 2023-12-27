@@ -6,10 +6,14 @@ use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
 use app\helpers\SystemRoles;
 use app\models\forms\EducationForm;
+use app\models\forms\PaymentForm;
+use app\models\Payment;
 use app\models\Pupil;
 use app\models\PupilEducation;
 use app\models\search\PupilSearch;
+use app\models\services\PupilService;
 use yii\base\BaseObject;
+use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -80,6 +84,7 @@ class PupilController extends Controller
      */
     public function actionView($id)
     {
+        PupilService::updateBalance($id);
         return $this->render('view', [
             'model' => $this->findModel($id),
         ]);
@@ -118,6 +123,7 @@ class PupilController extends Controller
     {
         $model = $this->findModel($id);
 
+        PupilService::updateBalance($id);
         if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
         }
@@ -142,6 +148,7 @@ class PupilController extends Controller
     }
 
     public function actionEdu($id){
+        PupilService::updateBalance($id);
         return $this->render('edu/index', [
             'model' => $this->findModel($id),
         ]);
@@ -177,6 +184,9 @@ class PupilController extends Controller
         ]);
     }
 
+    /**
+     * @return string|\yii\web\Response
+     */
     public function actionCopyEdu(){
         $model = new EducationForm();
         $model->scenario = EducationForm::TYPE_COPY;
@@ -192,6 +202,10 @@ class PupilController extends Controller
         ]);
     }
 
+    /**
+     * @param $id
+     * @return \yii\web\Response
+     */
     public function actionDeleteEdu($id)
     {
         $model = PupilEducation::findOne($id);
@@ -199,6 +213,43 @@ class PupilController extends Controller
 
         return $this->redirect(['index']);
     }
+
+    /**
+     * @param $id
+     * @return string
+     * @throws NotFoundHttpException
+     */
+    public function actionPayment($id){
+        $model = $this->findModel($id);
+        PupilService::updateBalance($id);
+        $dataProvider = new ActiveDataProvider([
+            'query' => Payment::find()->andWhere(['pupil_id' => $model->id])->byOrganization()->orderBy('date DESC'),
+            'pagination' => [
+                'pageSize' => 20
+            ],
+        ]);
+        return $this->render('payment/index', [
+            'model' => $model,
+            'dataProvider' => $dataProvider
+        ]);
+    }
+
+    public function actionCreatePayment($pupil_id){
+        $model = new PaymentForm();
+        $pupil = Pupil::findOne($pupil_id);
+        $model->loadDefaultValues();
+        if ($this->request->isPost) {
+            if ($model->load($this->request->post()) && $model->save()) {
+                return $this->redirect(OrganizationUrl::to(['pupil/payment', 'id' => $model->pupil_id]));
+            }
+        }
+
+        return $this->render('payment/form', [
+            'model' => $model,
+            'pupil' => $pupil,
+        ]);
+    }
+
 
 
     /**

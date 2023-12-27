@@ -4,14 +4,14 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4b7fb0fc796261a39619d48dc4c3eca5",
+    "content-hash": "bcbf66bf9d4c9dc260c5b43690aec7c0",
     "packages": [
         {
             "name": "bower-asset/bootstrap",
             "version": "v3.4.1",
             "source": {
                 "type": "git",
-                "url": "git@github.com:twbs/bootstrap.git",
+                "url": "https://github.com/twbs/bootstrap.git",
                 "reference": "68b0d231a13201eb14acd3dc84e51543d16e5f7e"
             },
             "dist": {
@@ -28,11 +28,41 @@
             ]
         },
         {
+            "name": "bower-asset/fullcalendar",
+            "version": "v4.4.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/fullcalendar/fullcalendar.git",
+                "reference": "71f15cc03f43f37943b91afb5b74f5cbc892c486"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/fullcalendar/fullcalendar/zipball/71f15cc03f43f37943b91afb5b74f5cbc892c486",
+                "reference": "71f15cc03f43f37943b91afb5b74f5cbc892c486"
+            },
+            "type": "bower-asset"
+        },
+        {
+            "name": "bower-asset/fullcalendar-scheduler",
+            "version": "v4.4.3",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:fullcalendar/fullcalendar-scheduler.git",
+                "reference": "af79dec4871ed3b1cd5133c4b6021113e6795100"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/fullcalendar/fullcalendar-scheduler/zipball/af79dec4871ed3b1cd5133c4b6021113e6795100",
+                "reference": "af79dec4871ed3b1cd5133c4b6021113e6795100"
+            },
+            "type": "bower-asset"
+        },
+        {
             "name": "bower-asset/inputmask",
             "version": "3.3.11",
             "source": {
                 "type": "git",
-                "url": "git@github.com:RobinHerbots/Inputmask.git",
+                "url": "https://github.com/RobinHerbots/Inputmask.git",
                 "reference": "5e670ad62f50c738388d4dcec78d2888505ad77b"
             },
             "dist": {
@@ -615,6 +645,65 @@
             "time": "2023-07-28T07:45:11+00:00"
         },
         {
+            "name": "kartik-v/yii2-widget-datetimepicker",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/kartik-v/yii2-widget-datetimepicker.git",
+                "reference": "85b22d38553ca207f86be198f37e6531347e9a23"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/kartik-v/yii2-widget-datetimepicker/zipball/85b22d38553ca207f86be198f37e6531347e9a23",
+                "reference": "85b22d38553ca207f86be198f37e6531347e9a23",
+                "shasum": ""
+            },
+            "require": {
+                "kartik-v/yii2-krajee-base": ">=3.0.4"
+            },
+            "default-branch": true,
+            "type": "yii2-extension",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.5.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "kartik\\datetime\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Kartik Visweswaran",
+                    "email": "kartikv2@gmail.com",
+                    "homepage": "http://www.krajee.com/"
+                }
+            ],
+            "description": "Enhanced Yii2 wrapper for the bootstrap datetimepicker plugin (sub repo split from yii2-widgets)",
+            "homepage": "https://github.com/kartik-v/yii2-widget-datetimepicker",
+            "keywords": [
+                "datetime",
+                "extension",
+                "form",
+                "jquery",
+                "picker",
+                "plugin",
+                "select2",
+                "widget",
+                "yii2"
+            ],
+            "support": {
+                "issues": "https://github.com/kartik-v/yii2-widget-datetimepicker/issues",
+                "source": "https://github.com/kartik-v/yii2-widget-datetimepicker/tree/v1.5.1"
+            },
+            "time": "2022-03-18T17:42:22+00:00"
+        },
+        {
             "name": "kartik-v/yii2-widget-select2",
             "version": "dev-master",
             "source": {
@@ -792,6 +881,60 @@
                 "source": "https://github.com/paragonie/random_compat"
             },
             "time": "2020-10-15T08:29:30+00:00"
+        },
+        {
+            "name": "philippfrenzel/yii2fullcalendar",
+            "version": "4.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/philippfrenzel/yii2fullcalendar.git",
+                "reference": "53c8b2f524c5f5d85bd30f6ed7ba34b563479782"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/philippfrenzel/yii2fullcalendar/zipball/53c8b2f524c5f5d85bd30f6ed7ba34b563479782",
+                "reference": "53c8b2f524c5f5d85bd30f6ed7ba34b563479782",
+                "shasum": ""
+            },
+            "require": {
+                "bower-asset/fullcalendar": "^4.0.2@stable",
+                "bower-asset/fullcalendar-scheduler": "^4.0.2@stable",
+                "yiisoft/yii2": "*",
+                "yiisoft/yii2-jui": "*"
+            },
+            "require-dev": {
+                "codeception/codeception": "*"
+            },
+            "type": "yii2-extension",
+            "autoload": {
+                "psr-4": {
+                    "yii2fullcalendar\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Philipp Frenzel",
+                    "email": "philipp@frenzel.net",
+                    "homepage": "http://www.frenzel.net/",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Yii2 fullcalendar Widgets",
+            "homepage": "http://www.frenzel.net/",
+            "keywords": [
+                "fullcalendar",
+                "widget",
+                "yii2"
+            ],
+            "support": {
+                "issues": "https://github.com/philippfrenzel/yii2fullcalendar/issues",
+                "source": "https://github.com/philippfrenzel/yii2fullcalendar"
+            },
+            "time": "2019-04-17T13:42:59+00:00"
         },
         {
             "name": "richardfan1126/yii2-sortable-gridview",
@@ -5819,7 +5962,8 @@
     "minimum-stability": "stable",
     "stability-flags": {
         "kartik-v/yii2-widget-datepicker": 20,
-        "kartik-v/yii2-widget-select2": 20
+        "kartik-v/yii2-widget-select2": 20,
+        "kartik-v/yii2-widget-datetimepicker": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

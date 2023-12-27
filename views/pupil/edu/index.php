@@ -17,12 +17,9 @@ $this->params['breadcrumbs'][] = $this->title;
 
 
 
-    <div class="row my-3">
-        <div class="input-group col-12 col-sm-5">
-            <div class="input-group-text" id="btnGroupAddon2" style="background: lightgreen;"><b>На счету ученика:</b></div>
-            <input type="text" disabled class="form-control" style="background: <?=$model->balance > 0 ? 'lightblue' : 'pink';?>"  aria-describedby="btnGroupAddon2" value="<?=$model->balance ? : 0;?> тг.">
-        </div>
-    </div>
+    <?=$this->render('../balance', [
+        'model' => $model
+    ]);?>
     <nav>
         <div class="nav nav-tabs" id="nav-tab" role="tablist">
             <a class="nav-item nav-link" id="nav-home-tab" href="<?=\app\helpers\OrganizationUrl::to(['pupil/view', 'id' => $model->id]);?>" role="tab" aria-controls="nav-home" aria-selected="true"><?=Yii::t('main', 'Основные данные');?></a>
