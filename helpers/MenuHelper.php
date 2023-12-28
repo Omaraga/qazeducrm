@@ -64,7 +64,7 @@ class MenuHelper extends Model
             $items[] = '<li>'
                 . Html::beginForm(['/site/logout'], 'post', ['class' => 'form-inline ml-sm-4'])
                 . Html::submitButton(
-                    '<i class="fa fa-sign-out" aria-hidden="true"></i> Выйти',
+                    '<i class="fa fa-sign-out" aria-hidden="true"></i> Выйти('.\Yii::$app->user->identity->fio.')',
                     ['class' => 'btn btn-link logout']
                 )
                 . Html::endForm()
