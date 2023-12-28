@@ -66,6 +66,40 @@ $events = [
         <?= Html::a(Yii::t('main', 'Создать предмет'), ['create'], ['class' => 'btn btn-success']) ?>
     </p>
 
+    <?= \lo\widgets\fullcalendar\FullcalendarScheduler::widget([
+        'header'        => [
+            'left'   => 'today prev,next',
+            'center' => 'title',
+            'right'  => 'timelineDay,agendaWeek,month',
+        ],
+        'options'       => [
+            'language' => 'ru',
+        ],
+        'clientOptions' => [
+            'now'               => '2016-05-07',
+            'editable'          => true, // enable draggable events
+            'scrollTime'        => '12:00', // undo default 6am scrollTime
+            'defaultView' => 'agendaWeek',
+            'minTime' => '08:00:00',
+            'maxTime' => '22:00:00',
+            'slotLabelFormat' => [
+                'ddd d.m', // top level of text
+                'HH:mm'        // lower level of text
+            ],
+            'columnFormat' => 'ddd MM.DD',
+            'allDaySlot' => false,
+            'dayClick'    => new \yii\web\JsExpression("
+			function(date, jsEvent, view, resource) {
+				console.log(
+					'dayClick',
+					date,
+				);
+			}
+		"),
+            'events'            => $events,
+        ],
+    ]);
+    ?>
 
     <?= \app\components\SortableGridView::widget([
         'dataProvider' => $dataProvider,
