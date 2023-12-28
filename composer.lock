@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bcbf66bf9d4c9dc260c5b43690aec7c0",
+    "content-hash": "2ed2e94e28bd0ee2e9b5ffdffc2ea484",
     "packages": [
         {
             "name": "bower-asset/bootstrap",
@@ -29,33 +29,48 @@
         },
         {
             "name": "bower-asset/fullcalendar",
-            "version": "v4.4.3",
+            "version": "v3.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fullcalendar/fullcalendar.git",
-                "reference": "71f15cc03f43f37943b91afb5b74f5cbc892c486"
+                "reference": "c9e90782f61b7a6ebd47a6314be1648749a7a7d6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fullcalendar/fullcalendar/zipball/71f15cc03f43f37943b91afb5b74f5cbc892c486",
-                "reference": "71f15cc03f43f37943b91afb5b74f5cbc892c486"
+                "url": "https://api.github.com/repos/fullcalendar/fullcalendar/zipball/c9e90782f61b7a6ebd47a6314be1648749a7a7d6",
+                "reference": "c9e90782f61b7a6ebd47a6314be1648749a7a7d6"
             },
-            "type": "bower-asset"
+            "require": {
+                "bower-asset/jquery": ">=2.0.0",
+                "bower-asset/moment": ">=2.9.0"
+            },
+            "type": "bower-asset",
+            "license": [
+                "MIT"
+            ]
         },
         {
             "name": "bower-asset/fullcalendar-scheduler",
-            "version": "v4.4.3",
+            "version": "v1.5.0",
             "source": {
                 "type": "git",
                 "url": "git@github.com:fullcalendar/fullcalendar-scheduler.git",
-                "reference": "af79dec4871ed3b1cd5133c4b6021113e6795100"
+                "reference": "22465b924ab9532270839e1f33812f11c28e21b5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fullcalendar/fullcalendar-scheduler/zipball/af79dec4871ed3b1cd5133c4b6021113e6795100",
-                "reference": "af79dec4871ed3b1cd5133c4b6021113e6795100"
+                "url": "https://api.github.com/repos/fullcalendar/fullcalendar-scheduler/zipball/22465b924ab9532270839e1f33812f11c28e21b5",
+                "reference": "22465b924ab9532270839e1f33812f11c28e21b5"
             },
-            "type": "bower-asset"
+            "require": {
+                "bower-asset/fullcalendar": ">=3.0.1",
+                "bower-asset/jquery": ">=2.0.0",
+                "bower-asset/moment": ">=2.9.0"
+            },
+            "type": "bower-asset",
+            "license": [
+                "SEE LICENSE IN LICENSE.md"
+            ]
         },
         {
             "name": "bower-asset/inputmask",
@@ -111,6 +126,24 @@
             },
             "require": {
                 "bower-asset/jquery": ">=1.6"
+            },
+            "type": "bower-asset",
+            "license": [
+                "MIT"
+            ]
+        },
+        {
+            "name": "bower-asset/moment",
+            "version": "2.29.4",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:moment/moment.git",
+                "reference": "000ac1800e620f770f4eb31b5ae908f6167b0ab2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/moment/moment/zipball/000ac1800e620f770f4eb31b5ae908f6167b0ab2",
+                "reference": "000ac1800e620f770f4eb31b5ae908f6167b0ab2"
             },
             "type": "bower-asset",
             "license": [
@@ -821,6 +854,108 @@
             "time": "2020-07-04T07:19:38+00:00"
         },
         {
+            "name": "loveorigami/yii2-fullcalendar",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/loveorigami/yii2-fullcalendar.git",
+                "reference": "8b472f49371fc933627a5f4b6fdcfcd87eab6470"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/loveorigami/yii2-fullcalendar/zipball/8b472f49371fc933627a5f4b6fdcfcd87eab6470",
+                "reference": "8b472f49371fc933627a5f4b6fdcfcd87eab6470",
+                "shasum": ""
+            },
+            "require": {
+                "bower-asset/fullcalendar": "~3.1.0",
+                "bower-asset/fullcalendar-scheduler": "~1.5.0",
+                "loveorigami/yii2-modal-ajax": "*",
+                "yiisoft/yii2": ">=2.0.9",
+                "yiisoft/yii2-jui": ">=2.0.6"
+            },
+            "default-branch": true,
+            "type": "yii2-extension",
+            "autoload": {
+                "psr-4": {
+                    "lo\\widgets\\fullcalendar\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Edo Freriks",
+                    "email": "edofre@gmail.com"
+                },
+                {
+                    "name": "Lukyanov Andrey",
+                    "homepage": "http://loveorigami.info"
+                }
+            ],
+            "description": "A wrapper for fullcalendar",
+            "homepage": "https://github.com/loveorigami/yii2-fullcalendar",
+            "keywords": [
+                "fullcalendar",
+                "yii2"
+            ],
+            "support": {
+                "issues": "https://github.com/loveorigami/yii2-fullcalendar/issues",
+                "source": "https://github.com/loveorigami/yii2-fullcalendar/tree/1.5"
+            },
+            "time": "2019-02-21T11:11:37+00:00"
+        },
+        {
+            "name": "loveorigami/yii2-modal-ajax",
+            "version": "3.8",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/loveorigami/yii2-modal-ajax.git",
+                "reference": "8bc23b8ad16390d42b37ab155bc030902b881fcd"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/loveorigami/yii2-modal-ajax/zipball/8bc23b8ad16390d42b37ab155bc030902b881fcd",
+                "reference": "8bc23b8ad16390d42b37ab155bc030902b881fcd",
+                "shasum": ""
+            },
+            "type": "yii2-extension",
+            "autoload": {
+                "psr-4": {
+                    "lo\\widgets\\modal\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Karnbrock Gmbh",
+                    "homepage": "http://karnbrock.biz"
+                },
+                {
+                    "name": "Lukyanov Andrey",
+                    "homepage": "http://loveorigami.info"
+                }
+            ],
+            "description": "A wrapper around Yii2 Bootstrap Modal for using an ActiveForm via AJAX inside",
+            "homepage": "https://github.com/loveorigami/yii2-modal-ajax",
+            "keywords": [
+                "ajax-modal",
+                "bootstrap",
+                "modal",
+                "yii2"
+            ],
+            "support": {
+                "issues": "https://github.com/loveorigami/yii2-modal-ajax/issues",
+                "source": "https://github.com/loveorigami/yii2-modal-ajax/tree/3.8"
+            },
+            "time": "2019-06-10T06:44:42+00:00"
+        },
+        {
             "name": "npm-asset/bootstrap",
             "version": "4.6.2",
             "dist": {
@@ -881,60 +1016,6 @@
                 "source": "https://github.com/paragonie/random_compat"
             },
             "time": "2020-10-15T08:29:30+00:00"
-        },
-        {
-            "name": "philippfrenzel/yii2fullcalendar",
-            "version": "4.0.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/philippfrenzel/yii2fullcalendar.git",
-                "reference": "53c8b2f524c5f5d85bd30f6ed7ba34b563479782"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/philippfrenzel/yii2fullcalendar/zipball/53c8b2f524c5f5d85bd30f6ed7ba34b563479782",
-                "reference": "53c8b2f524c5f5d85bd30f6ed7ba34b563479782",
-                "shasum": ""
-            },
-            "require": {
-                "bower-asset/fullcalendar": "^4.0.2@stable",
-                "bower-asset/fullcalendar-scheduler": "^4.0.2@stable",
-                "yiisoft/yii2": "*",
-                "yiisoft/yii2-jui": "*"
-            },
-            "require-dev": {
-                "codeception/codeception": "*"
-            },
-            "type": "yii2-extension",
-            "autoload": {
-                "psr-4": {
-                    "yii2fullcalendar\\": ""
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Philipp Frenzel",
-                    "email": "philipp@frenzel.net",
-                    "homepage": "http://www.frenzel.net/",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Yii2 fullcalendar Widgets",
-            "homepage": "http://www.frenzel.net/",
-            "keywords": [
-                "fullcalendar",
-                "widget",
-                "yii2"
-            ],
-            "support": {
-                "issues": "https://github.com/philippfrenzel/yii2fullcalendar/issues",
-                "source": "https://github.com/philippfrenzel/yii2fullcalendar"
-            },
-            "time": "2019-04-17T13:42:59+00:00"
         },
         {
             "name": "richardfan1126/yii2-sortable-gridview",
@@ -5963,7 +6044,8 @@
     "stability-flags": {
         "kartik-v/yii2-widget-datepicker": 20,
         "kartik-v/yii2-widget-select2": 20,
-        "kartik-v/yii2-widget-datetimepicker": 20
+        "kartik-v/yii2-widget-datetimepicker": 20,
+        "loveorigami/yii2-fullcalendar": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
