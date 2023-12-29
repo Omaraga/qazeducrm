@@ -4,6 +4,7 @@ namespace app\models;
 
 use app\components\PhoneNumberValidator;
 use app\helpers\Lists;
+use app\models\relations\EducationGroup;
 use app\traits\AttributesToInfoTrait;
 use app\traits\UpdateInsteadOfDeleteTrait;
 use Yii;
@@ -120,5 +121,9 @@ class Pupil extends ActiveRecord
 
     public function getEducations(){
         return $this->hasMany(PupilEducation::class, ['pupil_id' => 'id'])->onCondition(['!=','pupil_education.is_deleted', 1])->orderBy('id DESC');
+    }
+
+    public function getGroups(){
+        return $this->hasMany(EducationGroup::class, ['pupil_id' => 'id']);
     }
 }

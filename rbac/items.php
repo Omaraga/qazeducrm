@@ -3,8 +3,11 @@ return [
     'guest' => [
         'type' => 1
     ],
+    'general_director' => [
+        'type' => 1,
+    ],
     'director' => [
-        'type' => 1
+        'type' => 1,
     ],
     'no_role' => [
         'type' => 1,

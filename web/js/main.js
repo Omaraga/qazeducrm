@@ -3,6 +3,7 @@ $.ajaxSetup({
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
     }
 });
+$('#modal-form').removeAttr('tabindex')
 const targetNode = document.body;
 const config = { childList: true, subtree: true };
 

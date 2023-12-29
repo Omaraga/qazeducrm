@@ -38,7 +38,7 @@ class PayMethodController extends Controller
                             'allow' => true,
                             'roles' => [
                                 SystemRoles::SUPER,
-                                OrganizationRoles::ADMIN
+                                OrganizationRoles::GENERAL_DIRECTOR,
                             ]
                         ],
                         [

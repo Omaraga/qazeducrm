@@ -48,6 +48,7 @@ class PupilController extends Controller
                                 SystemRoles::SUPER,
                                 OrganizationRoles::ADMIN,
                                 OrganizationRoles::DIRECTOR,
+                                OrganizationRoles::GENERAL_DIRECTOR,
                             ]
                         ],
                         [
@@ -208,8 +209,22 @@ class PupilController extends Controller
      */
     public function actionDeleteEdu($id)
     {
+        $transaction = \Yii::$app->db->beginTransaction();
         $model = PupilEducation::findOne($id);
-        $model->delete();
+        $groups = $model->groups;
+
+        foreach ($groups as $group){
+            if (!$group->delete()){
+                $transaction->rollBack();
+                \Yii::$app->session->setFlash('error', \Yii::t('main', 'Ошибка при удалении'));
+            }
+        }
+
+        if(!$model->delete()){
+            $transaction->rollBack();
+            \Yii::$app->session->setFlash('error', \Yii::t('main', 'Ошибка при удалении'));
+        }
+        $transaction->commit();
 
         return $this->redirect(['index']);
     }

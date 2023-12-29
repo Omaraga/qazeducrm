@@ -38,7 +38,7 @@ class SubjectController extends Controller
                             'allow' => true,
                             'roles' => [
                                 SystemRoles::SUPER,
-                                OrganizationRoles::ADMIN
+                                OrganizationRoles::GENERAL_DIRECTOR,
                             ]
                         ],
                         [

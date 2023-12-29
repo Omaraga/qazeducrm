@@ -32,7 +32,7 @@ class ActiveQuery extends \yii\db\ActiveQuery
     {
         if (in_array('is_deleted',(new $this->modelClass())->attributes())) {
             return $this->onCondition(
-                ($alias ?: $this->alias) . ' is_deleted != ' . ActiveRecord::DELETED
+                ($alias ? $alias.'.': $this->alias) . 'is_deleted != ' . ActiveRecord::DELETED
             );
         }
         return $this;

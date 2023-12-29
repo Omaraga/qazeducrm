@@ -49,11 +49,16 @@ class MenuHelper extends Model
             foreach ($roles as $roleId => $name){
                 $menuRoles[] = ['label' => $name, 'url' => \app\helpers\OrganizationUrl::to(['site/change-role', 'id' => $roleId])];
             }
-            if (\Yii::$app->user->can(OrganizationRoles::ADMIN)){
-                $items[] = ['label' => 'Тарифы', 'url' => \app\helpers\OrganizationUrl::to(['/tariff/index']), 'active' => in_array(\Yii::$app->controller->id, ['tariff']),];
+            if (\Yii::$app->user->can(OrganizationRoles::ADMIN) ||
+                \Yii::$app->user->can(OrganizationRoles::DIRECTOR) ||
+                \Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR)
+            ){
+                $items[] = ['label' => 'Тарифы', 'url' => \app\helpers\OrganizationUrl::to(['/tariff/index']), 'active' => in_array(\Yii::$app->controller->id, ['tariff'])];
                 $items[] = ['label' => 'Ученики', 'url' => \app\helpers\OrganizationUrl::to(['/pupil/index']), 'active' => in_array(\Yii::$app->controller->id, ['pupil'])];
                 $items[] = ['label' => 'Преподаватели', 'url' => \app\helpers\OrganizationUrl::to(['/user/index']), 'active' => in_array(\Yii::$app->controller->id, ['user'])];
                 $items[] = ['label' => 'Группы', 'url' => \app\helpers\OrganizationUrl::to(['/group/index']), 'active' => in_array(\Yii::$app->controller->id, ['group'])];
+            }
+            if (\Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR)){
                 $items[] = ['label' => 'Справочники', 'items' => [
                     ['label' => 'Предметы', 'url' => \app\helpers\OrganizationUrl::to(['subject/index'])],
                     ['label' => 'Методы оплат', 'url' => \app\helpers\OrganizationUrl::to(['pay-method/index'])],
@@ -69,8 +74,6 @@ class MenuHelper extends Model
                 )
                 . Html::endForm()
                 . '</li>';
-
-
         }
 
         return $items;

@@ -6,6 +6,8 @@ use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
 use app\helpers\SystemRoles;
 use app\models\Group;
+use app\models\Pupil;
+use app\models\relations\EducationGroup;
 use app\models\relations\TeacherGroup;
 use app\models\search\GroupSearch;
 use app\models\Subject;
@@ -46,6 +48,7 @@ class GroupController extends Controller
                                 SystemRoles::SUPER,
                                 OrganizationRoles::ADMIN,
                                 OrganizationRoles::DIRECTOR,
+                                OrganizationRoles::GENERAL_DIRECTOR,
                             ]
                         ],
                         [
@@ -137,6 +140,24 @@ class GroupController extends Controller
             ],
         ]);
         return $this->render('teacher', [
+            'model' => $model,
+            'dataProvider' => $dataProvider
+        ]);
+    }
+
+    public function actionPupils($id){
+        $model = $this->findModel($id);
+        $dataProvider = new ActiveDataProvider([
+            'query' => Pupil::find()->innerJoinWith(['groups' => function($q) use ($model){
+                $q->andWhere(['<>', 'education_group.is_deleted', 1]);
+            }])->where(['education_group.group_id' => $model->id])
+                ->andWhere(['<>', 'pupil.is_deleted', 1]),
+
+            'pagination' => [
+                'pageSize' => 20
+            ],
+        ]);
+        return $this->render('pupils', [
             'model' => $model,
             'dataProvider' => $dataProvider
         ]);

@@ -41,6 +41,7 @@ class UserController extends Controller
                                 SystemRoles::SUPER,
                                 OrganizationRoles::ADMIN,
                                 OrganizationRoles::DIRECTOR,
+                                OrganizationRoles::GENERAL_DIRECTOR,
                             ]
                         ],
                         [

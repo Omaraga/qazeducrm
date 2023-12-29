@@ -69,7 +69,7 @@ class ActiveRecord extends yii\db\ActiveRecord
      */
     public static function find()
     {
-        return (new ActiveQuery(get_called_class()))->notDeleted();
+        return (new ActiveQuery(get_called_class()))->notDeleted(static::tableName());
     }
 
     public static function findWithDeleted()

@@ -171,8 +171,9 @@ class Lists
     {
         return [
             SystemRoles::SUPER => Yii::t('main', 'Системный администратор'),
+            OrganizationRoles::GENERAL_DIRECTOR => Yii::t('main', 'Директор'),
             OrganizationRoles::ADMIN => Yii::t('main', 'Администратор'),
-            OrganizationRoles::DIRECTOR => Yii::t('main', 'Директор'),
+            OrganizationRoles::DIRECTOR => Yii::t('main', 'Директор филиала'),
             SystemRoles::PARENT => Yii::t('main', 'Родитель'),
             OrganizationRoles::TEACHER => Yii::t('main', 'Преподаватель'),
             OrganizationRoles::NO_ROLE => Yii::t("main", "Без роли"),
@@ -216,27 +217,6 @@ class Lists
             2 => Yii::t('main', 'Не гражданин РК (Не резидент)')
         ];
     }
-
-    /*
-    protected static $institutionsTypes = null;
-    public static function getSchoolTypes()
-    {
-        if (!self::$institutionsTypes) {
-            //self::$institutionsType =
-            $client = new \GuzzleHttp\Client();
-            $result = $client->request('GET', 'https://pa.bilimal.kz/handbook/institution-type', [
-                'per-page' => 200
-            ]);
-            echo $result->getStatusCode();
-            echo $result->getHeader('content-type');
-            echo $result->getBody();
-
-            die();
-        }
-
-        return [];
-    }
-    */
 
     public static function getChildrenSocialCategory()
     {

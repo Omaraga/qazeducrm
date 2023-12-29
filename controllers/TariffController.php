@@ -39,9 +39,28 @@ class TariffController extends Controller
                     'rules' => [
                         [
                             'allow' => true,
+                            'actions' => [
+                                'delete'
+                            ],
                             'roles' => [
                                 SystemRoles::SUPER,
-                                OrganizationRoles::ADMIN
+                                OrganizationRoles::GENERAL_DIRECTOR,
+                            ]
+                        ],
+                        [
+                            'allow' => false,
+                            'actions' => [
+                                'delete'
+                            ],
+                            'roles' => ['@', '?']
+                        ],
+                        [
+                            'allow' => true,
+                            'roles' => [
+                                SystemRoles::SUPER,
+                                OrganizationRoles::ADMIN,
+                                OrganizationRoles::DIRECTOR,
+                                OrganizationRoles::GENERAL_DIRECTOR,
                             ]
                         ],
                         [

@@ -19,7 +19,7 @@ $this->params['breadcrumbs'][] = $this->title;
         <div class="nav nav-tabs" id="nav-tab" role="tablist">
             <a class="nav-item nav-link active" id="nav-home-tab"  href="<?=\app\helpers\OrganizationUrl::to(['group/view', 'id' => $model->id]);?>" role="tab" aria-controls="nav-home" aria-selected="true"><?=Yii::t('main', 'Основные данные');?></a>
             <a class="nav-item nav-link" id="nav-profile-tab"  href="<?=\app\helpers\OrganizationUrl::to(['group/teachers', 'id' => $model->id]);?>" role="tab" aria-controls="nav-profile" aria-selected="false"><?=Yii::t('main', 'Преподаватели');?></a>
-            <a class="nav-item nav-link" id="nav-contact-tab" data-toggle="tab" href="#nav-contact" role="tab" aria-controls="nav-contact" aria-selected="false"><?=Yii::t('main', 'Ученики');?></a>
+            <a class="nav-item nav-link" id="nav-contact-tab" href="<?=\app\helpers\OrganizationUrl::to(['group/pupils', 'id' => $model->id]);?>" role="tab" aria-controls="nav-contact" aria-selected="false"><?=Yii::t('main', 'Ученики');?></a>
         </div>
     </nav>
     <div class="tab-content" id="nav-tabContent">

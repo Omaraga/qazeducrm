@@ -328,15 +328,14 @@ class User extends ActiveRecord implements IdentityInterface
      */
     public static function getRoles($organization = null)
     {
-
-            $roles = [
-                SystemRoles::PARENT,
-                OrganizationRoles::ADMIN,
-                OrganizationRoles::DIRECTOR,
-                OrganizationRoles::TEACHER,
-            ];
-
-        $roles[] = OrganizationRoles::NO_ROLE;
+        $roles = [
+            SystemRoles::PARENT,
+            OrganizationRoles::ADMIN,
+            OrganizationRoles::GENERAL_DIRECTOR,
+            OrganizationRoles::DIRECTOR,
+            OrganizationRoles::TEACHER,
+            OrganizationRoles::NO_ROLE
+        ];
 
         $data = [];
         $roleList = Lists::getRoles();

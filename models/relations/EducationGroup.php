@@ -3,6 +3,7 @@
 namespace app\models\relations;
 
 use app\models\Group;
+use app\models\Pupil;
 use app\models\PupilEducation;
 use app\traits\UpdateInsteadOfDeleteTrait;
 use Yii;
@@ -103,5 +104,12 @@ class EducationGroup extends ActiveRecord
     public function getGroup()
     {
         return $this->hasOne(Group::class, ['id' => 'group_id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getPupil(){
+        return $this->hasOne(Pupil::class, ['id' => 'pupil_id']);
     }
 }
