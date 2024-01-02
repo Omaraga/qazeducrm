@@ -29,6 +29,7 @@ class PaymentForm extends \yii\base\Model
     const TYPE_ADD_REFUND = 'add_refund';
     const TYPE_UPDATE_REFUND = 'update_refund';
     const TYPE_UPDATE_PAY = 'update_pay';
+    const TYPE_CONSUMPTION = 'consumption';
 
     public function scenarios()
     {
@@ -37,6 +38,7 @@ class PaymentForm extends \yii\base\Model
         $scenarios[self::TYPE_UPDATE_PAY] = ['id','pupil_id', 'purpose_id', 'method_id', 'type','number','amount','date','comment'];;
         $scenarios[self::TYPE_ADD_REFUND] = ['id','pupil_id', 'type','number','amount','date','comment'];;
         $scenarios[self::TYPE_UPDATE_REFUND] = ['id','pupil_id', 'type','number','amount','date','comment'];;
+        $scenarios[self::TYPE_CONSUMPTION] = ['id', 'type','number','amount','date','comment'];;
         return $scenarios;
     }
 

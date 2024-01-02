@@ -32,6 +32,7 @@ class Payment extends ActiveRecord
 {
     const TYPE_PAY = 1;
     const TYPE_REFUND = 2;
+    const TYPE_SPENDING = 3;
 
     const PURPOSE_EDUCATION = 1;
     const PURPOSE_MATERIAL = 2;
@@ -89,7 +90,7 @@ class Payment extends ActiveRecord
         return [
             'id' => Yii::t('main', 'ID'),
             'organization_id' => Yii::t('main', 'Organization ID'),
-            'pupil_id' => Yii::t('main', 'Pupil ID'),
+            'pupil_id' => Yii::t('main', 'Ученик'),
             'purpose_id' => Yii::t('main', 'Назначение'),
             'method_id' => Yii::t('main', 'Метод оплаты'),
             'number' => Yii::t('main', '№ кватанции'),
@@ -162,6 +163,7 @@ class Payment extends ActiveRecord
         return [
             self::TYPE_PAY => Yii::t('main', 'Платеж'),
             self::TYPE_REFUND => Yii::t('main', 'Возврат'),
+            self::TYPE_SPENDING => Yii::t('main', 'Расход')
         ];
     }
 }
