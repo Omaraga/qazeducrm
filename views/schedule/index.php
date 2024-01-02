@@ -5,9 +5,9 @@
 
 use yii\bootstrap4\Html;
 
-$this->title = Yii::t('main', 'Типовое расписание');
+$this->title = Yii::t('main', 'Расписание');
 $this->params['breadcrumbs'][] = $this->title;
-$url = \app\helpers\OrganizationUrl::to(['typical-schedule/events']);
+$url = \app\helpers\OrganizationUrl::to(['schedule/events']);
 $js = <<<JS
 moment.locale('ru');
 var now = moment();
@@ -29,9 +29,11 @@ function updateEvents(ev, cats){
     myCalendar.init();
 }
 function getEvents(){
+    console.log(myCalendar);
      $.ajax({
         'url': '$url',
         'type': 'post',
+        'data' : {start : myCalendar.fromTimestamp, end : myCalendar.toTimestamp},
         success: function(data){
             data = JSON.parse(data);
             if (data){
@@ -68,15 +70,14 @@ function getEvents(){
     
 }
 
-getEvents();
 
+getEvents();
 $('#calendar').on('Calendar.event-click',function(event, instance, elem, evt){
-  console.log('ev', event);
-  console.log('instance', instance);
-  console.log('elem', elem);
-  console.log('evt', evt);
    $('#modal-form').find('#modalContent').load(evt.url);
     $('#modal-form').modal('show')
+});
+$('#calendar').on('Calendar.init', function(event, instance, before, current, after){
+  
 });
 
 JS;
@@ -86,15 +87,18 @@ $this->registerJs($js);
 <h3><?= Html::encode($this->title) ?></h3>
 <p>
     <?= Html::button(Yii::t('main','Добавить занятие'),[
-        'value' => \app\helpers\OrganizationUrl::to(['typical-schedule/create']),
+        'value' => \app\helpers\OrganizationUrl::to(['schedule/create']),
         'class' => 'btn btn-success modal-form',
         'id' => 'modalButton'
     ]) ?>
+    <?=Html::a(Yii::t('main', 'Заполнить расписание'), \app\helpers\OrganizationUrl::to(['schedule/typical-schedule']), [
+            'class' => 'btn btn-primary'
+    ]);?>
 </p>
 <div id="calendar"></div>
 
 <? \yii\bootstrap4\Modal::begin([
-    'title' => Yii::t('main', 'Добавить занятие'),
+    'title' => Yii::t('main', 'Занятие'),
     'id' => 'modal-form',
     'size' => 'modal-lg'
 

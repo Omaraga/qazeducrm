@@ -154,7 +154,8 @@ class TypicalScheduleController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
+        $model = $this->findModel($id);
+        $model->delete();
 
         return $this->redirect(['index']);
     }
@@ -172,6 +173,6 @@ class TypicalScheduleController extends Controller
             return $model;
         }
 
-        throw new NotFoundHttpException(Yii::t('main', 'The requested page does not exist.'));
+        throw new NotFoundHttpException(\Yii::t('main', 'The requested page does not exist.'));
     }
 }

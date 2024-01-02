@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use app\helpers\OrganizationUrl;
+use app\models\forms\TypicalLessonForm;
 use app\models\Group;
 use app\models\Lesson;
 use app\models\relations\TeacherGroup;
@@ -59,7 +60,7 @@ class ScheduleController extends Controller
                 $result[$i]['color'] = $event->group->color;
                 $result[$i]['category'] = $event->group->getNameFull();
                 $result[$i]['content'] = $event->teacher->fio;
-                $result[$i]['url'] = OrganizationUrl::to(['typical-schedule/update', 'id' => $event->id]);
+                $result[$i]['url'] = OrganizationUrl::to(['schedule/update', 'id' => $event->id]);
             }
 
         }
@@ -94,6 +95,19 @@ class ScheduleController extends Controller
         ]);
     }
 
+    public function actionTypicalSchedule(){
+        $model = new TypicalLessonForm();
+        $model->loadDefault();
+        if ($this->request->isPost) {
+            if ($model->load($this->request->post()) && $model->save()) {
+                return $this->redirect(OrganizationUrl::to(['schedule/index']));
+            }
+        }
+        return $this->render('typical-schedule', [
+            'model' => $model,
+        ]);
+    }
+
     /**
      * Creates a new TypicalSchedule model.
      * If creation is successful, the browser will be redirected to the 'view' page.
@@ -105,7 +119,7 @@ class ScheduleController extends Controller
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(OrganizationUrl::to(['typical-schedule/index']));
+                return $this->redirect(OrganizationUrl::to(['schedule/index']));
             }
         } else {
             $model->loadDefaultValues();
@@ -133,7 +147,9 @@ class ScheduleController extends Controller
         $model = $this->findModel($id);
 
         if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(OrganizationUrl::to(['typical-schedule/index']));
+            return $this->redirect(OrganizationUrl::to(['schedule/index']));
+        }else{
+            $model->date = $model->date ? date('d.m.Y', strtotime($model->date)) : date('d.m.Y');
         }
         if (\Yii::$app->request->isAjax){
             return $this->renderAjax('_form', [
@@ -157,7 +173,7 @@ class ScheduleController extends Controller
     {
         $this->findModel($id)->delete();
 
-        return $this->redirect(['index']);
+        return $this->redirect(OrganizationUrl::to(['schedule/index']));
     }
 
     /**

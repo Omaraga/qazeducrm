@@ -70,7 +70,7 @@ class TypicalSchedule extends ActiveRecord
 
     public function save($runValidation = true, $attributeNames = null)
     {
-        if (!$this->validate()){
+        if ($runValidation && !$this->validate()){
             return false;
         }
         $this->date = $this->getDate();

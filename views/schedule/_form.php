@@ -8,7 +8,7 @@ use yii\helpers\ArrayHelper;
 /** @var app\models\TypicalSchedule $model */
 /** @var yii\widgets\ActiveForm $form */
 
-$url = \app\helpers\OrganizationUrl::to(['typical-schedule/teachers']);
+$url = \app\helpers\OrganizationUrl::to(['schedule/teachers']);
 $js = <<<JS
     that = $('.modal-content');
     $(that).find('#select_group_id').change(function (){
@@ -18,22 +18,23 @@ $js = <<<JS
             type: 'post',
             data: {id : id},
             success: function (data){
-                $('#typicalschedule-teacher_id').find('option').each(function (e){
+                $('#lesson-teacher_id').find('option').each(function (e){
                     $(this).remove();
                 });
                 data = JSON.parse(data);
                 console.log('data ', data)
                 $(data).each(function (){
                    let html = '<option value="' + this.id + '">' + this.fio + '</option>';
-                    $('#typicalschedule-teacher_id').append(html);
-                    $('#typicalschedule-teacher_id').removeAttr('disabled');
+                    $('#lesson-teacher_id').append(html);
+                    $('#lesson-teacher_id').removeAttr('disabled');
                 });
             }
         })
     });
 
-$('#typicalschedule-start_time').mask('99:99');
-$('#typicalschedule-end_time').mask('99:99');
+$('#lesson-start_time').mask('99:99');
+$('#lesson-end_time').mask('99:99');
+$('#schedule_date_input').mask('99.99.9999');
 JS;
 $this->registerJs($js);
 ?>
@@ -64,7 +65,14 @@ $this->registerJs($js);
                 ]) ?>
             </div>
             <div class="row">
-                <?= $form->field($model, 'week', ['options' =>['class' => 'col-6 col-sm-4']])->dropDownList(\app\helpers\Lists::getWeekDays(), []) ?>
+                <?= $form->field($model, 'date', ['options' =>['class' => 'col-6 col-sm-4']])->widget(\kartik\date\DatePicker::className(), [
+                    'type' => \kartik\date\DatePicker::TYPE_INPUT,
+                    'pluginOptions' => [
+                        'autoclose' => true,
+                        'format' => 'dd.mm.yyyy'
+                    ],
+                    'options' => ['autocomplete' => 'off', 'id' => 'schedule_date_input']
+                ]) ?>
                 <?= $form->field($model, 'start_time', ['options' =>['class' => 'col-6 col-sm-4']])->widget(\kartik\time\TimePicker::classname(), [
                     'pluginOptions' => [
                         'showMeridian' => false
@@ -84,7 +92,13 @@ $this->registerJs($js);
 
     <div class="form-group d-flex" style="justify-content: space-between;">
         <?if($model->id):?>
-            <?= Html::a(Yii::t('main', 'Удалить занятие'), \app\helpers\OrganizationUrl::to(['typical-schedule/delete', 'id' => $model->id]), ['class' => 'btn btn-danger']) ?>
+            <?= Html::a(Yii::t('main', 'Удалить занятие'), \app\helpers\OrganizationUrl::to(['schedule/delete', 'id' => $model->id]), [
+                'class' => 'btn btn-danger',
+                'data' => [
+                    'confirm' => Yii::t('main', 'Вы действительно хотите удалить занятие?'),
+                    'method' => 'post',
+                ],
+            ]) ?>
         <?endif;?>
         <?= Html::submitButton(Yii::t('main', 'Сохранить'), ['class' => 'btn btn-primary']) ?>
 

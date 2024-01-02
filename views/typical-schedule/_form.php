@@ -84,7 +84,13 @@ $this->registerJs($js);
 
     <div class="form-group d-flex" style="justify-content: space-between;">
         <?if($model->id):?>
-            <?= Html::a(Yii::t('main', 'Удалить занятие'), \app\helpers\OrganizationUrl::to(['typical-schedule/delete', 'id' => $model->id]), ['class' => 'btn btn-danger']) ?>
+            <?= Html::a(Yii::t('main', 'Удалить занятие'), \app\helpers\OrganizationUrl::to(['typical-schedule/delete', 'id' => $model->id]), [
+                'class' => 'btn btn-danger',
+                'data' => [
+                    'confirm' => Yii::t('main', 'Вы действительно хотите удалить занятие?'),
+                    'method' => 'post',
+                ],
+            ]) ?>
         <?endif;?>
         <?= Html::submitButton(Yii::t('main', 'Сохранить'), ['class' => 'btn btn-primary']) ?>
 
