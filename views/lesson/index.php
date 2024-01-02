@@ -13,8 +13,8 @@ moment.locale('ru');
 var now = moment();
 var myCalendar = $('#calendar').Calendar({
     locale: 'ru',
-    showNavigateButton: false,
-    unixTimestamp: moment('2024-01-01').format('X'),
+    showNavigateButton: true,
+    unixTimestamp: moment().format('X'),
     weekday:{
         timeline:{
             fromHour:8,

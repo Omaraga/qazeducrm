@@ -8,7 +8,7 @@ use app\components\ActiveRecord;
 use yii\db\Expression;
 
 /**
- * This is the model class for table "typical_schedule".
+ * This is the model class for table "lesson".
  *
  * @property int $id
  * @property int|null $organization_id
@@ -28,7 +28,7 @@ use yii\db\Expression;
 
  *
  */
-class TypicalSchedule extends ActiveRecord
+class Lesson extends ActiveRecord
 {
     use UpdateInsteadOfDeleteTrait;
 
@@ -37,7 +37,7 @@ class TypicalSchedule extends ActiveRecord
      */
     public static function tableName()
     {
-        return 'typical_schedule';
+        return 'lesson';
     }
 
     /**
