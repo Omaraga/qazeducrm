@@ -134,7 +134,7 @@ class GroupController extends Controller
     public function actionTeachers($id){
         $model = $this->findModel($id);
         $dataProvider = new ActiveDataProvider([
-            'query' => TeacherGroup::find()->byOrganization(),
+            'query' => TeacherGroup::find()->byOrganization()->andWhere(['target_id' => $model->id]),
             'pagination' => [
                 'pageSize' => 20
             ],
@@ -243,7 +243,7 @@ class GroupController extends Controller
             $model->target_id = $groupId;
             if ($this->request->isPost) {
                 if ($model->load($this->request->post()) && $model->save()) {
-                    return $this->redirect(OrganizationUrl::to(['group/teachers', 'id' => $model->id]));
+                    return $this->redirect(OrganizationUrl::to(['group/teachers', 'id' => $model->target_id]));
                 }
             }
 

@@ -87,4 +87,6 @@ a.desc:after {
     color: lightyellow;
     font-weight: bold;
 }
-
+#calendar .event-name {
+    font-size: 15px;
+}

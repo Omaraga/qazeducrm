@@ -4,6 +4,7 @@ namespace app\models;
 
 use app\helpers\Lists;
 use app\models\enum\StatusEnum;
+use app\models\relations\TeacherGroup;
 use Yii;
 use yii\db\Expression;
 use app\components\ActiveRecord;
@@ -120,6 +121,14 @@ class Group extends ActiveRecord
     public function getSubjectLabel(){
         return $this->subject->name;
     }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getTeacherRelations(){
+        return $this->hasMany(TeacherGroup::class, ['target_id' => 'id']);
+    }
+
 
     /**
      * @return mixed

@@ -5,6 +5,8 @@ namespace app\models;
 use app\traits\UpdateInsteadOfDeleteTrait;
 use Yii;
 use app\components\ActiveRecord;
+use yii\db\Expression;
+
 /**
  * This is the model class for table "payment".
  *
@@ -44,6 +46,21 @@ class Payment extends ActiveRecord
     public static function tableName()
     {
         return 'payment';
+    }
+
+    /**
+     * @return array[]
+     */
+    public function behaviors()
+    {
+        return [
+            [
+                'class' => \yii\behaviors\TimestampBehavior::class,
+                'createdAtAttribute' => 'created_at',
+                'updatedAtAttribute' => 'updated_at',
+                'value' => (new Expression('NOW()')),
+            ],
+        ];
     }
 
     /**

@@ -22,9 +22,13 @@ class AppAsset extends AssetBundle
 
     public $css = [
         'css/site.css',
+        'css/jquery-calendar.min.css'
     ];
     public $js = [
         'https://cdn.jsdelivr.net/npm/jquery.maskedinput@1.4.1/src/jquery.maskedinput.min.js',
+        'https://cdn.jsdelivr.net/npm/moment@latest/min/moment-with-locales.min.js',
+        'js/jquery.touchSwipe.min.js',
+        'js/jquery-calendar.min.js',
         'js/main.js'
     ];
     public $depends = [

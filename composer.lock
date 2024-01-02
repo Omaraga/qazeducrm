@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2ed2e94e28bd0ee2e9b5ffdffc2ea484",
+    "content-hash": "79148ce3dfa34fb736e312d65af41179",
     "packages": [
         {
             "name": "bower-asset/bootstrap",
@@ -25,51 +25,6 @@
             "type": "bower-asset",
             "license": [
                 "MIT"
-            ]
-        },
-        {
-            "name": "bower-asset/fullcalendar",
-            "version": "v3.1.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/fullcalendar/fullcalendar.git",
-                "reference": "c9e90782f61b7a6ebd47a6314be1648749a7a7d6"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/fullcalendar/fullcalendar/zipball/c9e90782f61b7a6ebd47a6314be1648749a7a7d6",
-                "reference": "c9e90782f61b7a6ebd47a6314be1648749a7a7d6"
-            },
-            "require": {
-                "bower-asset/jquery": ">=2.0.0",
-                "bower-asset/moment": ">=2.9.0"
-            },
-            "type": "bower-asset",
-            "license": [
-                "MIT"
-            ]
-        },
-        {
-            "name": "bower-asset/fullcalendar-scheduler",
-            "version": "v1.5.0",
-            "source": {
-                "type": "git",
-                "url": "git@github.com:fullcalendar/fullcalendar-scheduler.git",
-                "reference": "22465b924ab9532270839e1f33812f11c28e21b5"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/fullcalendar/fullcalendar-scheduler/zipball/22465b924ab9532270839e1f33812f11c28e21b5",
-                "reference": "22465b924ab9532270839e1f33812f11c28e21b5"
-            },
-            "require": {
-                "bower-asset/fullcalendar": ">=3.0.1",
-                "bower-asset/jquery": ">=2.0.0",
-                "bower-asset/moment": ">=2.9.0"
-            },
-            "type": "bower-asset",
-            "license": [
-                "SEE LICENSE IN LICENSE.md"
             ]
         },
         {
@@ -126,24 +81,6 @@
             },
             "require": {
                 "bower-asset/jquery": ">=1.6"
-            },
-            "type": "bower-asset",
-            "license": [
-                "MIT"
-            ]
-        },
-        {
-            "name": "bower-asset/moment",
-            "version": "2.29.4",
-            "source": {
-                "type": "git",
-                "url": "git@github.com:moment/moment.git",
-                "reference": "000ac1800e620f770f4eb31b5ae908f6167b0ab2"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/moment/moment/zipball/000ac1800e620f770f4eb31b5ae908f6167b0ab2",
-                "reference": "000ac1800e620f770f4eb31b5ae908f6167b0ab2"
             },
             "type": "bower-asset",
             "license": [
@@ -802,6 +739,65 @@
             "time": "2023-06-22T07:43:31+00:00"
         },
         {
+            "name": "kartik-v/yii2-widget-timepicker",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/kartik-v/yii2-widget-timepicker.git",
+                "reference": "680aec2d79846e926c072da455cf6f33e1c3bb12"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/kartik-v/yii2-widget-timepicker/zipball/680aec2d79846e926c072da455cf6f33e1c3bb12",
+                "reference": "680aec2d79846e926c072da455cf6f33e1c3bb12",
+                "shasum": ""
+            },
+            "require": {
+                "kartik-v/yii2-krajee-base": ">=2.0.0"
+            },
+            "default-branch": true,
+            "type": "yii2-extension",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "kartik\\time\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Kartik Visweswaran",
+                    "email": "kartikv2@gmail.com",
+                    "homepage": "http://www.krajee.com/"
+                }
+            ],
+            "description": "Enhanced Yii2 wrapper for the bootstrap timepicker plugin (sub repo split from yii2-widgets)",
+            "homepage": "https://github.com/kartik-v/yii2-widget-timepicker",
+            "keywords": [
+                "bootstrap",
+                "extension",
+                "form",
+                "jquery",
+                "picker",
+                "plugin",
+                "time",
+                "widget",
+                "yii2"
+            ],
+            "support": {
+                "issues": "https://github.com/kartik-v/yii2-widget-timepicker/issues",
+                "source": "https://github.com/kartik-v/yii2-widget-timepicker/tree/v1.0.5"
+            },
+            "time": "2021-10-28T03:49:56+00:00"
+        },
+        {
             "name": "lajax/yii2-translate-manager",
             "version": "1.8.1",
             "source": {
@@ -852,108 +848,6 @@
                 "source": "https://github.com/lajax/yii2-translate-manager"
             },
             "time": "2020-07-04T07:19:38+00:00"
-        },
-        {
-            "name": "loveorigami/yii2-fullcalendar",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/loveorigami/yii2-fullcalendar.git",
-                "reference": "8b472f49371fc933627a5f4b6fdcfcd87eab6470"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/loveorigami/yii2-fullcalendar/zipball/8b472f49371fc933627a5f4b6fdcfcd87eab6470",
-                "reference": "8b472f49371fc933627a5f4b6fdcfcd87eab6470",
-                "shasum": ""
-            },
-            "require": {
-                "bower-asset/fullcalendar": "~3.1.0",
-                "bower-asset/fullcalendar-scheduler": "~1.5.0",
-                "loveorigami/yii2-modal-ajax": "*",
-                "yiisoft/yii2": ">=2.0.9",
-                "yiisoft/yii2-jui": ">=2.0.6"
-            },
-            "default-branch": true,
-            "type": "yii2-extension",
-            "autoload": {
-                "psr-4": {
-                    "lo\\widgets\\fullcalendar\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Edo Freriks",
-                    "email": "edofre@gmail.com"
-                },
-                {
-                    "name": "Lukyanov Andrey",
-                    "homepage": "http://loveorigami.info"
-                }
-            ],
-            "description": "A wrapper for fullcalendar",
-            "homepage": "https://github.com/loveorigami/yii2-fullcalendar",
-            "keywords": [
-                "fullcalendar",
-                "yii2"
-            ],
-            "support": {
-                "issues": "https://github.com/loveorigami/yii2-fullcalendar/issues",
-                "source": "https://github.com/loveorigami/yii2-fullcalendar/tree/1.5"
-            },
-            "time": "2019-02-21T11:11:37+00:00"
-        },
-        {
-            "name": "loveorigami/yii2-modal-ajax",
-            "version": "3.8",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/loveorigami/yii2-modal-ajax.git",
-                "reference": "8bc23b8ad16390d42b37ab155bc030902b881fcd"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/loveorigami/yii2-modal-ajax/zipball/8bc23b8ad16390d42b37ab155bc030902b881fcd",
-                "reference": "8bc23b8ad16390d42b37ab155bc030902b881fcd",
-                "shasum": ""
-            },
-            "type": "yii2-extension",
-            "autoload": {
-                "psr-4": {
-                    "lo\\widgets\\modal\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Karnbrock Gmbh",
-                    "homepage": "http://karnbrock.biz"
-                },
-                {
-                    "name": "Lukyanov Andrey",
-                    "homepage": "http://loveorigami.info"
-                }
-            ],
-            "description": "A wrapper around Yii2 Bootstrap Modal for using an ActiveForm via AJAX inside",
-            "homepage": "https://github.com/loveorigami/yii2-modal-ajax",
-            "keywords": [
-                "ajax-modal",
-                "bootstrap",
-                "modal",
-                "yii2"
-            ],
-            "support": {
-                "issues": "https://github.com/loveorigami/yii2-modal-ajax/issues",
-                "source": "https://github.com/loveorigami/yii2-modal-ajax/tree/3.8"
-            },
-            "time": "2019-06-10T06:44:42+00:00"
         },
         {
             "name": "npm-asset/bootstrap",
@@ -4651,16 +4545,16 @@
         },
         {
             "name": "symfony/console",
-            "version": "v5.4.32",
+            "version": "v5.4.34",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/console.git",
-                "reference": "c70df1ffaf23a8d340bded3cfab1b86752ad6ed7"
+                "reference": "4b4d8cd118484aa604ec519062113dd87abde18c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/console/zipball/c70df1ffaf23a8d340bded3cfab1b86752ad6ed7",
-                "reference": "c70df1ffaf23a8d340bded3cfab1b86752ad6ed7",
+                "url": "https://api.github.com/repos/symfony/console/zipball/4b4d8cd118484aa604ec519062113dd87abde18c",
+                "reference": "4b4d8cd118484aa604ec519062113dd87abde18c",
                 "shasum": ""
             },
             "require": {
@@ -4730,7 +4624,7 @@
                 "terminal"
             ],
             "support": {
-                "source": "https://github.com/symfony/console/tree/v5.4.32"
+                "source": "https://github.com/symfony/console/tree/v5.4.34"
             },
             "funding": [
                 {
@@ -4746,7 +4640,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-11-18T18:23:04+00:00"
+            "time": "2023-12-08T13:33:03+00:00"
         },
         {
             "name": "symfony/css-selector",
@@ -4957,16 +4851,16 @@
         },
         {
             "name": "symfony/event-dispatcher",
-            "version": "v5.4.26",
+            "version": "v5.4.34",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/event-dispatcher.git",
-                "reference": "5dcc00e03413f05c1e7900090927bb7247cb0aac"
+                "reference": "e3bca343efeb613f843c254e7718ef17c9bdf7a3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/event-dispatcher/zipball/5dcc00e03413f05c1e7900090927bb7247cb0aac",
-                "reference": "5dcc00e03413f05c1e7900090927bb7247cb0aac",
+                "url": "https://api.github.com/repos/symfony/event-dispatcher/zipball/e3bca343efeb613f843c254e7718ef17c9bdf7a3",
+                "reference": "e3bca343efeb613f843c254e7718ef17c9bdf7a3",
                 "shasum": ""
             },
             "require": {
@@ -5022,7 +4916,7 @@
             "description": "Provides tools that allow your application components to communicate with each other by dispatching events and listening to them",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/event-dispatcher/tree/v5.4.26"
+                "source": "https://github.com/symfony/event-dispatcher/tree/v5.4.34"
             },
             "funding": [
                 {
@@ -5038,7 +4932,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-07-06T06:34:20+00:00"
+            "time": "2023-12-27T21:12:56+00:00"
         },
         {
             "name": "symfony/event-dispatcher-contracts",
@@ -5570,16 +5464,16 @@
         },
         {
             "name": "symfony/string",
-            "version": "v5.4.32",
+            "version": "v5.4.34",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/string.git",
-                "reference": "91bf4453d65d8231688a04376c3a40efe0770f04"
+                "reference": "e3f98bfc7885c957488f443df82d97814a3ce061"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/string/zipball/91bf4453d65d8231688a04376c3a40efe0770f04",
-                "reference": "91bf4453d65d8231688a04376c3a40efe0770f04",
+                "url": "https://api.github.com/repos/symfony/string/zipball/e3f98bfc7885c957488f443df82d97814a3ce061",
+                "reference": "e3f98bfc7885c957488f443df82d97814a3ce061",
                 "shasum": ""
             },
             "require": {
@@ -5636,7 +5530,7 @@
                 "utf8"
             ],
             "support": {
-                "source": "https://github.com/symfony/string/tree/v5.4.32"
+                "source": "https://github.com/symfony/string/tree/v5.4.34"
             },
             "funding": [
                 {
@@ -5652,7 +5546,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-11-26T13:43:46+00:00"
+            "time": "2023-12-09T13:20:28+00:00"
         },
         {
             "name": "symfony/yaml",
@@ -6045,7 +5939,7 @@
         "kartik-v/yii2-widget-datepicker": 20,
         "kartik-v/yii2-widget-select2": 20,
         "kartik-v/yii2-widget-datetimepicker": 20,
-        "loveorigami/yii2-fullcalendar": 20
+        "kartik-v/yii2-widget-timepicker": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
