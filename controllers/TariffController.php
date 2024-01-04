@@ -40,7 +40,9 @@ class TariffController extends Controller
                         [
                             'allow' => true,
                             'actions' => [
-                                'delete'
+                                'delete',
+                                'create',
+                                'update'
                             ],
                             'roles' => [
                                 SystemRoles::SUPER,
@@ -81,9 +83,6 @@ class TariffController extends Controller
     public function actionIndex()
     {
         $query = Tariff::find();
-        if (!\Yii::$app->user->can(SystemRoles::SUPER)){
-            $query = $query->where(['organization_id' => Organizations::getCurrentOrganizationId()]);
-        }
         $dataProvider = new ActiveDataProvider([
             'query' => $query
         ]);

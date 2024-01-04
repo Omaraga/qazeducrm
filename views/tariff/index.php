@@ -16,9 +16,11 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <h1><?= Html::encode($this->title) ?></h1>
 
-    <p>
-        <?= Html::a('Создать тариф', ['create'], ['class' => 'btn btn-success']) ?>
-    </p>
+    <?if(Yii::$app->user->can(\app\helpers\OrganizationRoles::GENERAL_DIRECTOR) || Yii::$app->user->can(\app\helpers\SystemRoles::SUPER)):?>
+        <p>
+            <?= Html::a('Создать тариф', ['create'], ['class' => 'btn btn-success']) ?>
+        </p>
+    <?endif;?>
 
 
     <?= GridView::widget([

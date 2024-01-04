@@ -132,7 +132,7 @@ $this->params['breadcrumbs'][] = ['label' => 'Обучение', 'url' => \app\h
         <div class="card-body">
             <div class="row">
                 <?= $form->field($model, 'tariff_id', ['options' =>['class' => 'col-12']])->widget(\kartik\select2\Select2::classname(), [
-                    'data' => ArrayHelper::map(\app\models\Tariff::find()->byOrganization()->all(), 'id', 'nameFull'),
+                    'data' => ArrayHelper::map(\app\models\Tariff::find()->all(), 'id', 'nameFull'),
                     'options' => [
                         'placeholder' => 'Выберите тариф',
                         'disabled' => $model->getScenario() == \app\models\forms\EducationForm::TYPE_EDIT,
