@@ -42,10 +42,10 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' => function($model){
                     $phone = '';
                     if ($model->phone){
-                        $phone .= $model->phone.'<br>';
+                        $phone .= ('+'.$model->phone.'<br>');
                     }
                     if ($model->home_phone){
-                        $phone .= $model->home_phone;
+                        $phone .= ('+'.$model->home_phone);
                     }
                     return $phone;
                 },
@@ -54,7 +54,7 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'parent_contacts',
                 'value' => function($model){
-                    return $model->parent_fio.'<br>'.$model->parent_phone;
+                    return $model->parent_fio.'<br>+'.$model->parent_phone;
                 },
                 'format' => 'raw'
             ],
