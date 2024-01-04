@@ -18,6 +18,7 @@ $this->title = Yii::t('main', 'Посещаемость');
                 <p><span class="font-weight-bold">Группа: </span><?=$lesson->group->getNameFull();?></p>
                 <p><span class="font-weight-bold">Дата: </span><?=$lesson->getDateTime();?></p>
                 <p><span class="font-weight-bold">Преподаватель: </span><?=$lesson->teacher->fio;?></p>
+                <p><span class="font-weight-bold">Предмет: </span><?=$lesson->group->subject->name;?></p>
             </div>
         </div>
     </div>
@@ -49,4 +50,13 @@ $this->title = Yii::t('main', 'Посещаемость');
         </div>
     </div>
 </div>
+<div class="alert alert-warning mt-3">
+    <p class="font-weight-bold">Что такое редактирование посещения?</p>
+    <p>Каждый раз когда ученики посещают уроки, необходимо отмечать их посещаемость в системе. Всего существует 4 вида посещаемости:</p>
+    <p>1. <span class="font-weight-bold">Посещение</span> - ученик был на уроке, преподаватель получит оплату за ученика;</p>
+    <p>2. <span class="font-weight-bold">Пропуск (с оплатой)</span> - ученика не было на уроке, преподаватель получит оплату за ученика. Используется когда преподаватель явился ради ученика. В основном на индивиульных занятиях;</p>
+    <p>3. <span class="font-weight-bold">Пропуск (без оплаты)</span> - ученик был на уроке, преподаватель не получит оплату за ученика. Используется в обычных групповых занятиях;</p>
+    <p>4. <span class="font-weight-bold">Уваж. причина</span> - пропуск урока по уважительной причине. Ученик не был на уроке, преподаватель не получит оплату за ученика. Урок ученика переносится (оплата не сгорает).</p>
+</div>
+
 <?php ActiveForm::end(); ?>
