@@ -90,9 +90,11 @@ $this->registerJs($js);
 
 
 
+    <?if(Yii::$app->user->can(\app\helpers\OrganizationRoles::GENERAL_DIRECTOR) || Yii::$app->user->can(\app\helpers\SystemRoles::SUPER)):?>
     <div class="form-group">
         <?= Html::submitButton( Yii::t('main', 'Сохранить'), ['class' => 'btn btn-success']) ?>
     </div>
+    <?endif;?>
 
     <?php ActiveForm::end(); ?>
 
