@@ -144,7 +144,7 @@ class ScheduleController extends Controller
      */
     public function actionUpdate($id)
     {
-        $model = $this->findModel($id);
+        $model = Lesson::findOne($id);
 
         if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
             return $this->redirect(OrganizationUrl::to(['schedule/index']));
@@ -185,7 +185,7 @@ class ScheduleController extends Controller
      */
     protected function findModel($id)
     {
-        if (($model = Lesson::findOne(['id' => $id])) !== null) {
+        if (($model = Lesson::findOne($id)) !== null) {
             return $model;
         }
 

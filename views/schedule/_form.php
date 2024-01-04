@@ -5,7 +5,7 @@ use yii\widgets\ActiveForm;
 use yii\helpers\ArrayHelper;
 
 /** @var yii\web\View $this */
-/** @var app\models\TypicalSchedule $model */
+/** @var app\models\Lesson $model */
 /** @var yii\widgets\ActiveForm $form */
 
 $url = \app\helpers\OrganizationUrl::to(['schedule/teachers']);
@@ -90,6 +90,42 @@ $this->registerJs($js);
         </div>
     </div>
 
+    <?if($model->id):?>
+        <div class="card border-info mb-3 mt-3" style="width: 100%;">
+            <div class="card-header">
+                <b>Посещаемость</b>
+                <a href="<?=\app\helpers\OrganizationUrl::to(['attendance/lesson', 'id' => $model->id]);?>" class="badge badge-light" style="cursor: pointer;">Редактировать посещения</a>
+            </div>
+            <div class="card-body" style="padding: 0 1.25rem;">
+                <table>
+                    <tbody>
+                    <?foreach ($model->pupils as $pupil):?>
+                        <tr class="py-2">
+                            <td style="padding-right: 25px;" class="py-2">
+                                <span class="npp">1</span><a href="<?=\app\helpers\OrganizationUrl::to(['pupil/view', 'id' => $pupil->id]);?>"><?=$pupil->fio;?> </a>
+                            </td>
+                            <td>
+                                <?
+                                $attendance = \app\models\LessonAttendance::find()->where(['pupil_id' => $pupil->id, 'lesson_id' => $model->id])->notDeleted()->one();
+                                ?>
+                                <?if($attendance):?>
+                                    <?if ($attendance->status == \app\models\LessonAttendance::STATUS_VISIT):?>
+                                        <span style="color: green; font-weight: bold;"><?=$attendance->getStatusLabel();?></span>
+                                    <?else:?>
+                                        <span style="color: red; font-weight: bold;"><?=$attendance->getStatusLabel();?></span>
+                                    <?endif;?>
+                                <?else:?>
+                                    <span style="color: black; font-weight: bold;"><?=Yii::t('main', 'Не задано');?></span>
+                                <?endif;?>
+
+                            </td>
+                        </tr>
+                    <?endforeach;?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    <?endif;?>
     <div class="form-group d-flex" style="justify-content: space-between;">
         <?if($model->id):?>
             <?= Html::a(Yii::t('main', 'Удалить занятие'), \app\helpers\OrganizationUrl::to(['schedule/delete', 'id' => $model->id]), [
@@ -105,5 +141,6 @@ $this->registerJs($js);
     </div>
 
     <?php ActiveForm::end(); ?>
+
 
 </div>

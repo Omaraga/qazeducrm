@@ -118,4 +118,16 @@ class Lesson extends ActiveRecord
     public function getTeacher(){
         return $this->hasOne(User::class, ['id' => 'teacher_id']);
     }
+
+    public function getDateTime(){
+        return date('d.m.Y', strtotime($this->date)).'г. '.date('H:i',strtotime($this->date.' '.$this->start_time)).'-'.date('H:i',strtotime($this->date.' '.$this->end_time));
+    }
+
+    public function getPupils(){
+        $pupilEducationIds = PupilEducation::find()->select('pupil_education.pupil_id')->innerJoinWith(['groups' => function($q){
+            $q->andWhere(['<>','education_group.is_deleted', 1]);
+        }])->andWhere(['pupil_education.organization_id' => $this->organization_id, 'education_group.group_id' => $this->group_id])
+            ->andWhere(['<=', 'pupil_education.date_start', date('Y-m-d', strtotime($this->date))])->andWhere(['>=', 'pupil_education.date_end', date('Y-m-d', strtotime($this->date))])->notDeleted(PupilEducation::tableName())->column();
+        return Pupil::find()->where(['in', 'id', $pupilEducationIds])->orderBy('fio ASC')->notDeleted()->all();
+    }
 }

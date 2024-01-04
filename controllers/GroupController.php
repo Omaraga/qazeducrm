@@ -11,7 +11,6 @@ use app\models\relations\EducationGroup;
 use app\models\relations\TeacherGroup;
 use app\models\search\GroupSearch;
 use app\models\Subject;
-use vsk\modalForm\actions\ModalFormAction;
 use yii\base\BaseObject;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
