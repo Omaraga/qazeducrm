@@ -78,11 +78,8 @@ class TariffForm extends \yii\base\Model
         }
         $createdTariffSubjectIds = [];
         foreach ($this->subjects as $item){
-            $tariffSubject = TariffSubject::find()->where(['tariff_id' => $model->id, 'subject_id' => $item['subject_id'], 'lesson_amount' => $item['lesson_amount']])->one();
-            if (!$tariffSubject){
-                $tariffSubject = new TariffSubject();
-                $tariffSubject->tariff_id = $model->id;
-            }
+            $tariffSubject = new TariffSubject();
+            $tariffSubject->tariff_id = $model->id;
             $tariffSubject->subject_id = $item['subject_id'];
             $tariffSubject->lesson_amount = $item['lesson_amount'];
             if (!$tariffSubject->save()){
@@ -91,13 +88,13 @@ class TariffForm extends \yii\base\Model
             }
             $createdTariffSubjectIds[] = $tariffSubject->id;
         }
+        $transaction->commit();
         $forDeleteTariffSubjects = TariffSubject::find()->where(['not in', 'id', $createdTariffSubjectIds])->andWhere(['tariff_id' => $model->id])->all();
         foreach ($forDeleteTariffSubjects as $deleteTariffSubject){
             $deleteTariffSubject->delete();
         }
         $this->id = $model->id;
 
-        $transaction->commit();
         return true;
     }
     /**
