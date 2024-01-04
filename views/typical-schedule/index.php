@@ -18,6 +18,7 @@ var myCalendar = $('#calendar').Calendar({
     weekday:{
         timeline:{
             fromHour:8,
+            toHour:22,
             intervalMinutes: 60
         }
     }
