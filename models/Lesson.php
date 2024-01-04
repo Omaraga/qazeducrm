@@ -25,12 +25,16 @@ use yii\db\Expression;
  *
  * @property Group $group
  * @property User $teacher
-
+ * @property int $status [smallint(6)]
  *
  */
 class Lesson extends ActiveRecord
 {
     use UpdateInsteadOfDeleteTrait;
+
+    const STATUS_PLANED = 0;
+    const STATUS_FINISHED = 1;
+    const STATUS_CANCELED = 2;
 
     /**
      * {@inheritdoc}
