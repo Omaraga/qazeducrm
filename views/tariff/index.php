@@ -59,7 +59,12 @@ $this->params['breadcrumbs'][] = $this->title;
                     },
                     'delete' => function($name, $model, $key){
                         if(Yii::$app->user->can(\app\helpers\OrganizationRoles::GENERAL_DIRECTOR)){
-                            return Html::a('<i class="fa fa-trash"></i>', \app\helpers\OrganizationUrl::to(['tariff/delete', 'id' => $model->id]));
+                            return Html::a('<i class="fa fa-trash"></i>', \app\helpers\OrganizationUrl::to(['tariff/delete', 'id' => $model->id]), [
+                                'data' => [
+                                    'confirm' => 'Вы действительно хотите удалить?',
+                                    'method' => 'post',
+                                ],
+                            ]);
                         }else{
                             return '';
                         }
