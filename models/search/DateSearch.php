@@ -6,6 +6,10 @@ use app\components\ActiveRecord;
 use app\helpers\OrganizationRoles;
 use app\models\Lesson;
 use app\models\LessonAttendance;
+use app\models\Organizations;
+use app\models\PupilEducation;
+use app\models\relations\TeacherGroup;
+use app\models\Tariff;
 use app\models\User;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
@@ -94,13 +98,90 @@ class DateSearch extends Model
             $date = date('d.m.Y', $iDateTime);
             foreach ($teachers as $teacher){
                 $dateTeacherSalary[$date][$teacher->id] = 0;
+
             }
 
         }
+        $pupilEducations = PupilEducation::find()->innerJoinWith(['groups' => function($q){
+            $q->andWhere(['<>','education_group.is_deleted', 1]);
+        }])->andWhere(['pupil_education.organization_id' => Organizations::getCurrentOrganizationId()])
+            ->andWhere(['<=', 'pupil_education.date_start', date('Y-m-d', strtotime($this->date_start))])
+            ->andWhere(['>=', 'pupil_education.date_end', date('Y-m-d', strtotime($this->date_start))])
+            ->notDeleted(PupilEducation::tableName())->orderBy('pupil_education.date_start ASC')->asArray()->all();
+        $pupilEducationArr = [];
+        foreach ($pupilEducations as $pupilEducation){
+            $pupilEducationArr[$pupilEducation['pupil_id']][] = [
+                'sale' => $pupilEducation['sale'],
+                'total_price' => $pupilEducation['total_price'],
+                'tariff_price' => $pupilEducation['tariff_price'],
+                'date_start' => $pupilEducation['date_start'],
+                'date_end' => $pupilEducation['date_end'],
+                'tariff_id' => $pupilEducation['tariff_id']
+            ];
+        }
+
+
         $lessonAttendances = LessonAttendance::find()->innerJoinWith(['lesson' => function($q){
             $q->andWhere(['<>', 'lesson.is_deleted', 1]);
         }])->andWhere(['>=','lesson.date', date('Y-m-d', strtotime($this->date_start))])
-            ->andWhere(['<=','lesson.date', date('Y-m-d', strtotime($this->date_end))])->all();
+            ->andWhere(['<=','lesson.date', date('Y-m-d', strtotime($this->date_end))])
+            ->andWhere(['lesson.status' => Lesson::STATUS_FINISHED])->notDeleted(LessonAttendance::tableName())->orderBy('lesson.date ASC')->all();
+
+        foreach ($lessonAttendances as $lessonAttendance){
+            if (in_array($lessonAttendance->status, [LessonAttendance::STATUS_VISIT,LessonAttendance::STATUS_MISS_WITH_PAY ])){
+                $teacherGroup = TeacherGroup::find()->where(['related_id' => $lessonAttendance->lesson->teacher_id, 'target_id' => $lessonAttendance->lesson->group_id])
+                    ->notDeleted()->asArray()->one();
+                if (!$teacherGroup){
+                    continue;
+                }
+                $pupils = $lessonAttendance->lesson->getPupils();
+                $lessonTime = strtotime($lessonAttendance->lesson->date);
+                foreach ($pupils as $pupil){
+                    $totalSum = 0;
+                    $education = null;
+                    if (sizeof($pupilEducationArr[$pupil->id]) > 1){
+                        for ($i = 1; $i < sizeof($pupilEducationArr[$pupil->id]); $i++){
+                            $startTime = strtotime($pupilEducationArr[$pupil->id][$i]['date_start']);
+                            $endTime = strtotime($pupilEducationArr[$pupil->id][$i]['date_end']);
+                            if ($lessonTime >= $startTime && $lessonTime <= $endTime){
+                                $education = $pupilEducationArr[$pupil->id][$i];
+                                break;
+                            }
+                        }
+                    }else if (sizeof($pupilEducationArr[$pupil->id]) == 1){
+                        $education = $pupilEducationArr[$pupil->id][0];
+                    }else{
+                        continue;
+                    }
+                    if (!$education){
+                        continue;
+                    }
+                    if ($teacherGroup['type'] == TeacherGroup::PRICE_TYPE_FIX){
+                        $sum = $teacherGroup['price'];
+                        $sale = $education['sale'];
+                        if ($sale > 0){
+                            $sum = $sum * (100-$sale) / 100;
+                        }
+                        $totalSum += $sum;
+
+                    }else if($teacherGroup['type'] == TeacherGroup::PRICE_TYPE_PERCENT){
+                        $tariff = Tariff::findOne($education['tariff_id']);
+                        $lessonCount = 0;
+                        foreach ($tariff->subjectsRelation as $subject){
+                            $lessonCount += $subject->lesson_amount;
+                        }
+                        $sum = (($education['total_price'] / ($lessonCount*4.33)) * 50)/100;
+                        $totalSum += intval($sum);
+
+                    }
+                    $dateTeacherSalary[date('d.m.Y', strtotime($lessonAttendance->lesson->date))][$lessonAttendance->lesson->teacher_id] += $totalSum;
+                }
+
+
+            }
+
+        }
+        return $dateTeacherSalary;
 
 
     }

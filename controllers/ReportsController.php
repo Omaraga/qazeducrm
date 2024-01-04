@@ -15,11 +15,14 @@ class ReportsController extends \yii\web\Controller
     {
 
         $searchModel = new DateSearch();
-        $dataProvider = $searchModel->searchEmployer($this->request->queryParams);
-
+        $dateTeacherSalary = $searchModel->searchEmployer($this->request->queryParams);
+        $teachers = User::find()->innerJoinWith(['currentUserOrganizations' => function($q){
+            $q->andWhere(['<>','user_organization.is_deleted', ActiveRecord::DELETED])->andWhere(['in', 'user_organization.role', [OrganizationRoles::TEACHER]]);
+        }])->all();
         return $this->render('employer', [
-            'dataProvider' => $dataProvider,
-            'searchModel' => $searchModel
+            'dateTeacherSalary' => $dateTeacherSalary,
+            'searchModel' => $searchModel,
+            'teachers' => $teachers,
         ]);
     }
 

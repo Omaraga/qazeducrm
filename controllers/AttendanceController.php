@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\helpers\OrganizationUrl;
 use app\models\forms\AttendancesForm;
 use app\models\Lesson;
 
@@ -17,7 +18,7 @@ class AttendanceController extends \yii\web\Controller
         $model = new AttendancesForm();
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['schedule/index']);
+                return $this->redirect(OrganizationUrl::to(['schedule/index']));
             }
         }
         return $this->render('lesson', [

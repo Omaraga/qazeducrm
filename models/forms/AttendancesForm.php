@@ -82,7 +82,7 @@ class AttendancesForm extends \yii\base\Model
             }
         }
         $lesson->status = Lesson::STATUS_FINISHED;
-        if(!$lesson->save()){
+        if(!$lesson->save(false)){
             $transaction->rollBack();
             return false;
         }
