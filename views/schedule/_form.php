@@ -102,7 +102,7 @@ $this->registerJs($js);
                     <?foreach ($model->pupils as $pupil):?>
                         <tr class="py-2">
                             <td style="padding-right: 25px;" class="py-2">
-                                <span class="npp">1</span><a href="<?=\app\helpers\OrganizationUrl::to(['pupil/view', 'id' => $pupil->id]);?>"><?=$pupil->fio;?> </a>
+                                <span class="npp">1</span><a href="<?=\app\helpers\OrganizationUrl::to(['pupil/view', 'id' => $pupil->id]);?>" target="_blank"><?=$pupil->fio;?> </a>
                             </td>
                             <td>
                                 <?

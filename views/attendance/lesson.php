@@ -37,7 +37,7 @@ $this->title = Yii::t('main', 'Посещаемость');
                     <?foreach ($model->pupils as $k => $pupil):?>
                         <tr>
                             <td class="font-weight-bold"><?=$k+1;?></td>
-                            <td class="font-weight-bold"><a href="<?=\app\helpers\OrganizationUrl::to(['pupil/view', 'id' => $pupil->id]);?>"><?=$pupil->fio;?></a></td>
+                            <td class="font-weight-bold"><a href="<?=\app\helpers\OrganizationUrl::to(['pupil/view', 'id' => $pupil->id]);?>" target="_blank"><?=$pupil->fio;?></a></td>
                             <td><?=$form->field($model, 'statuses['.$pupil->id.'][status]')->radioList(\app\models\LessonAttendance::getStatusList(), array('labelOptions' => array('style' => 'display:inline'),
                                     'separator' => ' ',
                                 ))->inline(true)->label(false);?></td>
