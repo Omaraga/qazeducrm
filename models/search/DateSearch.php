@@ -134,48 +134,46 @@ class DateSearch extends Model
                 if (!$teacherGroup){
                     continue;
                 }
-                $pupils = $lessonAttendance->lesson->getPupils();
                 $lessonTime = strtotime($lessonAttendance->lesson->date);
-                foreach ($pupils as $pupil){
-                    $totalSum = 0;
-                    $education = null;
-                    if (sizeof($pupilEducationArr[$pupil->id]) > 1){
-                        for ($i = 1; $i < sizeof($pupilEducationArr[$pupil->id]); $i++){
-                            $startTime = strtotime($pupilEducationArr[$pupil->id][$i]['date_start']);
-                            $endTime = strtotime($pupilEducationArr[$pupil->id][$i]['date_end']);
-                            if ($lessonTime >= $startTime && $lessonTime <= $endTime){
-                                $education = $pupilEducationArr[$pupil->id][$i];
-                                break;
-                            }
+                $pupil = $lessonAttendance->pupil;
+                $totalSum = 0;
+                $education = null;
+                if (sizeof($pupilEducationArr[$pupil->id]) > 1){
+                    for ($i = 1; $i < sizeof($pupilEducationArr[$pupil->id]); $i++){
+                        $startTime = strtotime($pupilEducationArr[$pupil->id][$i]['date_start']);
+                        $endTime = strtotime($pupilEducationArr[$pupil->id][$i]['date_end']);
+                        if ($lessonTime >= $startTime && $lessonTime <= $endTime){
+                            $education = $pupilEducationArr[$pupil->id][$i];
+                            break;
                         }
-                    }else if (sizeof($pupilEducationArr[$pupil->id]) == 1){
-                        $education = $pupilEducationArr[$pupil->id][0];
-                    }else{
-                        continue;
                     }
-                    if (!$education){
-                        continue;
-                    }
-                    if ($teacherGroup['type'] == TeacherGroup::PRICE_TYPE_FIX){
-                        $sum = $teacherGroup['price'];
-                        $sale = $education['sale'];
-                        if ($sale > 0){
-                            $sum = $sum * (100-$sale) / 100;
-                        }
-                        $totalSum += $sum;
-
-                    }else if($teacherGroup['type'] == TeacherGroup::PRICE_TYPE_PERCENT){
-                        $tariff = Tariff::findOne($education['tariff_id']);
-                        $lessonCount = 0;
-                        foreach ($tariff->subjectsRelation as $subject){
-                            $lessonCount += $subject->lesson_amount;
-                        }
-                        $sum = (($education['total_price'] / ($lessonCount*4.33)) * 50)/100;
-                        $totalSum += intval($sum);
-
-                    }
-                    $dateTeacherSalary[date('d.m.Y', strtotime($lessonAttendance->lesson->date))][$lessonAttendance->lesson->teacher_id] += $totalSum;
+                }else if (sizeof($pupilEducationArr[$pupil->id]) == 1){
+                    $education = $pupilEducationArr[$pupil->id][0];
+                }else{
+                    continue;
                 }
+                if (!$education){
+                    continue;
+                }
+                if ($teacherGroup['type'] == TeacherGroup::PRICE_TYPE_FIX){
+                    $sum = $teacherGroup['price'];
+                    $sale = $education['sale'];
+                    if ($sale > 0){
+                        $sum = $sum * (100-$sale) / 100;
+                    }
+                    $totalSum += $sum;
+
+                }else if($teacherGroup['type'] == TeacherGroup::PRICE_TYPE_PERCENT){
+                    $tariff = Tariff::findOne($education['tariff_id']);
+                    $lessonCount = 0;
+                    foreach ($tariff->subjectsRelation as $subject){
+                        $lessonCount += $subject->lesson_amount;
+                    }
+                    $sum = (($education['total_price'] / ($lessonCount*4.33)) * 50)/100;
+                    $totalSum += intval($sum);
+
+                }
+                $dateTeacherSalary[date('d.m.Y', strtotime($lessonAttendance->lesson->date))][$lessonAttendance->lesson->teacher_id] += $totalSum;
 
 
             }

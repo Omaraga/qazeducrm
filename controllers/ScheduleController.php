@@ -60,6 +60,7 @@ class ScheduleController extends Controller
                 $result[$i]['color'] = $event->group->color;
                 $result[$i]['category'] = $event->group->getNameFull();
                 $result[$i]['content'] = $event->teacher->fio;
+                $result[$i]['status'] = $event->status;
                 $result[$i]['url'] = OrganizationUrl::to(['schedule/update', 'id' => $event->id]);
             }
 
