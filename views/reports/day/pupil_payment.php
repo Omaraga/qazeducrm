@@ -90,6 +90,7 @@ $resultDutyMonth = 0;
             $resultTariffSaleSum += $tariffSaleSum;
             $resultTariffPaySum += $tariffPaySum;
             $tariffPeriodText = implode('; ', $tariffPeriodArr);
+            $pupilEducation = null;
         }
         ?>
         <td>
