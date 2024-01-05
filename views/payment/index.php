@@ -30,11 +30,13 @@ $this->params['breadcrumbs'][] = $this->title;
             'datetimeFormat' => 'php: d.m.Y H:i',
             'locale' => 'ru'
         ],
+        'showFooter'=>true,
 
         'columns' => [
             [
                 'attribute' => 'date',
-                'format' => 'datetime'
+                'format' => 'datetime',
+                'footer' => '<span style="font-weight: bold;">'.Yii::t('main', 'Итого').'</span>',
             ],
             [
                 'attribute' => 'type',
@@ -49,7 +51,8 @@ $this->params['breadcrumbs'][] = $this->title;
                         return number_format($model->amount, 0,'.', ' ').' тг.';
                     }
                     return '-'.number_format($model->amount, 0,'.', ' ').' тг.';
-                }
+                },
+                'footer' => '<span style="font-weight: bold;">'.number_format($searchModel->sum, 0,'.', ' ').' тг.</span>',
             ],
             [
                 'attribute' => 'purpose_id',
@@ -90,14 +93,29 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'format' => 'raw',
                 'value' => function($model){
-                    return \yii\bootstrap4\Html::a('Посмотреть', \app\helpers\OrganizationUrl::to(['pupil/view', 'id' => $model->id]), ['class' => 'btn btn-secondary']);
+                    if ($model->pupil_id){
+                        return \yii\bootstrap4\Html::a('Посмотреть', \app\helpers\OrganizationUrl::to(['pupil/payment', 'id' => $model->pupil_id]), ['class' => 'btn btn-secondary']);
+                    }
+                    return '';
                 }
             ]
         ],
     ]); ?>
+    <table class="table table-striped table-bordered">
+        <tbody>
+        <tr data-key="5">
+            <td><?=Yii::t('main', 'Итого');?></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        </tbody>
+    </table>
 
-    <?= \yii\bootstrap4\LinkPager::widget([
-    'pagination' => $dataProvider->pagination
-    ]) ?>
 
 </div>

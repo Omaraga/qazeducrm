@@ -14,6 +14,15 @@ class PaymentSearch extends Model
     public $date_start;
     public $date_end;
     public $type;
+    public $sum = 0;
+
+    public function __construct($config = [])
+    {
+        $this->date_start = date('d.m.Y');
+        $this->date_end = date('d.m.Y');
+        parent::__construct($config);
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -40,9 +49,10 @@ class PaymentSearch extends Model
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'pagination' => [
-                'pageSize' => 20
+                'pageSize' => 30
             ],
         ]);
+
 
         $this->load($params);
 
@@ -61,6 +71,16 @@ class PaymentSearch extends Model
 
         if ($this->type && $this->type > 0){
             $query->andFilterWhere(['type' => $this->type]);
+        }
+        $cloneQuery = clone $query;
+
+        $payments = $cloneQuery->select('amount, type')->asArray()->all();
+        foreach ($payments as $payment){
+            if ($payment['type'] == Payment::TYPE_PAY){
+                $this->sum += $payment['amount'];
+            }else{
+                $this->sum -= $payment['amount'];
+            }
         }
 
 
