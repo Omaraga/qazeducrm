@@ -5,9 +5,10 @@
 /** @var array $dataArray */
 /** @var integer $type */
 $this->title = Yii::t('main', 'Отчет за месяц');
+$onlyMonth = false;
 if ($type == \app\models\search\DateSearch::TYPE_ATTENDANCE){
-
-    $this->title = $this->title.'. Статистика посещаемости занятий.';
+    $this->title = 'Статистика посещаемости занятий.';
+    $onlyMonth = false;
 }else if($type == \app\models\search\DateSearch::TYPE_SALARY){
     $this->title = $this->title.'. Зарпалата преподавателей.';
 }else if($type == \app\models\search\DateSearch::TYPE_PAYMENT){
@@ -17,7 +18,7 @@ setlocale(LC_ALL, 'russian');
 ?>
 <h3><?=$this->title;?></h3>
 
-<?php  echo $this->render('_search', ['model' => $searchModel, 'onlyMonth' => true]); ?>
+<?php  echo $this->render('_search', ['model' => $searchModel, 'onlyMonth' => $onlyMonth]); ?>
 <hr class="my-2">
 <div class="tab-content" id="pills-tabContent">
     <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
