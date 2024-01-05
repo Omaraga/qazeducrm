@@ -332,11 +332,28 @@ class DateSearch extends Model
      * @param $endDate
      * @return Payment[]|array|\yii\db\ActiveRecord[]
      */
-    public function getPayments($start_date, $endDate){
+    public function getPayments($startDate, $endDate){
         return Payment::find()->byOrganization()
             ->andWhere(['is not', 'pupil_id', null])->andWhere(['type' => Payment::TYPE_PAY])
-            ->andWhere(['>=', 'date', date('Y-m-d H:i:s', strtotime($start_date))])
+            ->andWhere(['>=', 'date', date('Y-m-d H:i:s', strtotime($startDate))])
             ->andWhere(['<', 'date', date('Y-m-d H:i:s', strtotime($endDate) + 24 * 60 * 60)])->orderBy('date DESC')->all();
+    }
+
+    public function getWeekPayments(){
+        $week_start = date("Y-m-d", strtotime('monday this week'));
+        $week_end = date("Y-m-d", strtotime('sunday this week'));
+        $data = [0, 0, 0, 0, 0, 0, 0];
+        $j = 0;
+        for ($i = strtotime($week_start); $i <= strtotime($week_end); $i += 24 * 60 * 60){
+            $date = date('d.m.Y', $i);
+            $payments = $this->getPayments($date, $date);
+
+            foreach ($payments as $payment){
+                $data[$j] += $payment['amount'];
+            }
+            $j++;
+        }
+        return $data;
     }
 
     public function getAttendance(){

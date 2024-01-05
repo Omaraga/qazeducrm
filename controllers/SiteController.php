@@ -7,6 +7,7 @@ use app\helpers\OrganizationUrl;
 use app\helpers\SystemRoles;
 use app\models\Organizations;
 use app\models\relations\UserOrganization;
+use app\models\search\DateSearch;
 use Yii;
 use yii\filters\AccessControl;
 use app\components\BaseController as Controller;
@@ -70,7 +71,11 @@ class SiteController extends Controller
         if (Yii::$app->user->isGuest) {
             return $this->redirect('site/login');
         }
-        return $this->render('index');
+        $search = new DateSearch();
+
+        return $this->render('index',[
+            'data' => $search->getWeekPayments()
+        ]);
     }
 
     /**

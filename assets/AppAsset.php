@@ -29,6 +29,7 @@ class AppAsset extends AssetBundle
         'https://cdn.jsdelivr.net/npm/moment@latest/min/moment-with-locales.min.js',
         'js/jquery.touchSwipe.min.js',
         'js/jquery-calendar.min.js',
+        'https://cdn.jsdelivr.net/npm/chart.js',
         'js/main.js'
     ];
     public $depends = [
