@@ -40,4 +40,16 @@ class ReportsController extends \yii\web\Controller
         ]);
     }
 
+    public function actionMonth(){
+        $searchModel = new DateSearch();
+        $searchModel->type = \Yii::$app->request->get('type') ? : 1;
+        $dataArray = $searchModel->searchMonth($this->request->queryParams);
+
+        return $this->render('month', [
+            'dataArray' => $dataArray,
+            'searchModel' => $searchModel,
+            'type' => $searchModel->type,
+        ]);
+    }
+
 }

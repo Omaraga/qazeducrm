@@ -15,9 +15,11 @@ setlocale(LC_ALL, 'russian');
     <li class="nav-item" role="presentation">
         <a href="<?=\app\helpers\OrganizationUrl::to(['reports/day', 'type' => 1, 'DateSearch[date]' => $searchModel->date]);?>" class="nav-link <?=$type == 1 ?'active':'';?>" id="pills-home-tab" type="button" role="tab" aria-controls="pills-home" aria-selected="true"><?=Yii::t('main', 'Посещаемость по группам');?></a>
     </li>
+    <?if(Yii::$app->user->can(\app\helpers\OrganizationRoles::GENERAL_DIRECTOR) || Yii::$app->user->can(\app\helpers\OrganizationRoles::DIRECTOR)):?>
     <li class="nav-item" role="presentation">
         <a href="<?=\app\helpers\OrganizationUrl::to(['reports/day', 'type' => 2, 'DateSearch[date]' => $searchModel->date]);?>" class="nav-link <?=$type == 2 ?'active':'';?>" id="pills-profile-tab" type="button" role="tab" aria-controls="pills-profile" aria-selected="false"><?=Yii::t('main', 'Оплата преподавателям');?></a>
     </li>
+    <?endif;?>
     <li class="nav-item" role="presentation">
         <a href="<?=\app\helpers\OrganizationUrl::to(['reports/day', 'type' => 3, 'DateSearch[date]' => $searchModel->date]);?>" class="nav-link <?=$type == 3 ?'active':'';?>" id="pills-contact-tab" type="button" role="tab" aria-controls="pills-contact" aria-selected="false"><?=Yii::t('main', 'Принятые платежы');?></a>
     </li>
