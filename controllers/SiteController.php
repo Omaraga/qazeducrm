@@ -74,7 +74,8 @@ class SiteController extends Controller
         $search = new DateSearch();
 
         return $this->render('index',[
-            'data' => $search->getWeekPayments()
+            'data' => $search->getWeekPayments(),
+            'week' => $search->getWeeks(true),
         ]);
     }
 

@@ -1,11 +1,13 @@
 <?php
 
 /** @var yii\web\View $this */
+/** @var array $data */
+/** @var string $wek */
 $this->title = 'Qazaq Education';
 $data = '['.implode(',', $data).']';
 $js = <<<JS
 const ctx = document.getElementById('myChart');
-const labels = ['Пн','Вт','Ср', 'Чт','Пт','Сб','Вс'];
+const labels = $week;
 const data = {
   labels: labels,
   datasets: [{

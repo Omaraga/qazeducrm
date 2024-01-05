@@ -356,6 +356,32 @@ class DateSearch extends Model
         return $data;
     }
 
+    public function getWeeks($isString = false){
+        $week_start = date("Y-m-d", strtotime('monday this week'));
+        $week_end = date("Y-m-d", strtotime('sunday this week'));
+        $week = ['Пн','Вт','Ср', 'Чт','Пт','Сб','Вс'];
+
+        $j = 0;
+        for ($i = strtotime($week_start); $i <= strtotime($week_end); $i += 24 * 60 * 60){
+            $date = date('d.m', $i);
+            $week[$j] .= ' '.$date;
+            $j++;
+        }
+        if ($isString){
+            $weekStr = "[";
+            foreach ($week as $i =>$item){
+                if($i == 6){
+                    $weekStr.= "'".$item."'";
+                }else{
+                    $weekStr.= "'".$item."',";
+                }
+            }
+            $weekStr.="]";
+            return $weekStr;
+        }
+        return $week;
+    }
+
     public function getAttendance(){
         $lessonAttendances = LessonAttendance::find()->innerJoinWith(['lesson' => function($q){
             $q->andWhere(['<>', 'lesson.is_deleted', 1]);
