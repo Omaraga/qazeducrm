@@ -14,6 +14,9 @@ $resultTariffSum = 0;
 $resultTariffSaleSum = 0;
 $resultTariffPaySum = 0;
 $resultPaymentSum = 0;
+$resultDutySum = 0;
+$pupilBalance = 0;
+$resultDutyMonth = 0;
 ?>
 <table id="pupil-payment-table" class="table table-bordered table-report">
     <tbody>
@@ -49,6 +52,7 @@ $resultPaymentSum = 0;
         $tariffSum = 0; $tariffArr = [];$tariffText = ''; //Тариф
         $tariffSaleSum = 0;  $tariffSaleArr = []; $tariffSaleText = ''; //Скидка тарифа
         $tariffPaySum = 0;  $tariffPayArr = []; $tariffPayText = ''; //К оплате
+        $tariffPeriodArr = []; $tariffPeriodText = ''; //Период тарифа
 
         if (key_exists($pupil->id, $pupilPupilEducations)){
             foreach ($pupilPupilEducations[$pupil->id] as $pupilEducation){
@@ -61,6 +65,9 @@ $resultPaymentSum = 0;
                 //К оплате
                 $tariffPaySum += $pupilEducation['total_price'];
                 $tariffPayArr[] = $pupilEducation['total_price'];
+                //Период
+                $tariffPeriodArr[] = date('d.m.Y', strtotime($pupilEducation['date_start'])).'-'.date('d.m.Y',strtotime($pupilEducation['date_end']))
+                    .'('.intval((strtotime($pupilEducation['date_end'])-strtotime($pupilEducation['date_start']))/86400).')';
 
 
             }
@@ -82,6 +89,7 @@ $resultPaymentSum = 0;
             $resultTariffSum += $tariffSum;
             $resultTariffSaleSum += $tariffSaleSum;
             $resultTariffPaySum += $tariffPaySum;
+            $tariffPeriodText = implode('; ', $tariffPeriodArr);
         }
         ?>
         <td>
@@ -127,13 +135,34 @@ $resultPaymentSum = 0;
             <?=$paymentDateText;?>
         </td>
         <td>
-            04.01-03.02 (30)
+            <?=$tariffPeriodText;?>
         </td>
+        <?
+        //долг
+        $duty = $tariffPaySum - $paymentSum;
+        $resultDutySum += $duty;
+        if ($duty > 1){
+            $dutyText = $duty;
+        }else{
+            $dutyText = '';
+        }
+        ?>
         <td>
-
+        <?=$dutyText;?>
         </td>
-        <td>
+        <?
+        //долг на конец месяца
+        $dutyMonth = $pupil->balance < 0 ? (-1)*$pupil->balance : 0;
+        if ($dutyMonth > 0){
+            $dutyMonthText = $dutyMonth;
+        }else{
+            $dutyMonthText = '';
+        }
+        $resultDutyMonth += $dutyMonth;
 
+        ?>
+        <td>
+        <?=$dutyMonthText;?>
         </td>
 
     </tr>
@@ -151,8 +180,9 @@ $resultPaymentSum = 0;
         <th></th>
         <th></th>
         <th></th>
-        <th>Долг<br>4&nbsp;285&nbsp;920тг</th>
-        <th>Долг (на конец месяца)<br>2&nbsp;180&nbsp;044тг</th>
+
+        <th>Долг<br><?=number_format($resultDutySum, 0, '.', ' ');?> тг</th>
+        <th>Долг (на конец месяца)<br><?=number_format($resultDutyMonth, 0, '.', ' ');?>тг</th>
 
     </tr>
     </tbody>
