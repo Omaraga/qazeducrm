@@ -12,10 +12,17 @@ use yii\grid\GridView;
 
 $this->title = Yii::t('main', 'Бухгалтерия');
 $this->params['breadcrumbs'][] = $this->title;
+
+$js = <<<JS
+    $('#main-container-block').removeClass('container').addClass('container-fluid');
+    $('.payment-search').addClass('container');
+    $('#report-title').addClass('container');
+JS;
+$this->registerJs($js);
 ?>
 <div class="payment-index">
 
-    <h1><?= Html::encode($this->title) ?></h1>
+    <h1 id="report-title"><?= Html::encode($this->title) ?></h1>
 
 
     <?php  echo $this->render('_search', ['model' => $searchModel]); ?>
@@ -101,21 +108,6 @@ $this->params['breadcrumbs'][] = $this->title;
             ]
         ],
     ]); ?>
-    <table class="table table-striped table-bordered">
-        <tbody>
-        <tr data-key="5">
-            <td><?=Yii::t('main', 'Итого');?></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-        </tr>
-        </tbody>
-    </table>
 
 
 </div>
