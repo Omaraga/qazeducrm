@@ -97,11 +97,13 @@ $resultPaymentSum = 0;
         <?
         $paymentSum = 0; $paymentArr = []; $paymentText = ''; //Оплачено
         $paymentNumberArr = []; $paymentNumberText = '';
+        $paymentDateArr = []; $paymentDateText = '';
         if (key_exists($pupil->id, $pupilPayments)){
             foreach ($pupilPayments[$pupil->id] as $payment){
                 $paymentSum += $payment['amount'];
                 $paymentArr[] = $payment['amount'];
                 $paymentNumberArr[] = $payment['number'];
+                $paymentDateArr[] = date('d.m.Y', strtotime($payment['date']));
             }
             if (sizeof($paymentArr) > 1){
                 //Оплачено
@@ -111,6 +113,7 @@ $resultPaymentSum = 0;
                 $paymentText = $paymentSum;
             }
             $paymentNumberText = implode('; ', $paymentNumberArr);
+            $paymentDateText = implode('; ', $paymentDateArr);
         }
         $resultPaymentSum += $paymentSum;
         ?>
@@ -121,7 +124,7 @@ $resultPaymentSum = 0;
             <?=$paymentNumberText;?>
         </td>
         <td>
-            05.01.2024
+            <?=$paymentDateText;?>
         </td>
         <td>
             04.01-03.02 (30)
