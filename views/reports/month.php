@@ -15,11 +15,11 @@ if ($type == DateSearch::TYPE_ATTENDANCE){
 }else if($type == DateSearch::TYPE_PAYMENT){
     $this->title = $this->title.'. Приход.';
 }else if($type == DateSearch::TYPE_PUPIL_PAYMENT){
-    $this->title = $this->title.'.Оплата и задолженность по ученикам.';
+    $this->title = $this->title.'. Оплата и задолженность по ученикам.';
 }
 setlocale(LC_ALL, 'russian');
 ?>
-<h3><?=$this->title;?></h3>
+<h3 id="report-title"><?=$this->title;?></h3>
 
 <?php  echo $this->render('_search', ['model' => $searchModel, 'onlyMonth' => $onlyMonth]); ?>
 <hr class="my-2">
@@ -53,6 +53,11 @@ setlocale(LC_ALL, 'russian');
                 <p style="font-weight: bold; font-size: 20px;"><?=$searchModel->date;?> г. нет ни одной оплаты</p>
             <?endif;?>
         <?elseif($type == DateSearch::TYPE_PUPIL_PAYMENT):?>
+            <?=$this->render('day/pupil_payment', [
+                'pupils' => $dataArray['pupils'],
+                'pupilPupilEducations' => $dataArray['pupilPupilEducations'],
+                'pupilPayments' => $dataArray['pupilPayments']
+            ]);?>
 
         <?endif;?>
     </div>

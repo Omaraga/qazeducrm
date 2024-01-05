@@ -66,6 +66,7 @@ class MenuHelper extends Model
                 $items[] = ['label' => 'Отчеты', 'items' => [
                     ['label' => 'Дневной отчет', 'url' => \app\helpers\OrganizationUrl::to(['reports/day'])],
                     ['label' => 'Приход за месяц', 'url' => \app\helpers\OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_PAYMENT])],
+                    ['label' => 'Оплата и задолженность по ученикам', 'url' => \app\helpers\OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_PUPIL_PAYMENT])],
                     ['label' => 'Статистика посещаемости занятий', 'url' => \app\helpers\OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_ATTENDANCE])],
                 ], 'active' => in_array(\Yii::$app->controller->id, ['reports'])];
             }

@@ -7,6 +7,7 @@ use app\helpers\OrganizationRoles;
 use app\models\Lesson;
 use app\models\LessonAttendance;
 use app\models\Organizations;
+use app\models\Pupil;
 use app\models\PupilEducation;
 use app\models\relations\TeacherGroup;
 use app\models\Tariff;
@@ -302,11 +303,35 @@ class DateSearch extends Model
 
         }else if($this->type == self::TYPE_PAYMENT){
             return $this->getPayments($this->date_start, $this->date_end);
+        }else if($this->type == self::TYPE_PUPIL_PAYMENT){
+            $pupilEducations = PupilEducation::find()
+                ->andWhere(['pupil_education.organization_id' => Organizations::getCurrentOrganizationId()])
+                ->andWhere(['>=', 'pupil_education.date_start', date('Y-m-d', strtotime($this->date_start))])
+                ->andWhere(['<=', 'pupil_education.date_start', date('Y-m-d', strtotime($this->date_end) + 24 * 60 * 60)])
+                ->notDeleted(PupilEducation::tableName())->orderBy('pupil_education.date_start ASC')->asArray()->all();
+            $pupilPupilEducations = [];
+            foreach ($pupilEducations as $pupilEducation){
+                $pupilPupilEducations[$pupilEducation['pupil_id']][] = $pupilEducation;
+            }
+            $payments = $this->getPayments($this->date_start, $this->date_end);
+            $pupilPayments = [];
+            foreach ($payments as $payment){
+                $pupilPayments[$payment->pupil_id][] = $payment;
+            }
+            $dataArray['pupilPayments'] = $pupilPayments;
+            $dataArray['pupilPupilEducations'] = $pupilPupilEducations;
+            $dataArray['pupils'] = Pupil::find()->byOrganization()->notDeleted()->orderBy('class_id ASC, fio ASC')->all();
+            return $dataArray;
         }
         return [];
 
     }
 
+    /**
+     * @param $start_date
+     * @param $endDate
+     * @return Payment[]|array|\yii\db\ActiveRecord[]
+     */
     public function getPayments($start_date, $endDate){
         return Payment::find()->byOrganization()
             ->andWhere(['is not', 'pupil_id', null])->andWhere(['type' => Payment::TYPE_PAY])
