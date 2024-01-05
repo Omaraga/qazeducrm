@@ -62,6 +62,9 @@ class MenuHelper extends Model
                     ['label' => 'Расписание', 'url' => \app\helpers\OrganizationUrl::to(['schedule/index'])],
                     ['label' => 'Типовое расписание', 'url' => \app\helpers\OrganizationUrl::to(['typical-schedule/index'])],
                 ], 'active' => in_array(\Yii::$app->controller->id, ['schedule', 'typical-schedule'])];
+                $items[] = ['label' => 'Отчеты', 'items' => [
+                    ['label' => 'Дневной отчет', 'url' => \app\helpers\OrganizationUrl::to(['reports/day'])],
+                ], 'active' => in_array(\Yii::$app->controller->id, ['reports'])];
             }
             if (\Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR)){
                 $items[] = ['label' => 'Заработная плата преподавателей', 'url' => \app\helpers\OrganizationUrl::to(['/reports/employer']), 'active' => in_array(\Yii::$app->controller->id, ['reports'])];

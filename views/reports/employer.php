@@ -27,7 +27,7 @@ setlocale(LC_ALL, 'russian');
                     <?foreach ($dateTeacherSalary as $date => $item):?>
                     <tr style="">
                         <td style="width: 300px;">
-                            <a href="/Schedule/DayClose?date=01.01.2024" target="_blank"><?=date('d.m.Y', strtotime($date));?> г. <?=\app\helpers\Lists::getWeekDays()[date('w', strtotime($date)) == 0 ? 7 :date('w', strtotime($date))];?></a>
+                            <a href="<?=\app\helpers\OrganizationUrl::to(['reports/day', 'DateSearch[date]' => $date]);?>" target="_blank"><?=date('d.m.Y', strtotime($date));?> г. <?=\app\helpers\Lists::getWeekDays()[date('w', strtotime($date)) == 0 ? 7 :date('w', strtotime($date))];?></a>
                         </td>
                         <td>
                             <?=$item[$teacher->id];?>тг

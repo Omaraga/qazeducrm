@@ -26,4 +26,18 @@ class ReportsController extends \yii\web\Controller
         ]);
     }
 
+    public function actionDay()
+    {
+
+        $searchModel = new DateSearch();
+        $searchModel->type = \Yii::$app->request->get('type') ? : 1;
+        $dataArray = $searchModel->searchDay($this->request->queryParams);
+
+        return $this->render('day', [
+            'dataArray' => $dataArray,
+            'searchModel' => $searchModel,
+            'type' => $searchModel->type,
+        ]);
+    }
+
 }

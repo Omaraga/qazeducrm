@@ -13,6 +13,9 @@ $js = <<<JS
     });
 JS;
 $this->registerJs($js);
+if (!isset($onlyMonth)){
+    $onlyMonth = true;
+}
 ?>
 
 <div class="payment-search">
@@ -30,9 +33,11 @@ $this->registerJs($js);
             ],
             'options' => ['autocomplete' => 'off', 'id' => 'search-date-input']
         ]) ?>
-        <div class="col-12">
-            <span style="color: gray; font-size: 0.75em;">Отчет отображается за выбранный месяц. Дата не учитывается.</span>
-        </div>
+        <?if($onlyMonth):?>
+            <div class="col-12">
+                <span style="color: gray; font-size: 0.75em;">Отчет отображается за выбранный месяц. Дата не учитывается.</span>
+            </div>
+        <?endif;?>
 
     </div>
 

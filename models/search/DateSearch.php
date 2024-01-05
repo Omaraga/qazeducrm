@@ -14,6 +14,7 @@ use app\models\User;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use app\models\Payment;
+use yii\helpers\ArrayHelper;
 
 /**
  * PaymentSearch represents the model behind the search form of `app\models\Payment`.
@@ -24,6 +25,8 @@ class DateSearch extends Model
     public $query;
     public $date_start;
     public $date_end;
+
+    public $type;
     /**
      * {@inheritdoc}
      */
@@ -181,6 +184,114 @@ class DateSearch extends Model
         }
         return $dateTeacherSalary;
 
+
+    }
+    public function searchDay($params){
+        $this->load($params);
+
+        $dataArray = [];
+
+        if (!$this->validate()) {
+            return $dataArray;
+        }
+
+        if ($this->type == 1){
+            $lessonAttendances = LessonAttendance::find()->innerJoinWith(['lesson' => function($q){
+                $q->andWhere(['<>', 'lesson.is_deleted', 1]);
+            }])->andWhere(['=','lesson.date', date('Y-m-d', strtotime($this->date))])
+                ->andWhere(['lesson.status' => Lesson::STATUS_FINISHED])->notDeleted(LessonAttendance::tableName())->orderBy('lesson.date ASC')->all();
+            $attendanceArray = [];
+            foreach ($lessonAttendances as $lessonAttendance){
+                $attendanceArray[$lessonAttendance->lesson_id][$lessonAttendance->pupil_id] = $lessonAttendance->status;
+            }
+            $dataArray['attendances'] = $attendanceArray;
+            $dataArray['lessons'] = Lesson::find()->innerJoinWith(['group' => function($q){
+                $q->andWhere(['<>', 'group.is_deleted', 1]);
+            }])->andWhere(['lesson.date' => date('Y-m-d', strtotime($this->date))])
+                ->notDeleted(Lesson::tableName())->orderBy('lesson.start_time ASC')->all();
+            return $dataArray;
+        }else if($this->type == 2){
+            $pupilEducations = PupilEducation::find()->innerJoinWith(['groups' => function($q){
+                $q->andWhere(['<>','education_group.is_deleted', 1]);
+            }])->andWhere(['pupil_education.organization_id' => Organizations::getCurrentOrganizationId()])
+                ->andWhere(['<=', 'pupil_education.date_start', date('Y-m-d', strtotime($this->date))])
+                ->andWhere(['>=', 'pupil_education.date_end', date('Y-m-d', strtotime($this->date))])
+                ->notDeleted(PupilEducation::tableName())->orderBy('pupil_education.date_start ASC')->asArray()->all();
+            $pupilEducationArr = [];
+            foreach ($pupilEducations as $pupilEducation){
+                $pupilEducationArr[$pupilEducation['pupil_id']] = [
+                    'sale' => $pupilEducation['sale'],
+                    'total_price' => $pupilEducation['total_price'],
+                    'tariff_price' => $pupilEducation['tariff_price'],
+                    'tariff_id' => $pupilEducation['tariff_id']
+                ];
+            }
+
+            $lessonPupilSalary = [];
+            $teacherLessons = [];
+            $lessons = Lesson::find()->andWhere(['lesson.date' => date('Y-m-d', strtotime($this->date))])
+                ->notDeleted(Lesson::tableName())->orderBy('lesson.start_time ASC')->all();
+            foreach ($lessons as $lesson){
+                $teacherLessons[$lesson->teacher_id][] = $lesson;
+                $pupils = $lesson->getPupils();
+                foreach ($pupils as $pupil){
+                    $lessonPupilSalary[$lesson->id][$pupil->id] = 0;
+                }
+            }
+
+            $lessonAttendances = LessonAttendance::find()->innerJoinWith(['lesson' => function($q){
+                $q->andWhere(['<>', 'lesson.is_deleted', 1]);
+            }])->andWhere(['=','lesson.date', date('Y-m-d', strtotime($this->date))])
+                ->andWhere(['lesson.status' => Lesson::STATUS_FINISHED])->notDeleted(LessonAttendance::tableName())->orderBy('lesson.date ASC')->all();
+
+            foreach ($lessonAttendances as $lessonAttendance){
+                if (in_array($lessonAttendance->status, [LessonAttendance::STATUS_VISIT,LessonAttendance::STATUS_MISS_WITH_PAY ])){
+                    $teacherGroup = TeacherGroup::find()->where(['related_id' => $lessonAttendance->lesson->teacher_id, 'target_id' => $lessonAttendance->lesson->group_id])
+                        ->notDeleted()->asArray()->one();
+                    if (!$teacherGroup){
+                        continue;
+                    }
+                    $pupil = $lessonAttendance->pupil;
+                    $education = $pupilEducationArr[$pupil->id];
+                    if (!$education){
+                        continue;
+                    }
+                    $totalSum = 0;
+                    if ($teacherGroup['type'] == TeacherGroup::PRICE_TYPE_FIX){
+                        $sum = $teacherGroup['price'];
+                        $sale = $education['sale'];
+                        if ($sale > 0){
+                            $sum = $sum * (100-$sale) / 100;
+                        }
+                        $totalSum += $sum;
+
+                    }else if($teacherGroup['type'] == TeacherGroup::PRICE_TYPE_PERCENT){
+                        $tariff = Tariff::findOne($education['tariff_id']);
+                        $lessonCount = 0;
+                        foreach ($tariff->subjectsRelation as $subject){
+                            $lessonCount += $subject->lesson_amount;
+                        }
+                        $sum = (($education['total_price'] / ($lessonCount*4.33)) * 50)/100;
+                        $totalSum += intval($sum);
+                    }
+                    $lessonPupilSalary[$lessonAttendance->lesson_id][$pupil->id] = $totalSum;
+
+                }
+            }
+            $dataArray['teachers'] = User::find()->select('user.id, user.fio')->innerJoinWith(['currentUserOrganizations' => function($q){
+                $q->andWhere(['<>','user_organization.is_deleted', ActiveRecord::DELETED])
+                    ->andWhere(['in', 'user_organization.role', [OrganizationRoles::TEACHER]]);
+            }])->andWhere(['in', 'user.id', array_keys($teacherLessons)])->asArray()->all();
+            $dataArray['lessonPupilSalary'] = $lessonPupilSalary;
+            $dataArray['teacherLessons'] = $teacherLessons;
+            return  $dataArray;
+
+        }else{
+            return Payment::find()->byOrganization()
+                ->andWhere(['is not', 'pupil_id', null])->andWhere(['type' => Payment::TYPE_PAY])
+                ->andWhere(['>=', 'date', date('Y-m-d H:i:s', strtotime($this->date))])
+                ->andWhere(['<', 'date', date('Y-m-d H:i:s', strtotime($this->date) + 24 * 60 * 60)])->orderBy('date DESC')->all();
+        }
 
     }
 
