@@ -24,6 +24,7 @@ class DateSearch extends Model
     const TYPE_ATTENDANCE = 1;
     const TYPE_SALARY = 2;
     const TYPE_PAYMENT = 3;
+    const TYPE_PUPIL_PAYMENT = 4;
     public $date;
     public $query;
     public $date_start;

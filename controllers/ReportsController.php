@@ -42,7 +42,7 @@ class ReportsController extends \yii\web\Controller
 
     public function actionMonth(){
         $searchModel = new DateSearch();
-        $searchModel->type = \Yii::$app->request->get('type') ? : 1;
+        $searchModel->type = \Yii::$app->request->get('type') ? : DateSearch::TYPE_ATTENDANCE;
         $dataArray = $searchModel->searchMonth($this->request->queryParams);
 
         return $this->render('month', [
@@ -51,5 +51,6 @@ class ReportsController extends \yii\web\Controller
             'type' => $searchModel->type,
         ]);
     }
+
 
 }

@@ -4,15 +4,18 @@
 /** @var \app\models\search\DateSearch $searchModel */
 /** @var array $dataArray */
 /** @var integer $type */
+use app\models\search\DateSearch;
 $this->title = Yii::t('main', 'Отчет за месяц');
-$onlyMonth = false;
-if ($type == \app\models\search\DateSearch::TYPE_ATTENDANCE){
+$onlyMonth = true;
+if ($type == DateSearch::TYPE_ATTENDANCE){
     $this->title = 'Статистика посещаемости занятий.';
     $onlyMonth = false;
-}else if($type == \app\models\search\DateSearch::TYPE_SALARY){
+}else if($type == DateSearch::TYPE_SALARY){
     $this->title = $this->title.'. Зарпалата преподавателей.';
-}else if($type == \app\models\search\DateSearch::TYPE_PAYMENT){
+}else if($type == DateSearch::TYPE_PAYMENT){
     $this->title = $this->title.'. Приход.';
+}else if($type == DateSearch::TYPE_PUPIL_PAYMENT){
+    $this->title = $this->title.'.Оплата и задолженность по ученикам.';
 }
 setlocale(LC_ALL, 'russian');
 ?>
@@ -22,7 +25,7 @@ setlocale(LC_ALL, 'russian');
 <hr class="my-2">
 <div class="tab-content" id="pills-tabContent">
     <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
-        <?if($type == 1):?>
+        <?if($type == DateSearch::TYPE_ATTENDANCE):?>
             <?if(sizeof($dataArray['lessons']) > 0):?>
             <?=$this->render('day/attendance', [
                 'lessons' => $dataArray['lessons'],
@@ -31,7 +34,7 @@ setlocale(LC_ALL, 'russian');
             <?else:?>
                 <p style="font-weight: bold; font-size: 20px;"><?=$searchModel->date;?> г. нет ни одного занятия</p>
             <?endif;?>
-        <?elseif($type == 2):?>
+        <?elseif($type == DateSearch::TYPE_SALARY):?>
             <?if(sizeof($dataArray['teachers']) > 0):?>
                 <?=$this->render('day/teacher', [
                     'teachers' => $dataArray['teachers'],
@@ -41,7 +44,7 @@ setlocale(LC_ALL, 'russian');
             <?else:?>
                 <p style="font-weight: bold; font-size: 20px;"><?=$searchModel->date;?> г. нет ни одного занятия</p>
             <?endif;?>
-        <?elseif($type == 3):?>
+        <?elseif($type == DateSearch::TYPE_PAYMENT):?>
             <?if(sizeof($dataArray) > 0):?>
                 <?=$this->render('day/payment', [
                     'payments' => $dataArray,
@@ -49,6 +52,8 @@ setlocale(LC_ALL, 'russian');
             <?else:?>
                 <p style="font-weight: bold; font-size: 20px;"><?=$searchModel->date;?> г. нет ни одной оплаты</p>
             <?endif;?>
+        <?elseif($type == DateSearch::TYPE_PUPIL_PAYMENT):?>
+
         <?endif;?>
     </div>
 </div>
