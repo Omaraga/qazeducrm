@@ -51,7 +51,7 @@ class TypicalScheduleController extends Controller
     public function actionEvents(){
         $result = [];
         if (\Yii::$app->request->isAjax){
-            $events = TypicalSchedule::find()->andWhere(['typical_schedule.organization_id' => Organizations::getCurrentOrganizationId()])->asArray()->all();
+            $events = TypicalSchedule::find()->andWhere(['typical_schedule.organization_id' => Organizations::getCurrentOrganizationId()])->limit(10)->asArray()->all();
             foreach ($events as $i => $event){
                 $group = Group::findOne($event['group_id']);
                 $teacher = User::findOne($event['teacher_id']);
