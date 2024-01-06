@@ -44,7 +44,7 @@ function getEvents(){
                    ev['end'] = data[i]['end'].toString();
                    ev['title'] = data[i]['title'].toString();
                    ev['content'] = data[i]['content'].toString();
-                   ev['category'] = data[i]['category'].toString();
+                   ev['category'] = data[i]['title'].toString();
                    ev['color'] = data[i]['color'];
                    ev['url'] = data[i]['url'];
                    let catExist = false;

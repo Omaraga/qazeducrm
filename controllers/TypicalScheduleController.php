@@ -59,7 +59,6 @@ class TypicalScheduleController extends Controller
                 $result[$i]['end'] = strtotime($event['date'].' '.$event['end_time']);
                 $result[$i]['title'] = $group->getNameFull();
                 $result[$i]['color'] = $group->color;
-                $result[$i]['category'] = $group->getNameFull();
                 $result[$i]['content'] = $teacher->fio;
                 $result[$i]['url'] = OrganizationUrl::to(['typical-schedule/update', 'id' => $event['id']]);
             }
