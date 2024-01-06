@@ -7,6 +7,7 @@ use app\models\Group;
 use app\models\Organizations;
 use app\models\relations\TeacherGroup;
 use app\models\TypicalSchedule;
+use app\models\User;
 use yii\data\ActiveDataProvider;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -50,22 +51,21 @@ class TypicalScheduleController extends Controller
     public function actionEvents(){
         $result = [];
         if (\Yii::$app->request->isAjax){
-            $events = TypicalSchedule::find()->innerJoinWith(['group' => function($q){
-                $q->andWhere(['<>', 'group.is_deleted', 1]);
-            }])->andWhere(['typical_schedule.organization_id' => Organizations::getCurrentOrganizationId()])->all();
+            $events = TypicalSchedule::find()->andWhere(['typical_schedule.organization_id' => Organizations::getCurrentOrganizationId()])->asArray()->all();
             foreach ($events as $i => $event){
-                $result[$i]['start'] = strtotime($event->date.' '.$event->start_time);
-                $result[$i]['end'] = strtotime($event->date.' '.$event->end_time);
-                $result[$i]['title'] = $event->group->getNameFull();
-                $result[$i]['teacher_id'] = $event->teacher_id;
-                $result[$i]['color'] = $event->group->color;
-                $result[$i]['category'] = $event->group->getNameFull();
-                $result[$i]['content'] = $event->teacher->fio;
-                $result[$i]['url'] = OrganizationUrl::to(['typical-schedule/update', 'id' => $event->id]);
+                $group = Group::findOne($event['group_id']);
+                $teacher = User::findOne($event['teacher_id']);
+                $result[$i]['start'] = strtotime($event['date'].' '.$event['start_time']);
+                $result[$i]['end'] = strtotime($event['date'].' '.$event['end_time']);
+                $result[$i]['title'] = $group->getNameFull();
+                $result[$i]['color'] = $group->color;
+                $result[$i]['category'] = $group->getNameFull();
+                $result[$i]['content'] = $teacher->fio;
+                $result[$i]['url'] = OrganizationUrl::to(['typical-schedule/update', 'id' => $event['id']]);
             }
 
         }
-        return json_encode($result);
+        return json_encode($result, true);
 
     }
 
