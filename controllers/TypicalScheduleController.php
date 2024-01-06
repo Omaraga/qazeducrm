@@ -4,6 +4,7 @@ namespace app\controllers;
 
 use app\helpers\OrganizationUrl;
 use app\models\Group;
+use app\models\Organizations;
 use app\models\relations\TeacherGroup;
 use app\models\TypicalSchedule;
 use yii\data\ActiveDataProvider;
@@ -51,7 +52,7 @@ class TypicalScheduleController extends Controller
         if (\Yii::$app->request->isAjax){
             $events = TypicalSchedule::find()->innerJoinWith(['group' => function($q){
                 $q->andWhere(['<>', 'typical_schedule.is_deleted', 1]);
-            }])->byOrganization()->all();
+            }])->andWhere(['typical_schedule.organization_id' => Organizations::getCurrentOrganizationId()])->all();
             foreach ($events as $i => $event){
                 $result[$i]['start'] = strtotime($event->date.' '.$event->start_time);
                 $result[$i]['end'] = strtotime($event->date.' '.$event->end_time);
