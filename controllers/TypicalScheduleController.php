@@ -49,7 +49,9 @@ class TypicalScheduleController extends Controller
     public function actionEvents(){
         $result = [];
         if (\Yii::$app->request->isAjax){
-            $events = TypicalSchedule::find()->byOrganization()->all();
+            $events = TypicalSchedule::find()->innerJoinWith(['group' => function($q){
+                $q->andWhere(['<>', 'typical_schedule.is_deleted', 1]);
+            }])->byOrganization()->all();
             foreach ($events as $i => $event){
                 $result[$i]['start'] = strtotime($event->date.' '.$event->start_time);
                 $result[$i]['end'] = strtotime($event->date.' '.$event->end_time);
