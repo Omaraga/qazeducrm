@@ -9,6 +9,7 @@ use app\models\relations\UserOrganization;
 use app\helpers\Lists;
 use app\helpers\OrganizationRoles;
 use app\helpers\SystemRoles;
+use app\traits\UpdateInsteadOfDeleteTrait;
 use Yii;
 use yii\base\NotSupportedException;
 use app\components\ActiveRecord;
