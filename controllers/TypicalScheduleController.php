@@ -72,7 +72,7 @@ class TypicalScheduleController extends Controller
                 'typical_schedule.group_id = group.id AND group.is_deleted != 1')
                 ->innerJoin(User::tableName(), 'typical_schedule.teacher_id = user.id')
                 ->andWhere(['typical_schedule.organization_id' => Organizations::getCurrentOrganizationId()])
-                ->andWhere('typical_schedule.is_deleted != 1')->orderBy('typical_schedule.date');
+                ->andWhere('typical_schedule.is_deleted != 1')->orderBy('typical_schedule.date ASC typical_schedule.start_time ASC');
             $events = $query->all();
             foreach ($events as $i => $event){
                 $result[$i]['start'] = strtotime($event['date'].' '.$event['start_time']);
