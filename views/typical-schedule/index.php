@@ -79,7 +79,7 @@ $('#calendar').on('Calendar.event-click',function(event, instance, elem, evt){
    $('#modal-form').find('#modalContent').load(evt.url);
     $('#modal-form').modal('show')
 });
-
+$('#main-container-block').removeClass('container').addClass('container-fluid');
 JS;
 $this->registerJs($js);
 ?>
