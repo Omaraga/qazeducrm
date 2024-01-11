@@ -54,6 +54,7 @@ class ScheduleController extends Controller
 
     public function actionEvents(){
         $result = [];
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         if (\Yii::$app->request->isAjax){
 
             $query = new Query();
@@ -82,7 +83,7 @@ class ScheduleController extends Controller
             }
 
         }
-        return json_encode($result, true);
+        return $result;
 
     }
 
