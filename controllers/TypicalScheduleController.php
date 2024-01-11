@@ -83,8 +83,15 @@ class TypicalScheduleController extends Controller
                 $result[$i]['url'] = OrganizationUrl::to(['typical-schedule/update', 'id' => $event['id']]);
             }
 
+            usort($result, );
+
         }
-        return json_encode($result, true);
+        return json_encode($result, function($a, $b)
+        {
+            $aDif = $a['end'] - $a['start'];
+            $bDif = $b['end'] - $b['start'];
+            return $aDif > $bDif;
+        }, true);
 
     }
 
