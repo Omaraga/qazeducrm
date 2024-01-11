@@ -84,7 +84,7 @@ $('#calendar').on('Calendar.event-click',function(event, instance, elem, evt){
 $('#calendar').on('Calendar.init', function(event, instance, before, current, after){
   
 });
-
+$('#main-container-block').removeClass('container').addClass('container-fluid');
 JS;
 $this->registerJs($js);
 ?>
