@@ -58,19 +58,19 @@ class ScheduleController extends Controller
 
             $query = new Query();
             $query->select([
-                'typical_schedule.id',
-                'typical_schedule.start_time',
-                'typical_schedule.end_time',
-                'typical_schedule.date',
+                'lesson.id',
+                'lesson.start_time',
+                'lesson.end_time',
+                'lesson.date',
                 'group.code as code',
                 'group.color as color',
                 'group.name as name',
                 'user.fio as fio',
-            ])->from(TypicalSchedule::tableName())->innerJoin(Group::tableName(),
-                'typical_schedule.group_id = group.id AND group.is_deleted != 1')
-                ->innerJoin(User::tableName(), 'typical_schedule.teacher_id = user.id')
-                ->andWhere(['typical_schedule.organization_id' => Organizations::getCurrentOrganizationId()])
-                ->andWhere('typical_schedule.is_deleted != 1')->orderBy('typical_schedule.start_time ASC');
+            ])->from(Lesson::tableName())->innerJoin(Group::tableName(),
+                'lesson.group_id = group.id AND group.is_deleted != 1')
+                ->innerJoin(User::tableName(), 'lesson.teacher_id = user.id')
+                ->andWhere(['lesson.organization_id' => Organizations::getCurrentOrganizationId()])
+                ->andWhere('lesson.is_deleted != 1')->orderBy('lesson.start_time ASC');
             $events = $query->all();
             foreach ($events as $i => $event){
                 $result[$i]['start'] = strtotime($event['date'].' '.$event['start_time']);
