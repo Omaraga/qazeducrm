@@ -6,9 +6,13 @@ use app\helpers\OrganizationUrl;
 use app\models\forms\TypicalLessonForm;
 use app\models\Group;
 use app\models\Lesson;
+use app\models\Organizations;
 use app\models\relations\TeacherGroup;
 use app\models\TypicalSchedule;
+use app\models\User;
+use yii\base\BaseObject;
 use yii\data\ActiveDataProvider;
+use yii\db\Query;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -51,21 +55,34 @@ class ScheduleController extends Controller
     public function actionEvents(){
         $result = [];
         if (\Yii::$app->request->isAjax){
-            $events = Lesson::find()->byOrganization()->all();
+
+            $query = new Query();
+            $query->select([
+                'typical_schedule.id',
+                'typical_schedule.start_time',
+                'typical_schedule.end_time',
+                'typical_schedule.date',
+                'group.code as code',
+                'group.color as color',
+                'group.name as name',
+                'user.fio as fio',
+            ])->from(TypicalSchedule::tableName())->innerJoin(Group::tableName(),
+                'typical_schedule.group_id = group.id AND group.is_deleted != 1')
+                ->innerJoin(User::tableName(), 'typical_schedule.teacher_id = user.id')
+                ->andWhere(['typical_schedule.organization_id' => Organizations::getCurrentOrganizationId()])
+                ->andWhere('typical_schedule.is_deleted != 1')->orderBy('typical_schedule.start_time ASC');
+            $events = $query->all();
             foreach ($events as $i => $event){
-                $result[$i]['start'] = strtotime($event->date.' '.$event->start_time);
-                $result[$i]['end'] = strtotime($event->date.' '.$event->end_time);
-                $result[$i]['title'] = $event->group->getNameFull();
-                $result[$i]['teacher_id'] = $event->teacher_id;
-                $result[$i]['color'] = $event->group->color;
-                $result[$i]['category'] = $event->group->getNameFull();
-                $result[$i]['content'] = $event->teacher->fio;
-                $result[$i]['status'] = $event->status;
-                $result[$i]['url'] = OrganizationUrl::to(['schedule/update', 'id' => $event->id]);
+                $result[$i]['start'] = strtotime($event['date'].' '.$event['start_time']);
+                $result[$i]['end'] = strtotime($event['date'].' '.$event['end_time']);
+                $result[$i]['title'] = $event['code'] .'-'. $event['name'];
+                $result[$i]['color'] = $event['color'];
+                $result[$i]['content'] = $event['fio'];
+                $result[$i]['url'] = OrganizationUrl::to(['schedule/update', 'id' => $event['id']]);
             }
 
         }
-        return json_encode($result);
+        return json_encode($result, true);
 
     }
 

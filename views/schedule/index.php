@@ -36,7 +36,7 @@ function getEvents(){
         'type': 'post',
         'data' : {start : myCalendar.fromTimestamp, end : myCalendar.toTimestamp},
         success: function(data){
-            data = JSON.parse(data);
+            // data = JSON.parse(data);
             if (data){
                 let events = [];
                 let categories = [];
@@ -50,7 +50,7 @@ function getEvents(){
                        ev['title'] = '<i class="fa fa-calendar-times-o" aria-hidden="true" style="font-size:13px;"></i> ' + data[i]['title'].toString();
                    }
                    ev['content'] = data[i]['content'].toString();
-                   ev['category'] = data[i]['category'].toString();
+                   ev['category'] = data[i]['title'].toString();
                    ev['color'] = data[i]['color'];
                    ev['url'] = data[i]['url'];
                    let catExist = false;
