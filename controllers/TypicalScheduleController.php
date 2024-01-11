@@ -86,12 +86,13 @@ class TypicalScheduleController extends Controller
             usort($result, );
 
         }
-        return json_encode($result, function($a, $b)
+        function cmp($a, $b)
         {
             $aDif = $a['end'] - $a['start'];
             $bDif = $b['end'] - $b['start'];
-            return $aDif > $bDif;
-        }, true);
+            return $aDif > $bDif ? 1 : -1;
+        }
+        return json_encode($result, 'cmp', true);
 
     }
 
