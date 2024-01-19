@@ -81,6 +81,12 @@ class ScheduleController extends Controller
                 $result[$i]['content'] = $event['fio'];
                 $result[$i]['url'] = OrganizationUrl::to(['schedule/update', 'id' => $event['id']]);
             }
+            usort($result, function ($a, $b)
+            {
+                $aDif = $a['end'] - $a['start'];
+                $bDif = $b['end'] - $b['start'];
+                return $aDif > $bDif ? 1 : -1;
+            });
 
         }
         return $result;
