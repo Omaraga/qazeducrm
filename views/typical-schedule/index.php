@@ -34,7 +34,6 @@ function getEvents(){
         'url': '$url',
         'type': 'post',
         success: function(data){
-            data = JSON.parse(data);
             if (data){
                 let events = [];
                 let categories = [];
