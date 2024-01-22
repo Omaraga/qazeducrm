@@ -33,7 +33,13 @@ $this->params['breadcrumbs'][] = $this->title;
                 'columns' => [
                     'id',
                     'iin',
-                    'fio',
+                    [
+                        'attribute' => 'fio',
+                        'value' => function($data){
+                            return Html::a($data->fio, \app\helpers\OrganizationUrl::to(['pupil/view', 'id' => $data->id]));
+                        },
+                        'format' => 'raw'
+                    ],
                     [
                         'attribute' => 'contacts',
                         'value' => function($model){
