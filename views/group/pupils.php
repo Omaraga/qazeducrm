@@ -84,14 +84,6 @@ $this->params['breadcrumbs'][] = $this->title;
             ]) ?>
         </div>
     </div>
-    <? \yii\bootstrap4\Modal::begin([
-        'title' => Yii::t('main', 'Добавить преподавателя'),
-        'id' => 'modal-form',
-        'size' => 'modal-lg'
-
-    ]); ?>
-    <div id="modalContent"></div>
-    <? \yii\bootstrap4\Modal::end();?>
 
 </div>
 
