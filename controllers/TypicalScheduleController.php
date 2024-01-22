@@ -87,7 +87,7 @@ class TypicalScheduleController extends Controller
             {
                 $aDif = $a['end'] - $a['start'];
                 $bDif = $b['end'] - $b['start'];
-                return $aDif < $bDif ? 1 : -1;
+                return $aDif > $bDif ? 1 : -1;
             });
 
         }
