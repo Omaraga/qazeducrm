@@ -87,14 +87,19 @@ class TypicalScheduleController extends Controller
                 $result[$i]['url'] = OrganizationUrl::to(['typical-schedule/update', 'id' => $event['id']]);
             }
 
-            for ($i = 0; $i < sizeof($result) - 1; $i++){
-                for ($j = $i + 1; $j < sizeof($result); $j++){
-                    $iDif = $result[$i]['end'] - $result[$i]['start'];
-                    $jDif = $result[$j]['end'] - $result[$j]['start'];
-                    if ($iDif > $jDif){
-                        $tmp = $result[$i];
-                        $result[$i] = $result[$j];
-                        $result[$j] = $tmp;
+            $n = sizeof($result);
+
+            for($i = 0; $i < $n; $i++)
+            {
+                for ($j = 0; $j < $n - $i - 1; $j++)
+                {
+                    $iDif = $result[$j]['end'] - $result[$j]['start'];
+                    $jDif = $result[$j+1]['end'] - $result[$j+1]['start'];
+                    if ($iDif > $jDif)
+                    {
+                        $t = $result[$j];
+                        $result[$j] = $result[$j+1];
+                        $result[$j+1] = $t;
                     }
                 }
             }
