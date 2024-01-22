@@ -61,6 +61,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         },
                         'format' => 'raw'
                     ],
+                    'class_id',
                     [
                         'label' => Yii::t('main','Оплачено до'),
                         'value' => function($data) use ($model){
