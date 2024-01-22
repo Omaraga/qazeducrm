@@ -91,7 +91,7 @@ class TypicalScheduleController extends Controller
 
             for($i = 0; $i < $n; $i++)
             {
-                for ($j = 0; $j < $n - $i - 1; $j++)
+                for ($j = 0; $j < $n - 1; $j++)
                 {
                     $iDif = $result[$j]['end'] - $result[$j]['start'];
                     $jDif = $result[$j+1]['end'] - $result[$j+1]['start'];
