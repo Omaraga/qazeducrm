@@ -59,6 +59,7 @@ class MenuHelper extends Model
                 $items[] = ['label' => 'Преподаватели', 'url' => \app\helpers\OrganizationUrl::to(['/user/index']), 'active' => in_array(\Yii::$app->controller->id, ['user'])];
                 $items[] = ['label' => 'Группы', 'url' => \app\helpers\OrganizationUrl::to(['/group/index']), 'active' => in_array(\Yii::$app->controller->id, ['group'])];
                 $items[] = ['label' => 'Бухгалтерия', 'url' => \app\helpers\OrganizationUrl::to(['/payment/index']), 'active' => in_array(\Yii::$app->controller->id, ['payment'])];
+                $items[] = ['label' => 'Пробное тестирование', 'url' => \app\helpers\OrganizationUrl::to(['/lids/index']), 'active' => in_array(\Yii::$app->controller->id, ['payment'])];
                 $items[] = ['label' => 'Расписание', 'items' => [
                     ['label' => 'Расписание', 'url' => \app\helpers\OrganizationUrl::to(['schedule/index'])],
                     ['label' => 'Типовое расписание', 'url' => \app\helpers\OrganizationUrl::to(['typical-schedule/index'])],
