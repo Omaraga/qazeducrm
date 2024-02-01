@@ -146,7 +146,7 @@ class DateSearch extends Model
                 $pupil = $lessonAttendance->pupil;
                 $totalSum = 0;
                 $education = null;
-                if (sizeof($pupilEducationArr[$pupil->id]) > 1){
+                if (key_exists($pupil->id, $pupilEducationArr) && sizeof($pupilEducationArr[$pupil->id]) > 1){
                     for ($i = 1; $i < sizeof($pupilEducationArr[$pupil->id]); $i++){
                         $startTime = strtotime($pupilEducationArr[$pupil->id][$i]['date_start']);
                         $endTime = strtotime($pupilEducationArr[$pupil->id][$i]['date_end']);
@@ -155,7 +155,7 @@ class DateSearch extends Model
                             break;
                         }
                     }
-                }else if (sizeof($pupilEducationArr[$pupil->id]) == 1){
+                }else if (key_exists($pupil->id, $pupilEducationArr) && sizeof($pupilEducationArr[$pupil->id]) == 1){
                     $education = $pupilEducationArr[$pupil->id][0];
                 }else{
                     continue;
