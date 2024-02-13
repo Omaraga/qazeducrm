@@ -54,11 +54,11 @@ class MenuHelper extends Model
                 \Yii::$app->user->can(OrganizationRoles::DIRECTOR) ||
                 \Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR)
             ){
-                $items[] = ['label' => 'Тарифы', 'url' => \app\helpers\OrganizationUrl::to(['/tariff/index']), 'active' => in_array(\Yii::$app->controller->id, ['tariff'])];
+
                 $items[] = ['label' => 'Ученики', 'url' => \app\helpers\OrganizationUrl::to(['/pupil/index']), 'active' => in_array(\Yii::$app->controller->id, ['pupil'])];
                 $items[] = ['label' => 'Преподаватели', 'url' => \app\helpers\OrganizationUrl::to(['/user/index']), 'active' => in_array(\Yii::$app->controller->id, ['user'])];
                 $items[] = ['label' => 'Группы', 'url' => \app\helpers\OrganizationUrl::to(['/group/index']), 'active' => in_array(\Yii::$app->controller->id, ['group'])];
-                $items[] = ['label' => 'Бухгалтерия', 'url' => \app\helpers\OrganizationUrl::to(['/payment/index']), 'active' => in_array(\Yii::$app->controller->id, ['payment'])];
+
                 $items[] = ['label' => 'Пробное тестирование', 'url' => \app\helpers\OrganizationUrl::to(['/lids/index']), 'active' => in_array(\Yii::$app->controller->id, ['payment'])];
                 $items[] = ['label' => 'Расписание', 'items' => [
                     ['label' => 'Расписание', 'url' => \app\helpers\OrganizationUrl::to(['schedule/index'])],
@@ -69,6 +69,7 @@ class MenuHelper extends Model
                     ['label' => 'Приход за месяц', 'url' => \app\helpers\OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_PAYMENT])],
                     ['label' => 'Оплата и задолженность по ученикам', 'url' => \app\helpers\OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_PUPIL_PAYMENT])],
                     ['label' => 'Статистика посещаемости занятий', 'url' => \app\helpers\OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_ATTENDANCE])],
+                    ['label' => 'Бухгалтерия', 'url' => \app\helpers\OrganizationUrl::to(['/payment/index'])]
                 ], 'active' => in_array(\Yii::$app->controller->id, ['reports'])];
             }
             if (\Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR)){
@@ -76,6 +77,7 @@ class MenuHelper extends Model
                 $items[] = ['label' => 'Справочники', 'items' => [
                     ['label' => 'Предметы', 'url' => \app\helpers\OrganizationUrl::to(['subject/index'])],
                     ['label' => 'Методы оплат', 'url' => \app\helpers\OrganizationUrl::to(['pay-method/index'])],
+                    ['label' => 'Тарифы', 'url' => \app\helpers\OrganizationUrl::to(['/tariff/index'])]
                 ], 'active' => in_array(\Yii::$app->controller->id, ['subject', 'pay-method'])];
             }
 
