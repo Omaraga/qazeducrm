@@ -395,7 +395,7 @@ class DateSearch extends Model
         $dataArray['lessons'] = Lesson::find()->innerJoinWith(['group' => function($q){
             $q->andWhere(['<>', 'group.is_deleted', 1]);
         }])->andWhere(['lesson.date' => date('Y-m-d', strtotime($this->date))])
-            ->notDeleted(Lesson::tableName())->orderBy('lesson.start_time ASC')->all();
+            ->notDeleted(Lesson::tableName())->andWhere(['lesson.organization_id' => Organizations::getCurrentOrganizationId()])->orderBy('lesson.start_time ASC')->all();
         return $dataArray;
     }
 
