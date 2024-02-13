@@ -386,7 +386,7 @@ class DateSearch extends Model
         $lessonAttendances = LessonAttendance::find()->innerJoinWith(['lesson' => function($q){
             $q->andWhere(['<>', 'lesson.is_deleted', 1]);
         }])->andWhere(['=','lesson.date', date('Y-m-d', strtotime($this->date))])
-            ->andWhere(['lesson.status' => Lesson::STATUS_FINISHED])->notDeleted(LessonAttendance::tableName())->orderBy('lesson.date ASC')->andWhere(['lesson.organization_id' => Organizations::getCurrentOrganizationId()])->all();
+            ->andWhere(['lesson.status' => Lesson::STATUS_FINISHED])->notDeleted(LessonAttendance::tableName())->orderBy('lesson.date ASC')->andWhere(['lesson_attendance.organization_id' => Organizations::getCurrentOrganizationId()])->all();
         $attendanceArray = [];
         foreach ($lessonAttendances as $lessonAttendance){
             $attendanceArray[$lessonAttendance->lesson_id][$lessonAttendance->pupil_id] = $lessonAttendance->status;
