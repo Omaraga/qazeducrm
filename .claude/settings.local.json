@@ -19,7 +19,12 @@
       "Bash(for file in AttendanceController.php GroupController.php LidsController.php PaymentController.php PayMethodController.php PupilController.php ReportsController.php ScheduleController.php SubjectController.php TariffController.php TypicalScheduleController.php UserController.php)",
       "Bash(do sed -i 's/namespace app\\\\\\\\controllers;/namespace app\\\\\\\\modules\\\\\\\\crm\\\\\\\\controllers;/' \"$file\")",
       "Bash(ls:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss init)",
+      "Bash(./node_modules/.bin/tailwindcss:*)",
+      "Bash(node ./node_modules/@tailwindcss/cli/dist/index.mjs:*)"
     ]
   }
 }

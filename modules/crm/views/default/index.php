@@ -4,200 +4,180 @@
 /** @var array $data */
 /** @var string $week */
 
-use yii\helpers\Url;
+use app\helpers\OrganizationUrl;
+use yii\helpers\Html;
 
 $chartData = '[' . implode(',', $data) . ']';
 $js = <<<JS
-const ctx = document.getElementById('weekChart');
-const labels = $week;
-const data = {
-  labels: labels,
-  datasets: [{
-    label: 'Сумма платежей',
-    data: $chartData,
-    backgroundColor: 'rgba(254, 141, 0, 0.2)',
-    borderColor: 'rgb(254, 141, 0)',
-    borderWidth: 2,
-    borderRadius: 4,
-  }]
-};
-const config = {
-  type: 'bar',
-  data: data,
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false }
-    },
-    scales: {
-      y: { beginAtZero: true }
-    }
-  },
-};
-new Chart(ctx, config);
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('weekChart');
+    if (!ctx) return;
+
+    const labels = $week;
+    const data = {
+      labels: labels,
+      datasets: [{
+        label: 'Сумма платежей',
+        data: $chartData,
+        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+        borderColor: 'rgb(59, 130, 246)',
+        borderWidth: 2,
+        borderRadius: 6,
+      }]
+    };
+    const config = {
+      type: 'bar',
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(0,0,0,0.05)' }
+          },
+          x: {
+            grid: { display: false }
+          }
+        }
+      },
+    };
+    new Chart(ctx, config);
+});
 JS;
 $this->registerJs($js);
 ?>
 
-<style>
-.stat-card {
-    background: var(--bg-white);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    border: 1px solid var(--border);
-    transition: all var(--transition);
-}
-.stat-card:hover {
-    box-shadow: var(--shadow-md);
-}
-.stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    color: var(--text-white);
-}
-.stat-value {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-.stat-label {
-    color: var(--text-muted);
-    font-size: 0.875rem;
-}
-.chart-card {
-    background: var(--bg-white);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    border: 1px solid var(--border);
-}
-.chart-title {
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 1rem;
-}
-.quick-action {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1rem;
-    background: var(--bg-white);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-primary);
-    text-decoration: none;
-    transition: all var(--transition);
-}
-.quick-action:hover {
-    border-color: var(--primary);
-    box-shadow: var(--shadow);
-    text-decoration: none;
-    color: var(--primary);
-}
-.quick-action i {
-    width: 36px;
-    height: 36px;
-    background: var(--primary-light);
-    border-radius: var(--radius);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--primary);
-}
-</style>
+<div class="space-y-6">
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Pupils -->
+        <div class="card">
+            <div class="card-body">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-gray-900">—</div>
+                        <div class="text-sm text-gray-500">Учеников</div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<!-- Stats -->
-<div class="row g-4 mb-4">
-    <div class="col-sm-6 col-lg-3">
-        <div class="stat-card">
-            <div class="d-flex align-items-center gap-3">
-                <div class="stat-icon" style="background: var(--primary);">
-                    <i class="fas fa-user-graduate"></i>
-                </div>
-                <div>
-                    <div class="stat-value">—</div>
-                    <div class="stat-label">Учеников</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="stat-card">
-            <div class="d-flex align-items-center gap-3">
-                <div class="stat-icon" style="background: var(--info);">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div>
-                    <div class="stat-value">—</div>
-                    <div class="stat-label">Групп</div>
+        <!-- Groups -->
+        <div class="card">
+            <div class="card-body">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-lg bg-info-100 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-info-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-gray-900">—</div>
+                        <div class="text-sm text-gray-500">Групп</div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="stat-card">
-            <div class="d-flex align-items-center gap-3">
-                <div class="stat-icon" style="background: var(--success);">
-                    <i class="fas fa-money-bill-wave"></i>
-                </div>
-                <div>
-                    <div class="stat-value">—</div>
-                    <div class="stat-label">Доход (мес)</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="stat-card">
-            <div class="d-flex align-items-center gap-3">
-                <div class="stat-icon" style="background: var(--warning);">
-                    <i class="fas fa-exclamation-circle"></i>
-                </div>
-                <div>
-                    <div class="stat-value">—</div>
-                    <div class="stat-label">Должников</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="row g-4">
-    <!-- Chart -->
-    <div class="col-lg-8">
-        <div class="chart-card">
-            <h5 class="chart-title">Платежи за неделю</h5>
-            <div style="height: 300px;">
-                <canvas id="weekChart"></canvas>
+        <!-- Revenue -->
+        <div class="card">
+            <div class="card-body">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-lg bg-success-100 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-gray-900">—</div>
+                        <div class="text-sm text-gray-500">Доход (мес)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debtors -->
+        <div class="card">
+            <div class="card-body">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-lg bg-warning-100 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-warning-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-gray-900">—</div>
+                        <div class="text-sm text-gray-500">Должников</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="col-lg-4">
-        <div class="chart-card">
-            <h5 class="chart-title">Быстрые действия</h5>
-            <div class="d-flex flex-column gap-3">
-                <a href="<?= Url::to(['/crm/pupil/create']) ?>" class="quick-action">
-                    <i class="fas fa-user-plus"></i>
-                    <span>Добавить ученика</span>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Chart -->
+        <div class="lg:col-span-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-lg font-semibold text-gray-900">Платежи за неделю</h3>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="weekChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-lg font-semibold text-gray-900">Быстрые действия</h3>
+            </div>
+            <div class="card-body space-y-3">
+                <a href="<?= OrganizationUrl::to(['pupil/create']) ?>" class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors group">
+                    <div class="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center group-hover:bg-primary-200 transition-colors">
+                        <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                        </svg>
+                    </div>
+                    <span class="text-gray-700 group-hover:text-primary-700 font-medium">Добавить ученика</span>
                 </a>
-                <a href="<?= Url::to(['/crm/group/create']) ?>" class="quick-action">
-                    <i class="fas fa-users"></i>
-                    <span>Создать группу</span>
+
+                <a href="<?= OrganizationUrl::to(['group/create']) ?>" class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors group">
+                    <div class="w-10 h-10 rounded-lg bg-info-100 flex items-center justify-center group-hover:bg-info-200 transition-colors">
+                        <svg class="w-5 h-5 text-info-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <span class="text-gray-700 group-hover:text-primary-700 font-medium">Создать группу</span>
                 </a>
-                <a href="<?= Url::to(['/crm/payment/create']) ?>" class="quick-action">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>Принять платёж</span>
+
+                <a href="<?= OrganizationUrl::to(['payment/create']) ?>" class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors group">
+                    <div class="w-10 h-10 rounded-lg bg-success-100 flex items-center justify-center group-hover:bg-success-200 transition-colors">
+                        <svg class="w-5 h-5 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                    </div>
+                    <span class="text-gray-700 group-hover:text-primary-700 font-medium">Принять платёж</span>
                 </a>
-                <a href="<?= Url::to(['/crm/schedule/index']) ?>" class="quick-action">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Расписание</span>
+
+                <a href="<?= OrganizationUrl::to(['schedule/index']) ?>" class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors group">
+                    <div class="w-10 h-10 rounded-lg bg-warning-100 flex items-center justify-center group-hover:bg-warning-200 transition-colors">
+                        <svg class="w-5 h-5 text-warning-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <span class="text-gray-700 group-hover:text-primary-700 font-medium">Расписание</span>
                 </a>
             </div>
         </div>

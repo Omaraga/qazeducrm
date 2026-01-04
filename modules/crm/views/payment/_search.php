@@ -1,52 +1,37 @@
 <?php
 
+use app\helpers\OrganizationUrl;
 use yii\helpers\Html;
-use yii\widgets\ActiveForm;
-use kartik\date\DatePicker;
+
 /** @var yii\web\View $this */
 /** @var app\models\search\PaymentSearch $model */
-/** @var yii\widgets\ActiveForm $form */
-$js = <<<JS
-    $('#order_date_start_input').mask('99.99.9999');
-    $('#order_date_end_input').mask('99.99.9999');
-JS;
-$this->registerJs($js);
+
+// Convert dates for HTML5 date input
+$dateStart = $model->date_start ? date('Y-m-d', strtotime(str_replace('.', '-', $model->date_start))) : '';
+$dateEnd = $model->date_end ? date('Y-m-d', strtotime(str_replace('.', '-', $model->date_end))) : '';
 ?>
 
-<div class="payment-search">
-
-    <?php $form = ActiveForm::begin([
-        'action' => \app\helpers\OrganizationUrl::to(['payment/index']),
-        'method' => 'get',
-    ]); ?>
-    <div class="row my-3">
-        <?= $form->field($model, 'date_start', ['options' =>['class' => 'col-12 col-sm-4']])->widget(\kartik\date\DatePicker::className(), [
-            'type' => DatePicker::TYPE_INPUT,
-            'pluginOptions' => [
-                'autoclose' => true,
-                'format' => 'dd.mm.yyyy'
-            ],
-            'options' => ['autocomplete' => 'off', 'id' => 'order_date_start_input']
-        ]) ?>
-        <?= $form->field($model, 'date_end', ['options' =>['class' => 'col-12 col-sm-4']])->widget(\kartik\date\DatePicker::className(), [
-            'type' => DatePicker::TYPE_INPUT,
-            'pluginOptions' => [
-                'autoclose' => true,
-                'format' => 'dd.mm.yyyy'
-            ],
-            'options' => ['autocomplete' => 'off', 'id' => 'order_date_end_input']
-        ]) ?>
-        <?= $form->field($model, 'type', ['options' =>['class' => 'col-12 col-sm-8']])->dropDownList(\app\models\Payment::getTypeList(), [
-                'prompt' => Yii::t('main', 'Все')
-        ]);?>
+<form action="<?= OrganizationUrl::to(['payment/index']) ?>" method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <div>
+        <label class="form-label">Дата начала</label>
+        <input type="date" name="PaymentSearch[date_start]" value="<?= $dateStart ?>" class="form-input">
     </div>
-
-
-    <div class="form-group">
-        <?= Html::submitButton(Yii::t('main', 'Поиск'), ['class' => 'btn btn-primary']) ?>
-        <?= Html::a(Yii::t('main', 'Сбросить'), \app\helpers\OrganizationUrl::to(['payment/index']), ['class' => 'btn btn-outline-secondary']) ?>
+    <div>
+        <label class="form-label">Дата окончания</label>
+        <input type="date" name="PaymentSearch[date_end]" value="<?= $dateEnd ?>" class="form-input">
     </div>
-
-    <?php ActiveForm::end(); ?>
-
-</div>
+    <div>
+        <label class="form-label">Тип операции</label>
+        <?= Html::activeDropDownList($model, 'type', \app\models\Payment::getTypeList(), [
+            'class' => 'form-select',
+            'prompt' => 'Все операции'
+        ]) ?>
+    </div>
+    <div class="flex items-end gap-2 md:col-span-2">
+        <button type="submit" class="btn btn-primary">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            Поиск
+        </button>
+        <a href="<?= OrganizationUrl::to(['payment/index']) ?>" class="btn btn-secondary">Сбросить</a>
+    </div>
+</form>

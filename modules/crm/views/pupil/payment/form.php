@@ -1,75 +1,156 @@
 <?php
 
-use app\helpers\Lists;
-use app\models\forms\TeacherForm;
+use app\helpers\OrganizationUrl;
+use app\models\Payment;
+use app\models\PayMethod;
+use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
-use kartik\date\DatePicker;
-use kartik\datetime\DateTimePicker;
-use yii\bootstrap4\ActiveForm;
 
 /** @var yii\web\View $this */
 /** @var \app\models\forms\PaymentForm $model */
 /** @var \app\models\Pupil $pupil */
-/** @var yii\widgets\ActiveForm $form */
 
-$js = <<<JS
-    $('#order_date_input').mask('99.99.9999 99:99');
-JS;
-$this->registerJs($js);
-if ($model->type == \app\models\Payment::TYPE_PAY){
-    $this->title = 'Оплату ученику '.$pupil->fio;
-}else{
-    $this->title = 'Возврат ученику '.$pupil->fio;
+if ($model->type == Payment::TYPE_PAY) {
+    $this->title = 'Добавить оплату';
+    $subtitle = 'ученику ' . $pupil->fio;
+} else {
+    $this->title = 'Добавить возврат';
+    $subtitle = 'ученику ' . $pupil->fio;
 }
 
-$this->params['breadcrumbs'][] = ['label' => 'Оплата', 'url' => \app\helpers\OrganizationUrl::to(['pupil/payment', 'id' => $model->pupil_id])];
+$this->params['breadcrumbs'][] = ['label' => 'Оплата', 'url' => OrganizationUrl::to(['pupil/payment', 'id' => $model->pupil_id])];
 $this->params['breadcrumbs'][] = $this->title;
+
+// Convert datetime for HTML5 input
+$dateValue = '';
+if ($model->date) {
+    $timestamp = strtotime($model->date);
+    $dateValue = date('Y-m-d\TH:i', $timestamp);
+} else {
+    $dateValue = date('Y-m-d\TH:i');
+}
+
+$payMethods = ArrayHelper::map(PayMethod::find()->byOrganization()->all(), 'id', 'name');
+$purposes = Payment::getPurposeList();
 ?>
 
-<div class="payment-form">
-
-    <h1><?= Html::encode($this->title) ?></h1>
-    <?php $form = ActiveForm::begin(); ?>
-    <div class="card mb-3">
-        <div class="card-header">
-            <?if($model->type == \app\models\Payment::TYPE_PAY):?>
-                <?=Yii::t('main', 'Оплата');?>
-            <?else:?>
-                <?=Yii::t('main', 'Возврат');?>
-            <?endif;?>
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900"><?= Html::encode($this->title) ?></h1>
+            <p class="text-gray-500 mt-1"><?= Html::encode($subtitle) ?></p>
         </div>
-        <div class="card-body">
-            <?if($model->type == \app\models\Payment::TYPE_PAY):?>
-                <div class="row">
-                    <?= $form->field($model, 'purpose_id', ['options' =>['class' => 'col-12 col-sm-4']])->dropDownList(\app\models\Payment::getPurposeList()) ?>
-                    <?= $form->field($model, 'method_id', ['options' =>['class' => 'col-12 col-sm-4']])->dropDownList(\yii\helpers\ArrayHelper::map(\app\models\PayMethod::find()->byOrganization()->all(), 'id', 'name')) ?>
-                </div>
-            <?endif;?>
-            <div class="row">
-                <?if($model->type == \app\models\Payment::TYPE_PAY):?>
-                    <?= $form->field($model, 'number', ['options' =>['class' => 'col-12 col-sm-4']])->textInput() ?>
-                <?endif;?>
-                <?= $form->field($model, 'amount', ['options' =>['class' => 'col-12 col-sm-4']])->textInput(['type' => 'number']) ?>
+        <div>
+            <a href="<?= OrganizationUrl::to(['pupil/payment', 'id' => $model->pupil_id]) ?>" class="btn btn-secondary">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Назад к оплатам
+            </a>
+        </div>
+    </div>
 
-                <?=$form->field($model, 'date', ['options' =>['class' => 'col-12 col-sm-4']])->widget(DateTimePicker::classname(), [
-                    'options' => ['autocomplete' => 'off', 'id' => 'order_date_input'],
-                    'type' => \kartik\datetime\DateTimePicker::TYPE_INPUT,
-                    'pluginOptions' => [
-                        'autoclose' => true,
-                        'format' => 'dd.mm.yyyy hh:ii'
-                    ]
-                ]);?>
-                <?= $form->field($model, 'comment', ['options' => ['class' => 'col-12']])->textarea();?>
+    <form action="" method="post" class="space-y-6">
+        <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
+        <input type="hidden" name="PaymentForm[type]" value="<?= $model->type ?>">
+        <input type="hidden" name="PaymentForm[pupil_id]" value="<?= $model->pupil_id ?>">
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <?php if ($model->type == Payment::TYPE_PAY): ?>
+                        <?= Yii::t('main', 'Оплата') ?>
+                    <?php else: ?>
+                        <?= Yii::t('main', 'Возврат') ?>
+                    <?php endif; ?>
+                </h3>
             </div>
+            <div class="card-body">
+                <?php if ($model->type == Payment::TYPE_PAY): ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="form-label" for="paymentform-purpose_id">Назначение платежа <span class="text-danger-500">*</span></label>
+                        <?= Html::activeDropDownList($model, 'purpose_id', $purposes, [
+                            'class' => 'form-select',
+                            'id' => 'paymentform-purpose_id',
+                        ]) ?>
+                        <?php if ($model->hasErrors('purpose_id')): ?>
+                            <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('purpose_id') ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <div>
+                        <label class="form-label" for="paymentform-method_id">Способ оплаты <span class="text-danger-500">*</span></label>
+                        <?= Html::activeDropDownList($model, 'method_id', $payMethods, [
+                            'class' => 'form-select',
+                            'id' => 'paymentform-method_id',
+                        ]) ?>
+                        <?php if ($model->hasErrors('method_id')): ?>
+                            <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('method_id') ?></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
 
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <?php if ($model->type == Payment::TYPE_PAY): ?>
+                    <div>
+                        <label class="form-label" for="paymentform-number">Номер квитанции</label>
+                        <?= Html::activeTextInput($model, 'number', [
+                            'class' => 'form-input',
+                            'id' => 'paymentform-number',
+                            'placeholder' => 'Номер документа'
+                        ]) ?>
+                        <?php if ($model->hasErrors('number')): ?>
+                            <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('number') ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
 
+                    <div>
+                        <label class="form-label" for="paymentform-amount">Сумма (₸) <span class="text-danger-500">*</span></label>
+                        <?= Html::activeTextInput($model, 'amount', [
+                            'class' => 'form-input',
+                            'id' => 'paymentform-amount',
+                            'type' => 'number',
+                            'min' => '0',
+                            'placeholder' => '0'
+                        ]) ?>
+                        <?php if ($model->hasErrors('amount')): ?>
+                            <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('amount') ?></p>
+                        <?php endif; ?>
+                    </div>
+
+                    <div>
+                        <label class="form-label" for="paymentform-date">Дата и время <span class="text-danger-500">*</span></label>
+                        <input type="datetime-local" name="PaymentForm[date]" id="paymentform-date" class="form-input" value="<?= $dateValue ?>" autocomplete="off">
+                        <?php if ($model->hasErrors('date')): ?>
+                            <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('date') ?></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <label class="form-label" for="paymentform-comment">Комментарий</label>
+                    <?= Html::activeTextarea($model, 'comment', [
+                        'class' => 'form-input',
+                        'id' => 'paymentform-comment',
+                        'rows' => 3,
+                        'placeholder' => 'Дополнительная информация...'
+                    ]) ?>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div class="form-group">
-        <?= Html::submitButton(Yii::t('main', 'Сохранить'), ['class' => 'btn btn-success']) ?>
-    </div>
-
-    <?php ActiveForm::end(); ?>
-
+        <!-- Actions -->
+        <div class="flex items-center gap-3">
+            <button type="submit" class="btn <?= $model->type == Payment::TYPE_PAY ? 'btn-primary' : 'btn-warning' ?>">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <?= Yii::t('main', 'Сохранить') ?>
+            </button>
+            <a href="<?= OrganizationUrl::to(['pupil/payment', 'id' => $model->pupil_id]) ?>" class="btn btn-secondary">Отмена</a>
+        </div>
+    </form>
 </div>

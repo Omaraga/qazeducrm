@@ -1,213 +1,311 @@
 <?php
 
-use yii\bootstrap4\Html;
-use yii\bootstrap4\ActiveForm;
-use app\models\relations\TariffSubject;
+use app\helpers\OrganizationUrl;
+use app\models\forms\EducationForm;
+use app\models\Group;
+use app\models\Tariff;
 use yii\helpers\ArrayHelper;
-use kartik\date\DatePicker;
+use yii\helpers\Html;
+
 /** @var yii\web\View $this */
 /** @var \app\models\forms\EducationForm $model */
-/** @var yii\widgets\ActiveForm $form */
 
-$tariffUrl = \app\helpers\OrganizationUrl::to(['tariff/get-info']);
-$js = <<<JS
-    $('#date_start_input').mask('99.99.9999');
-    $('#date_end_input').mask('99.99.9999');
-    $('#edu-sale').change(function (e){
-        e.preventDefault();
-        let val = parseInt($(this).val());
-        if (val < 0){
-            val = 0;
-        }else if(val > 100){
-            val = 100
-        }
-        $(this).val(val);
-    })
-    let loadGroups = function (subjects){
-        let scenario = $('#scenario').val()
-        if (scenario !== 'edit' && subjects.length > 0){
-            let i = 0;
-            for (let i = 0; i < subjects.length; i++){
-                let templateClone = $('#education-table').find('.group-block').last().clone();
-                subjects[i] = {id : subjects[i], temp: templateClone};
-            }
-            
-            $('#education-table').find('.group-block').each(function (){
-                $(this).remove();
-            })
-            console.log(subjects);
-            $(subjects).each(function (){
-                console.log('inpu')
-                $(this.temp).find('input[name],select[name]').each(function (e){
-                    let size = $('#education-table').find('tbody').children('.group-block').length + 1;
-                    var prefix = "EducationForm[groups][" + i + "]";
-                    this.name = this.name.replace(/EducationForm\[groups\]\[\d+\]/, prefix);
-                    $(this).find('option:selected').removeAttr('selected');
-                });
-                $(this.temp).find('.subject_input').find('option[value='+this.id+']').attr({'selected':true});
-                $('#education-table').find('tbody').append(this.temp);
-                i++;
-            })
-            
-            
-        }
-    }
-    let updateInfo = function (isLoadSubjects = false){
-       let tariffId = $('#educationform-tariff_id').find('option:selected').val();
-       let dateStart = $('#date_start_input').val();
-       let dateEnd = $('#date_end_input').val();
-       let sale = $('#edu-sale').val();
-       $.ajax({
-            'url': '/tariff/get-info',
-            'type': 'post',
-            'data': {id : tariffId, date_start : dateStart, date_end : dateEnd, sale : sale},
-            success: function(data){
-                data = JSON.parse(data);
-                if (data.id){
-                    $('#divPaymentDescription').html(data.info_text);
-                    if (data.duration == 3){
-                        $('.field-date_end_input').hide();
-                    }else{
-                        $('.field-date_end_input').show();
-                    }
-                    $('#group-card').removeClass('d-none');
-                    if (isLoadSubjects){
-                        loadGroups(data.subjects)
-                    }
-                }
-                console.log(data);
-            },
-            error: function(data){
-            
-                alert('Error');
-            }
-        });
-    }
-    $('#educationform-tariff_id').change(function (e){
-       updateInfo(true);
-    });
-    $('#date_start_input').change(function (e){
-       updateInfo();
-    });
-    $('#date_end_input').change(function (e){
-       updateInfo();
-    });
-    $('#edu-sale').change(function (e){
-        updateInfo();
-    })
-    
-    updateInfo();
-    $('#submit-btn').click(function (e){
-        e.preventDefault();
-        $('input[disabled],select[disabled]').each(function (e){
-            $(this).removeAttr('disabled')
-        })
-        $('#education-form').submit();
-    })
-    
-    
-JS;
-$this->registerJs($js);
-
-if ($model->getScenario() === \app\models\forms\EducationForm::TYPE_EDIT){
-    $this->title = 'Редактировать обучение: ';
-}else if($model->getScenario() === \app\models\forms\EducationForm::TYPE_COPY){
-    $this->title = 'Дублировать обучение: ';
-}else{
+if ($model->getScenario() === EducationForm::TYPE_EDIT) {
+    $this->title = 'Редактировать обучение';
+} elseif ($model->getScenario() === EducationForm::TYPE_COPY) {
+    $this->title = 'Дублировать обучение';
+} else {
     $this->title = 'Добавить обучение';
 }
 
-$this->params['breadcrumbs'][] = ['label' => 'Обучение', 'url' => \app\helpers\OrganizationUrl::to(['pupil/edu', 'id' => $model->pupil_id])];
+$this->params['breadcrumbs'][] = ['label' => 'Обучение', 'url' => OrganizationUrl::to(['pupil/edu', 'id' => $model->pupil_id])];
+$this->params['breadcrumbs'][] = $this->title;
+
+$tariffs = ArrayHelper::map(Tariff::find()->byOrganization()->all(), 'id', 'nameFull');
+$groups = ArrayHelper::map(Group::find()->byOrganization()->all(), 'id', 'nameFull');
+$subjects = Tariff::getSubjectsMap();
+$isEdit = $model->getScenario() == EducationForm::TYPE_EDIT;
+
+// Convert date formats for HTML5 date input
+$dateStart = $model->date_start ? date('Y-m-d', strtotime(str_replace('.', '-', $model->date_start))) : '';
+$dateEnd = $model->date_end ? date('Y-m-d', strtotime(str_replace('.', '-', $model->date_end))) : '';
 ?>
 
-<div class="edu-form">
-    <input type="hidden" id="scenario" value="<?=$model->getScenario();?>">
-
-    <?php $form = ActiveForm::begin(['action' => $model->getActionUrl(), 'method' => 'POST', 'id' => 'education-form']); ?>
-
-    <div class="card mb-3">
-        <div class="card-header font-weight-bold">
-            <?=$this->title?>
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900"><?= Html::encode($this->title) ?></h1>
+            <p class="text-gray-500 mt-1">Заполните данные об обучении</p>
         </div>
-        <div class="card-body">
-            <div class="row">
-                <?= $form->field($model, 'tariff_id', ['options' =>['class' => 'col-12']])->widget(\kartik\select2\Select2::classname(), [
-                    'data' => ArrayHelper::map(\app\models\Tariff::find()->all(), 'id', 'nameFull'),
-                    'options' => [
-                        'placeholder' => 'Выберите тариф',
-                        'disabled' => $model->getScenario() == \app\models\forms\EducationForm::TYPE_EDIT,
-                    ],
-                    'pluginOptions' => [
-                        'allowClear' => false
-                    ],
-                ]) ?>
-            </div>
-            <div class="card my-3 <?=$model->tariff_id ? '': '';?>" id="group-card">
-                <div class="card-header">
-                    <?=Yii::t('main', 'Выберите группы согласно тарифа');?>
-                </div>
-                <div class="card-body">
-                    <table class="table table-bordered" id="education-table">
-                        <thead>
-                        <tr style="background: #e4e2ff;">
-                            <th scope="col"><?=Yii::t('main', 'Предмет');?></th>
-                            <th scope="col"><?=Yii::t('main', 'Группа');?></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                            <?foreach ($model->groups ? : [new \app\models\relations\EducationGroup()] as $k => $group):?>
-                                <tr class="group-block">
-                                    <td class="td-subject"><?=$form->field($model, "groups[$k][subject_id]")->dropDownList(\app\models\Tariff::getSubjectsMap(), [
-                                            'disabled' => true,
-                                            'class' => 'form-control subject_input disabled'
-                                        ])->label(false)?></td>
+        <div>
+            <a href="<?= OrganizationUrl::to(['pupil/edu', 'id' => $model->pupil_id]) ?>" class="btn btn-secondary">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Назад к обучению
+            </a>
+        </div>
+    </div>
 
-                                    <td class="td-lesson"><?= $form->field($model, "groups[$k][group_id]")->dropDownList(ArrayHelper::map(\app\models\Group::find()->byOrganization()->all(), 'id', 'nameFull'), [
-                                            'disabled' => $model->getScenario() == \app\models\forms\EducationForm::TYPE_EDIT,
-                                            'prompt' => Yii::t('main', 'Выберите группу'),
-                                        ])->label(false) ?></td>
-                                </tr>
-                            <?endforeach;?>
+    <form action="<?= $model->getActionUrl() ?>" method="post" id="education-form" class="space-y-6">
+        <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
+        <input type="hidden" id="scenario" value="<?= $model->getScenario() ?>">
+
+        <!-- Tariff Selection -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-lg font-semibold text-gray-900"><?= Yii::t('main', 'Тариф') ?></h3>
+            </div>
+            <div class="card-body">
+                <div>
+                    <label class="form-label" for="educationform-tariff_id">Выберите тариф <span class="text-danger-500">*</span></label>
+                    <?= Html::activeDropDownList($model, 'tariff_id', $tariffs, [
+                        'class' => 'form-select',
+                        'id' => 'educationform-tariff_id',
+                        'prompt' => 'Выберите тариф',
+                        'disabled' => $isEdit,
+                    ]) ?>
+                    <?php if ($model->hasErrors('tariff_id')): ?>
+                        <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('tariff_id') ?></p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Groups Selection -->
+        <div class="card" id="group-card" style="<?= $model->tariff_id ? '' : 'display: none;' ?>">
+            <div class="card-header">
+                <h3 class="text-lg font-semibold text-gray-900"><?= Yii::t('main', 'Выберите группы согласно тарифа') ?></h3>
+            </div>
+            <div class="card-body">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200" id="education-table">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><?= Yii::t('main', 'Предмет') ?></th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><?= Yii::t('main', 'Группа') ?></th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <?php foreach ($model->groups ?: [new \app\models\relations\EducationGroup()] as $k => $group): ?>
+                            <tr class="group-block">
+                                <td class="px-4 py-3">
+                                    <select name="EducationForm[groups][<?= $k ?>][subject_id]" class="form-select subject_input" disabled>
+                                        <option value="">Выберите предмет</option>
+                                        <?php foreach ($subjects as $id => $name): ?>
+                                            <option value="<?= $id ?>" <?= ($group->subject_id ?? '') == $id ? 'selected' : '' ?>><?= Html::encode($name) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <select name="EducationForm[groups][<?= $k ?>][group_id]" class="form-select group_input" <?= $isEdit ? 'disabled' : '' ?>>
+                                        <option value=""><?= Yii::t('main', 'Выберите группу') ?></option>
+                                        <?php foreach ($groups as $id => $name): ?>
+                                            <option value="<?= $id ?>" <?= ($group->group_id ?? '') == $id ? 'selected' : '' ?>><?= Html::encode($name) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
             </div>
-            <div class="row">
-                <?= $form->field($model, 'sale', ['options' =>['class' => 'col-12 col-sm-4']])->textInput([
-                    'type' => 'number',
-                    'id' => 'edu-sale',
-                    'max' => '100'
-                ]) ?>
-                <?= $form->field($model, 'date_start', ['options' =>['class' => 'col-12 col-sm-4']])->widget(\kartik\date\DatePicker::className(), [
-                    'type' => DatePicker::TYPE_INPUT,
-                    'pluginOptions' => [
-                        'autoclose' => true,
-                        'format' => 'dd.mm.yyyy'
-                    ],
-                    'options' => ['autocomplete' => 'off', 'id' => 'date_start_input']
-                ]) ?>
-                <?= $form->field($model, 'date_end', ['options' =>['class' => 'col-12 col-sm-4']])->widget(\kartik\date\DatePicker::className(), [
-                    'type' => DatePicker::TYPE_INPUT,
-                    'pluginOptions' => [
-                        'autoclose' => true,
-                        'format' => 'dd.mm.yyyy'
-                    ],
-                    'options' => ['autocomplete' => 'off', 'id' => 'date_end_input']
-                ]) ?>
-            </div>
-            <?= $form->field($model, 'comment')->textarea(['rows' => 6]) ?>
         </div>
-    </div>
 
-    <div id="divPaymentDescription" class="alert alert-warning mb-4 mt-2" role="alert" style="margin-bottom: 0;">Выберите тариф для расчета стоимости</div>
+        <!-- Dates and Settings -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-lg font-semibold text-gray-900"><?= Yii::t('main', 'Период и условия') ?></h3>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="form-label" for="date_start_input"><?= $model->getAttributeLabel('date_start') ?> <span class="text-danger-500">*</span></label>
+                        <input type="date" name="EducationForm[date_start]" id="date_start_input" class="form-input" value="<?= $dateStart ?>" autocomplete="off">
+                        <?php if ($model->hasErrors('date_start')): ?>
+                            <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('date_start') ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <div id="field-date_end">
+                        <label class="form-label" for="date_end_input"><?= $model->getAttributeLabel('date_end') ?></label>
+                        <input type="date" name="EducationForm[date_end]" id="date_end_input" class="form-input" value="<?= $dateEnd ?>" autocomplete="off">
+                        <?php if ($model->hasErrors('date_end')): ?>
+                            <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('date_end') ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <div>
+                        <label class="form-label" for="edu-sale"><?= $model->getAttributeLabel('sale') ?> (%)</label>
+                        <input type="number" name="EducationForm[sale]" id="edu-sale" class="form-input" value="<?= $model->sale ?>" min="0" max="100" placeholder="0">
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="form-label" for="educationform-comment"><?= $model->getAttributeLabel('comment') ?></label>
+                    <textarea name="EducationForm[comment]" id="educationform-comment" class="form-input" rows="3"><?= Html::encode($model->comment) ?></textarea>
+                </div>
+            </div>
+        </div>
 
+        <!-- Payment Info Alert -->
+        <div id="divPaymentDescription" class="rounded-lg bg-warning-50 border border-warning-200 p-4 text-warning-800">
+            Выберите тариф для расчета стоимости
+        </div>
 
-
-    <div class="form-group">
-        <?= Html::submitButton( Yii::t('main', 'Сохранить'), ['class' => 'btn btn-success', 'id' => 'submit-btn']) ?>
-    </div>
-
-    <?php ActiveForm::end(); ?>
-
+        <!-- Actions -->
+        <div class="flex items-center gap-3">
+            <button type="button" id="submit-btn" class="btn btn-primary">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <?= Yii::t('main', 'Сохранить') ?>
+            </button>
+            <a href="<?= OrganizationUrl::to(['pupil/edu', 'id' => $model->pupil_id]) ?>" class="btn btn-secondary">Отмена</a>
+        </div>
+    </form>
 </div>
 
+<?php
+$js = <<<JS
+document.addEventListener('DOMContentLoaded', function() {
+    const tariffSelect = document.getElementById('educationform-tariff_id');
+    const dateStartInput = document.getElementById('date_start_input');
+    const dateEndInput = document.getElementById('date_end_input');
+    const saleInput = document.getElementById('edu-sale');
+    const groupCard = document.getElementById('group-card');
+    const dateEndField = document.getElementById('field-date_end');
+    const paymentDescription = document.getElementById('divPaymentDescription');
+    const submitBtn = document.getElementById('submit-btn');
+    const form = document.getElementById('education-form');
+    const scenario = document.getElementById('scenario').value;
+
+    // Validate sale input
+    saleInput.addEventListener('change', function() {
+        let val = parseInt(this.value) || 0;
+        if (val < 0) val = 0;
+        if (val > 100) val = 100;
+        this.value = val;
+    });
+
+    // Format date for display (dd.mm.yyyy)
+    function formatDateForApi(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return day + '.' + month + '.' + year;
+    }
+
+    // Load groups based on tariff subjects
+    function loadGroups(subjects) {
+        if (scenario === 'edit' || !subjects || subjects.length === 0) return;
+
+        const tbody = document.querySelector('#education-table tbody');
+        const templateRow = tbody.querySelector('.group-block').cloneNode(true);
+
+        // Clear existing rows
+        tbody.innerHTML = '';
+
+        subjects.forEach(function(subjectId, index) {
+            const row = templateRow.cloneNode(true);
+
+            // Update field names
+            row.querySelectorAll('select').forEach(function(select) {
+                select.name = select.name.replace(/\[\d+\]/, '[' + index + ']');
+            });
+
+            // Set subject
+            const subjectSelect = row.querySelector('.subject_input');
+            subjectSelect.value = subjectId;
+
+            // Clear group selection
+            const groupSelect = row.querySelector('.group_input');
+            groupSelect.value = '';
+
+            tbody.appendChild(row);
+        });
+    }
+
+    // Update tariff info via AJAX
+    function updateInfo(isLoadSubjects) {
+        const tariffId = tariffSelect.value;
+        const dateStart = formatDateForApi(dateStartInput.value);
+        const dateEnd = formatDateForApi(dateEndInput.value);
+        const sale = saleInput.value || 0;
+
+        if (!tariffId) {
+            groupCard.style.display = 'none';
+            paymentDescription.innerHTML = 'Выберите тариф для расчета стоимости';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('id', tariffId);
+        formData.append('date_start', dateStart);
+        formData.append('date_end', dateEnd);
+        formData.append('sale', sale);
+        formData.append('<?= Yii::$app->request->csrfParam ?>', '<?= Yii::$app->request->csrfToken ?>');
+
+        fetch('/tariff/get-info', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(function(data) {
+            if (data.id) {
+                paymentDescription.innerHTML = data.info_text;
+
+                // Toggle date_end field based on duration type
+                if (data.duration == 3) {
+                    dateEndField.style.display = 'none';
+                } else {
+                    dateEndField.style.display = 'block';
+                }
+
+                groupCard.style.display = 'block';
+
+                if (isLoadSubjects && data.subjects) {
+                    loadGroups(data.subjects);
+                }
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+        });
+    }
+
+    // Event listeners
+    tariffSelect.addEventListener('change', function() {
+        updateInfo(true);
+    });
+
+    dateStartInput.addEventListener('change', function() {
+        updateInfo(false);
+    });
+
+    dateEndInput.addEventListener('change', function() {
+        updateInfo(false);
+    });
+
+    saleInput.addEventListener('change', function() {
+        updateInfo(false);
+    });
+
+    // Initial load
+    if (tariffSelect.value) {
+        updateInfo(false);
+    }
+
+    // Submit handler - enable disabled fields before submit
+    submitBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        form.querySelectorAll('input[disabled], select[disabled]').forEach(function(el) {
+            el.removeAttribute('disabled');
+        });
+        form.submit();
+    });
+});
+JS;
+$this->registerJs($js);
+?>

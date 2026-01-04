@@ -6,10 +6,9 @@ use app\models\Lids;
 use app\models\Organizations;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use app\models\Pupil;
 
 /**
- * PupilSearch represents the model behind the search form of `app\models\Pupil`.
+ * LidsSearch represents the model behind the search form of `app\models\Lids`.
  */
 class LidsSearch extends Lids
 {
@@ -19,10 +18,10 @@ class LidsSearch extends Lids
     public function rules()
     {
         return [
-            [['class_id', 'total_point', 'total_sum', 'sale'], 'integer'],
+            [['class_id', 'total_point', 'total_sum', 'sale', 'status', 'manager_id'], 'integer'],
             ['date', 'date', 'format' => 'php:d.m.Y'],
-            [['fio', 'phone'], 'string'],
-            [['fio', 'class_id'], 'safe'],
+            [['fio', 'phone', 'source'], 'string'],
+            [['fio', 'class_id', 'status', 'source', 'next_contact_date'], 'safe'],
         ];
     }
 
@@ -31,7 +30,6 @@ class LidsSearch extends Lids
      */
     public function scenarios()
     {
-        // bypass scenarios() implementation in the parent class
         return Model::scenarios();
     }
 
@@ -44,40 +42,49 @@ class LidsSearch extends Lids
      */
     public function search($params)
     {
-        $query = Lids::find()->andWhere(['organization_id' => Organizations::getCurrentOrganizationId()]);
-
-        // add conditions that should always apply here
+        $query = Lids::find()
+            ->andWhere(['lids.organization_id' => Organizations::getCurrentOrganizationId()])
+            ->andWhere(['!=', 'lids.is_deleted', 1]);
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'pagination' => [
                 'pageSize' => 20
             ],
+            'sort' => [
+                'defaultOrder' => [
+                    'created_at' => SORT_DESC,
+                ],
+            ],
         ]);
 
         $this->load($params);
 
         if (!$this->validate()) {
-            // uncomment the following line if you do not want to return any records when validation fails
-            // $query->where('0=1');
             return $dataProvider;
         }
 
-        // grid filtering conditions
-//        $query->andFilterWhere([
-//            'id' => $this->id,
-//            'fio' => $this->fio,
-//            'class_id' => $this->class_id,
-//        ]);
-        if ($this->fio && strlen($this->fio) > 0){
-            $query->andFilterWhere(['like', "LOWER(fio)", mb_strtolower(trim($this->fio), "UTF-8")]);
+        // Фильтр по ФИО
+        if ($this->fio && strlen($this->fio) > 0) {
+            $query->andFilterWhere(['like', 'LOWER(fio)', mb_strtolower(trim($this->fio), 'UTF-8')]);
         }
 
-        if ($this->phone && strlen($this->phone) > 0){
+        // Фильтр по телефону
+        if ($this->phone && strlen($this->phone) > 0) {
             $query->andFilterWhere(['like', 'phone', $this->phone]);
         }
 
+        // Фильтр по статусу
+        $query->andFilterWhere(['status' => $this->status]);
 
+        // Фильтр по источнику
+        $query->andFilterWhere(['source' => $this->source]);
+
+        // Фильтр по менеджеру
+        $query->andFilterWhere(['manager_id' => $this->manager_id]);
+
+        // Фильтр по классу
+        $query->andFilterWhere(['class_id' => $this->class_id]);
 
         return $dataProvider;
     }

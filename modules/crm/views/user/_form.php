@@ -1,77 +1,185 @@
 <?php
 
 use app\helpers\Lists;
-use app\models\forms\TeacherForm;
+use app\helpers\OrganizationUrl;
+use app\models\User;
 use yii\helpers\Html;
-use kartik\date\DatePicker;
-use yii\bootstrap4\ActiveForm;
 
 /** @var yii\web\View $this */
-/** @var TeacherForm $model */
-/** @var yii\widgets\ActiveForm $form */
+/** @var app\models\forms\TeacherForm $model */
 
-$js = <<<JS
-    $('#birth_date_input').mask('99.99.9999');
-    $('#teacherform-phone').mask("+7(999)9999999");
-    $('#teacherform-home_phone').mask("+7(999)9999999");
-JS;
-$this->registerJs($js);
+// Convert date format for HTML5 date input
+$birthDate = '';
+if ($model->birth_date) {
+    $timestamp = strtotime(str_replace('.', '-', $model->birth_date));
+    if ($timestamp) {
+        $birthDate = date('Y-m-d', $timestamp);
+    }
+}
 ?>
 
-<div class="user-form">
+<form action="" method="post" class="space-y-6">
+    <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
 
-    <?php $form = ActiveForm::begin(); ?>
-    <div class="card mb-3">
+    <!-- Basic Info -->
+    <div class="card">
         <div class="card-header">
-            <?=Yii::t('main', 'Основные данные');?>
+            <h3 class="text-lg font-semibold text-gray-900"><?= Yii::t('main', 'Основные данные') ?></h3>
         </div>
         <div class="card-body">
-            <div class="row">
-                <?= $form->field($model, 'username', ['options' =>['class' => 'col-12 col-sm-4']])->textInput() ?>
-                <?= $form->field($model, 'iin', ['options' =>['class' => 'col-12 col-sm-4']])->textInput() ?>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="form-label" for="teacherform-username">Логин <span class="text-danger-500">*</span></label>
+                    <?= Html::activeTextInput($model, 'username', [
+                        'class' => 'form-input',
+                        'id' => 'teacherform-username',
+                        'placeholder' => 'Введите логин'
+                    ]) ?>
+                    <?php if ($model->hasErrors('username')): ?>
+                        <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('username') ?></p>
+                    <?php endif; ?>
+                </div>
+                <div>
+                    <label class="form-label" for="teacherform-iin">ИИН</label>
+                    <?= Html::activeTextInput($model, 'iin', [
+                        'class' => 'form-input',
+                        'id' => 'teacherform-iin',
+                        'placeholder' => '000000000000',
+                        'maxlength' => 12
+                    ]) ?>
+                    <?php if ($model->hasErrors('iin')): ?>
+                        <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('iin') ?></p>
+                    <?php endif; ?>
+                </div>
             </div>
-            <div class="row">
-                <?= $form->field($model, 'first_name', ['options' =>['class' => 'col-12 col-sm-4']])->textInput() ?>
-                <?= $form->field($model, 'last_name', ['options' =>['class' => 'col-12 col-sm-4']])->textInput() ?>
-                <?= $form->field($model, 'middle_name', ['options' =>['class' => 'col-12 col-sm-4']])->textInput() ?>
-                <?= $form->field($model, 'sex', ['options' =>['class' => 'col-12 col-sm-4']])->dropDownList(Lists::getGenders()) ?>
-                <?= $form->field($model, 'birth_date', ['options' =>['class' => 'col-12 col-sm-4']])->widget(\kartik\date\DatePicker::className(), [
-                    'type' => DatePicker::TYPE_INPUT,
-                    'pluginOptions' => [
-                        'autoclose' => true,
-                        'format' => 'dd.mm.yyyy'
-                    ],
-                    'options' => ['autocomplete' => 'off', 'id' => 'birth_date_input']
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="form-label" for="teacherform-last_name">Фамилия <span class="text-danger-500">*</span></label>
+                    <?= Html::activeTextInput($model, 'last_name', [
+                        'class' => 'form-input',
+                        'id' => 'teacherform-last_name',
+                        'placeholder' => 'Иванов'
+                    ]) ?>
+                    <?php if ($model->hasErrors('last_name')): ?>
+                        <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('last_name') ?></p>
+                    <?php endif; ?>
+                </div>
+                <div>
+                    <label class="form-label" for="teacherform-first_name">Имя <span class="text-danger-500">*</span></label>
+                    <?= Html::activeTextInput($model, 'first_name', [
+                        'class' => 'form-input',
+                        'id' => 'teacherform-first_name',
+                        'placeholder' => 'Иван'
+                    ]) ?>
+                    <?php if ($model->hasErrors('first_name')): ?>
+                        <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('first_name') ?></p>
+                    <?php endif; ?>
+                </div>
+                <div>
+                    <label class="form-label" for="teacherform-middle_name">Отчество</label>
+                    <?= Html::activeTextInput($model, 'middle_name', [
+                        'class' => 'form-input',
+                        'id' => 'teacherform-middle_name',
+                        'placeholder' => 'Иванович'
+                    ]) ?>
+                </div>
+                <div>
+                    <label class="form-label" for="teacherform-sex">Пол</label>
+                    <?= Html::activeDropDownList($model, 'sex', Lists::getGenders(), [
+                        'class' => 'form-select',
+                        'id' => 'teacherform-sex',
+                        'prompt' => 'Выберите пол'
+                    ]) ?>
+                </div>
+                <div>
+                    <label class="form-label" for="teacherform-birth_date">Дата рождения</label>
+                    <input type="date" name="TeacherForm[birth_date]" id="teacherform-birth_date" class="form-input" value="<?= $birthDate ?>" autocomplete="off">
+                    <?php if ($model->hasErrors('birth_date')): ?>
+                        <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('birth_date') ?></p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="text-lg font-semibold text-gray-900"><?= Yii::t('main', 'Контактные данные') ?></h3>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="form-label" for="teacherform-email">Email</label>
+                    <?= Html::activeTextInput($model, 'email', [
+                        'class' => 'form-input',
+                        'id' => 'teacherform-email',
+                        'type' => 'email',
+                        'placeholder' => 'example@mail.com'
+                    ]) ?>
+                    <?php if ($model->hasErrors('email')): ?>
+                        <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('email') ?></p>
+                    <?php endif; ?>
+                </div>
+                <div>
+                    <label class="form-label" for="teacherform-phone">Телефон</label>
+                    <?= Html::activeTextInput($model, 'phone', [
+                        'class' => 'form-input',
+                        'id' => 'teacherform-phone',
+                        'type' => 'tel',
+                        'placeholder' => '77001234567'
+                    ]) ?>
+                    <?php if ($model->hasErrors('phone')): ?>
+                        <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('phone') ?></p>
+                    <?php endif; ?>
+                </div>
+                <div>
+                    <label class="form-label" for="teacherform-home_phone">Домашний телефон</label>
+                    <?= Html::activeTextInput($model, 'home_phone', [
+                        'class' => 'form-input',
+                        'id' => 'teacherform-home_phone',
+                        'type' => 'tel',
+                        'placeholder' => '77272345678'
+                    ]) ?>
+                </div>
+            </div>
+            <div class="mt-4">
+                <label class="form-label" for="teacherform-address">Адрес</label>
+                <?= Html::activeTextInput($model, 'address', [
+                    'class' => 'form-input',
+                    'id' => 'teacherform-address',
+                    'placeholder' => 'г. Алматы, ул. Примерная, д. 1'
                 ]) ?>
             </div>
-
-
         </div>
     </div>
 
-    <div class="card mb-3">
+    <!-- System Settings -->
+    <div class="card">
         <div class="card-header">
-            <?=Yii::t('main', 'Контактные данные');?>
+            <h3 class="text-lg font-semibold text-gray-900"><?= Yii::t('main', 'Системные сведения') ?></h3>
         </div>
-        <div class="card-body row">
-            <?= $form->field($model, 'email',  ['options' =>['class' => 'col-12 col-sm-4']])->textInput() ?>
-            <?= $form->field($model, 'phone', ['options' =>['class' => 'col-12 col-sm-4']])->textInput() ?>
-            <?= $form->field($model, 'home_phone',['options' =>['class' => 'col-12 col-sm-4']])->textInput() ?>
-            <?= $form->field($model, 'address',['options' =>['class' => 'col-12']])->textInput() ?>
+        <div class="card-body">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="form-label" for="teacherform-status">Статус</label>
+                    <?= Html::activeDropDownList($model, 'status', User::getStatusList(), [
+                        'class' => 'form-select',
+                        'id' => 'teacherform-status'
+                    ]) ?>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="card mb-3">
-        <div class="card-header">
-            <?=Yii::t('main', 'Системные сведения');?>
-        </div>
-        <div class="card-body row">
-            <?= $form->field($model, 'status',  ['options' =>['class' => 'col-12 col-sm-4']])->dropDownList(\app\models\User::getStatusList()) ?>
-        </div>
-    </div>
-    <div class="form-group">
-        <?= Html::submitButton(Yii::t('main', 'Сохранить'), ['class' => 'btn btn-success']) ?>
     </div>
 
-    <?php ActiveForm::end(); ?>
-
-</div>
+    <!-- Actions -->
+    <div class="flex items-center gap-3">
+        <button type="submit" class="btn btn-primary">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <?= Yii::t('main', 'Сохранить') ?>
+        </button>
+        <a href="<?= OrganizationUrl::to(['user/index']) ?>" class="btn btn-secondary">Отмена</a>
+    </div>
+</form>

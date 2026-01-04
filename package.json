@@ -1,0 +1,16 @@
+{
+  "name": "qazeducrm",
+  "version": "1.0.0",
+  "description": "Qazaq Education CRM - SaaS платформа для учебных центров",
+  "scripts": {
+    "dev": "node ./node_modules/@tailwindcss/cli/dist/index.mjs -i ./web/src/css/tailwind.css -o ./web/css/tailwind.css --watch",
+    "build": "node ./node_modules/@tailwindcss/cli/dist/index.mjs -i ./web/src/css/tailwind.css -o ./web/css/tailwind.css --minify"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "@tailwindcss/forms": "^0.5.11",
+    "@tailwindcss/typography": "^0.5.19",
+    "autoprefixer": "^10.4.23",
+    "tailwindcss": "^4.1.18"
+  }
+}
