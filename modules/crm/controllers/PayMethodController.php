@@ -5,15 +5,15 @@ namespace app\modules\crm\controllers;
 use app\helpers\OrganizationRoles;
 use app\helpers\SystemRoles;
 use app\models\PayMethod;
-use yii\data\ActiveDataProvider;
 use Yii;
+use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 
 /**
- * SubjectController implements the CRUD actions for Subject model.
+ * PayMethodController - управление способами оплаты
  */
 class PayMethodController extends Controller
 {
@@ -26,13 +26,13 @@ class PayMethodController extends Controller
             parent::behaviors(),
             [
                 'verbs' => [
-                    'class' => VerbFilter::className(),
+                    'class' => VerbFilter::class,
                     'actions' => [
                         'delete' => ['POST'],
                     ],
                 ],
                 'access' => [
-                    'class' => AccessControl::className(),
+                    'class' => AccessControl::class,
                     'rules' => [
                         [
                             'allow' => true,
@@ -51,9 +51,8 @@ class PayMethodController extends Controller
         );
     }
 
-
     /**
-     * Lists all Subject models.
+     * Список способов оплаты
      *
      * @return string
      */
@@ -79,10 +78,11 @@ class PayMethodController extends Controller
     }
 
     /**
-     * Displays a single Subject model.
+     * Просмотр способа оплаты
+     *
      * @param int $id ID
      * @return string
-     * @throws NotFoundHttpException if the model cannot be found
+     * @throws NotFoundHttpException
      */
     public function actionView($id)
     {
@@ -92,8 +92,8 @@ class PayMethodController extends Controller
     }
 
     /**
-     * Creates a new Subject model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
+     * Создание способа оплаты
+     *
      * @return string|\yii\web\Response
      */
     public function actionCreate()
@@ -114,11 +114,11 @@ class PayMethodController extends Controller
     }
 
     /**
-     * Updates an existing Subject model.
-     * If update is successful, the browser will be redirected to the 'view' page.
+     * Редактирование способа оплаты
+     *
      * @param int $id ID
      * @return string|\yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
+     * @throws NotFoundHttpException
      */
     public function actionUpdate($id)
     {
@@ -134,11 +134,11 @@ class PayMethodController extends Controller
     }
 
     /**
-     * Deletes an existing Subject model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
+     * Удаление способа оплаты
+     *
      * @param int $id ID
      * @return \yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
+     * @throws NotFoundHttpException
      */
     public function actionDelete($id)
     {

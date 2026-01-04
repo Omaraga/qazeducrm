@@ -1,7 +1,8 @@
 <?php
 
 use app\helpers\OrganizationUrl;
-use app\models\Lids;
+use app\widgets\tailwind\Icon;
+use app\widgets\tailwind\StatusBadge;
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
@@ -10,28 +11,14 @@ use yii\helpers\Html;
 $this->title = $model->fio;
 $this->params['breadcrumbs'][] = ['label' => 'Лиды', 'url' => OrganizationUrl::to(['index'])];
 $this->params['breadcrumbs'][] = $this->title;
-
-// Status colors mapping
-$statusColors = [
-    Lids::STATUS_NEW => 'bg-blue-500',
-    Lids::STATUS_CONTACTED => 'bg-indigo-500',
-    Lids::STATUS_TRIAL => 'bg-yellow-500',
-    Lids::STATUS_THINKING => 'bg-gray-500',
-    Lids::STATUS_ENROLLED => 'bg-purple-500',
-    Lids::STATUS_PAID => 'bg-green-500',
-    Lids::STATUS_LOST => 'bg-red-500',
-];
-$statusBgColor = $statusColors[$model->status] ?? 'bg-gray-500';
 ?>
 
 <div class="space-y-6">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
-                <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                </svg>
+            <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600">
+                <?= Icon::show('user', 'lg') ?>
             </div>
             <div>
                 <h1 class="text-2xl font-bold text-gray-900"><?= Html::encode($this->title) ?></h1>
@@ -40,12 +27,10 @@ $statusBgColor = $statusColors[$model->status] ?? 'bg-gray-500';
         </div>
         <div class="flex gap-3">
             <a href="<?= OrganizationUrl::to(['lids/update', 'id' => $model->id]) ?>" class="btn btn-primary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                </svg>
+                <?= Icon::show('edit', 'sm') ?>
                 Редактировать
             </a>
-            <?= Html::a('<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg> Удалить',
+            <?= Html::a(Icon::show('trash', 'sm') . ' Удалить',
                 OrganizationUrl::to(['lids/delete', 'id' => $model->id]), [
                 'class' => 'btn btn-danger',
                 'data' => [
@@ -58,9 +43,7 @@ $statusBgColor = $statusColors[$model->status] ?? 'bg-gray-500';
 
     <!-- Status Badge -->
     <div class="flex items-center gap-3">
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white <?= $statusBgColor ?>">
-            <?= Html::encode($model->getStatusLabel()) ?>
-        </span>
+        <?= StatusBadge::show('lids', $model->status, ['size' => 'lg']) ?>
         <?php if ($model->source): ?>
             <span class="badge badge-secondary"><?= Html::encode($model->getSourceLabel()) ?></span>
         <?php endif; ?>
@@ -216,15 +199,11 @@ $statusBgColor = $statusColors[$model->status] ?? 'bg-gray-500';
                 <div class="card-body space-y-2">
                     <?php if ($model->phone): ?>
                     <a href="tel:<?= Html::encode($model->phone) ?>" class="btn btn-secondary w-full justify-center">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                        </svg>
+                        <?= Icon::show('phone', 'sm') ?>
                         Позвонить
                     </a>
                     <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $model->phone) ?>" target="_blank" class="btn btn-success w-full justify-center">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                        </svg>
+                        <?= Icon::show('whatsapp', 'sm') ?>
                         WhatsApp
                     </a>
                     <?php endif; ?>

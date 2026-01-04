@@ -12,12 +12,11 @@ use app\models\Pupil;
 use app\models\PupilEducation;
 use app\models\search\PupilSearch;
 use app\models\services\PupilService;
-use yii\base\BaseObject;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 
 /**
  * PupilController implements the CRUD actions for Pupil model.
@@ -33,14 +32,14 @@ class PupilController extends Controller
             parent::behaviors(),
             [
                 'verbs' => [
-                    'class' => VerbFilter::className(),
+                    'class' => VerbFilter::class,
                     'actions' => [
                         'delete' => ['POST'],
                         'delete-edu' => ['POST']
                     ],
                 ],
                 'access' => [
-                    'class' => AccessControl::className(),
+                    'class' => AccessControl::class,
                     'rules' => [
                         [
                             'allow' => true,
@@ -204,29 +203,44 @@ class PupilController extends Controller
     }
 
     /**
-     * @param $id
+     * Удаление обучения ученика
+     *
+     * @param int $id ID обучения
      * @return \yii\web\Response
      */
     public function actionDeleteEdu($id)
     {
-        $transaction = \Yii::$app->db->beginTransaction();
         $model = PupilEducation::findOne($id);
-        $groups = $model->groups;
-
-        foreach ($groups as $group){
-            if (!$group->delete()){
-                $transaction->rollBack();
-                \Yii::$app->session->setFlash('error', \Yii::t('main', 'Ошибка при удалении'));
-            }
+        if ($model === null) {
+            \Yii::$app->session->setFlash('error', \Yii::t('main', 'Обучение не найдено'));
+            return $this->redirect(['index']);
         }
 
-        if(!$model->delete()){
+        $pupilId = $model->pupil_id;
+        $transaction = \Yii::$app->db->beginTransaction();
+
+        try {
+            // Удаляем связи с группами
+            foreach ($model->groups as $group) {
+                if (!$group->delete()) {
+                    throw new \Exception('Ошибка при удалении связи с группой');
+                }
+            }
+
+            // Удаляем само обучение
+            if (!$model->delete()) {
+                throw new \Exception('Ошибка при удалении обучения');
+            }
+
+            $transaction->commit();
+            \Yii::$app->session->setFlash('success', \Yii::t('main', 'Обучение удалено'));
+
+        } catch (\Exception $e) {
             $transaction->rollBack();
             \Yii::$app->session->setFlash('error', \Yii::t('main', 'Ошибка при удалении'));
         }
-        $transaction->commit();
 
-        return $this->redirect(['index']);
+        return $this->redirect(['edu', 'id' => $pupilId]);
     }
 
     /**

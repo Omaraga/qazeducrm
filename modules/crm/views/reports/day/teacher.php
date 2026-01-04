@@ -19,6 +19,7 @@ use yii\helpers\Html;
         <div class="card-body p-0">
             <div class="divide-y divide-gray-200">
                 <?php foreach ($teacherLessons[$teacher['id']] as $lesson): ?>
+                <?php if (!$lesson->group) continue; ?>
                 <?php $lessonSalary = 0; ?>
                 <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-100">
                     <!-- Lesson Info -->

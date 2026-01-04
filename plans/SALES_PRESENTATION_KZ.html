@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qazaq Education CRM - Оқу орталықтарына арналған презентация</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ================================================
+           PDF-ОПТИМИЗИРОВАННЫЕ СТИЛИ
+           Формат: A4 (210mm × 297mm)
+           Басып шығару үшін: Ctrl+P → PDF ретінде сақтау
+           ================================================ */
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #7c3aed;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --light-gray: #94a3b8;
+            --light: #f1f5f9;
+            --white: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #e2e8f0;
+            color: var(--dark);
+            line-height: 1.5;
+            font-size: 11pt;
+        }
+
+        /* Основной слайд - точный размер A4 */
+        .slide {
+            width: 210mm;
+            height: 297mm;
+            margin: 10mm auto;
+            padding: 18mm 22mm;
+            background: var(--white);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            page-break-after: always;
+            page-break-inside: avoid;
+        }
+
+        .slide:last-child {
+            page-break-after: auto;
+        }
+
+        /* Декоративная линия сверху */
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4mm;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        /* Номер страницы */
+        .slide-number {
+            position: absolute;
+            bottom: 8mm;
+            right: 10mm;
+            font-size: 9pt;
+            color: var(--light-gray);
+        }
+
+        /* ================================================
+           ТИТУЛЬНЫЙ СЛАЙД
+           ================================================ */
+        .slide-cover {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--white);
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .slide-cover::before {
+            display: none;
+        }
+
+        .slide-cover .logo {
+            font-size: 72pt;
+            margin-bottom: 8mm;
+        }
+
+        .slide-cover h1 {
+            font-size: 36pt;
+            font-weight: 800;
+            margin-bottom: 6mm;
+            letter-spacing: -0.5px;
+        }
+
+        .slide-cover .tagline {
+            font-size: 16pt;
+            font-weight: 400;
+            opacity: 0.95;
+            margin-bottom: 15mm;
+        }
+
+        .slide-cover .cta-text {
+            font-size: 11pt;
+            padding: 4mm 10mm;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        /* ================================================
+           ЗАГОЛОВКИ
+           ================================================ */
+        .slide-header {
+            margin-bottom: 10mm;
+            padding-bottom: 5mm;
+            border-bottom: 1px solid var(--light);
+        }
+
+        .slide-header h2 {
+            font-size: 22pt;
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 4mm;
+        }
+
+        .slide-header h2 .icon {
+            font-size: 24pt;
+        }
+
+        .slide-header .subtitle {
+            font-size: 11pt;
+            color: var(--gray);
+            margin-top: 2mm;
+        }
+
+        /* ================================================
+           КОНТЕНТ
+           ================================================ */
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Сетки */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6mm;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5mm;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4mm;
+        }
+
+        /* Карточки */
+        .card {
+            background: var(--light);
+            border-radius: 4mm;
+            padding: 5mm;
+        }
+
+        .card-white {
+            background: var(--white);
+            border: 1px solid #e2e8f0;
+        }
+
+        .card h4 {
+            font-size: 11pt;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 2mm;
+            display: flex;
+            align-items: center;
+            gap: 2mm;
+        }
+
+        .card p, .card li {
+            font-size: 9.5pt;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        .card ul {
+            list-style: none;
+            margin-top: 2mm;
+        }
+
+        .card li {
+            padding: 1.5mm 0;
+            padding-left: 4mm;
+            position: relative;
+        }
+
+        .card li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+            font-size: 9pt;
+        }
+
+        /* ================================================
+           СЛАЙД ПРОБЛЕМ
+           ================================================ */
+        .problem-card {
+            background: var(--white);
+            border-left: 3px solid var(--danger);
+            border-radius: 0 4mm 4mm 0;
+            padding: 4mm 5mm;
+        }
+
+        .problem-card h4 {
+            color: var(--danger);
+            font-size: 10.5pt;
+        }
+
+        .problem-card p {
+            font-size: 9pt;
+        }
+
+        .loss-banner {
+            background: linear-gradient(90deg, #fef2f2 0%, #fee2e2 100%);
+            border: 2px solid var(--danger);
+            border-radius: 4mm;
+            padding: 5mm;
+            text-align: center;
+            margin-top: 6mm;
+        }
+
+        .loss-banner h3 {
+            color: var(--danger);
+            font-size: 14pt;
+            font-weight: 700;
+        }
+
+        /* ================================================
+           ФУНКЦИИ
+           ================================================ */
+        .feature-card {
+            background: var(--white);
+            border: 1px solid #e2e8f0;
+            border-radius: 4mm;
+            padding: 5mm;
+            border-top: 3px solid var(--primary);
+        }
+
+        .feature-card.green { border-top-color: var(--success); }
+        .feature-card.purple { border-top-color: var(--secondary); }
+        .feature-card.orange { border-top-color: var(--accent); }
+
+        .feature-card .icon-box {
+            width: 12mm;
+            height: 12mm;
+            border-radius: 3mm;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16pt;
+            margin-bottom: 3mm;
+        }
+
+        .feature-card.green .icon-box { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); }
+        .feature-card.purple .icon-box { background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); }
+        .feature-card.orange .icon-box { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); }
+
+        /* ================================================
+           SMS/WHATSAPP СЛАЙД
+           ================================================ */
+        .sms-hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 4mm;
+            padding: 6mm;
+            color: var(--white);
+            text-align: center;
+            margin-bottom: 6mm;
+        }
+
+        .sms-hero h3 {
+            font-size: 14pt;
+            font-weight: 700;
+            margin-bottom: 2mm;
+        }
+
+        .sms-hero p {
+            font-size: 10pt;
+            opacity: 0.9;
+        }
+
+        .sms-providers {
+            display: flex;
+            justify-content: center;
+            gap: 8mm;
+            margin-top: 4mm;
+        }
+
+        .sms-provider {
+            background: rgba(255,255,255,0.2);
+            padding: 2mm 5mm;
+            border-radius: 3mm;
+            font-size: 9pt;
+            font-weight: 500;
+        }
+
+        .template-card {
+            background: var(--white);
+            border: 1px solid #e2e8f0;
+            border-radius: 3mm;
+            padding: 4mm;
+            text-align: center;
+        }
+
+        .template-card .emoji {
+            font-size: 20pt;
+            margin-bottom: 2mm;
+        }
+
+        .template-card h5 {
+            font-size: 9pt;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .template-card p {
+            font-size: 8pt;
+            color: var(--gray);
+        }
+
+        .whatsapp-soon {
+            background: linear-gradient(90deg, #dcfce7 0%, #bbf7d0 100%);
+            border: 2px solid var(--success);
+            border-radius: 4mm;
+            padding: 4mm 6mm;
+            display: flex;
+            align-items: center;
+            gap: 4mm;
+            margin-top: 5mm;
+        }
+
+        .whatsapp-soon .icon {
+            font-size: 24pt;
+        }
+
+        .whatsapp-soon h4 {
+            font-size: 11pt;
+            color: var(--success);
+            margin-bottom: 1mm;
+        }
+
+        .whatsapp-soon p {
+            font-size: 9pt;
+            color: var(--gray);
+        }
+
+        /* ================================================
+           ВОРОНКА ЛИДОВ
+           ================================================ */
+        .funnel-visual {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5mm 0;
+            margin-bottom: 5mm;
+        }
+
+        .funnel-step {
+            text-align: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .funnel-step::after {
+            content: '→';
+            position: absolute;
+            right: -2mm;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16pt;
+            color: var(--primary);
+        }
+
+        .funnel-step:last-child::after {
+            display: none;
+        }
+
+        .funnel-step .circle {
+            width: 16mm;
+            height: 16mm;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14pt;
+            margin: 0 auto 2mm;
+        }
+
+        .funnel-step h5 {
+            font-size: 9pt;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .funnel-step p {
+            font-size: 8pt;
+            color: var(--gray);
+        }
+
+        .sources-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2mm;
+            margin-top: 4mm;
+        }
+
+        .source-tag {
+            background: var(--light);
+            padding: 2mm 4mm;
+            border-radius: 2mm;
+            font-size: 8.5pt;
+            color: var(--gray);
+        }
+
+        /* ================================================
+           СТАТИСТИКА
+           ================================================ */
+        .stat-card {
+            background: var(--white);
+            border: 1px solid #e2e8f0;
+            border-radius: 4mm;
+            padding: 5mm;
+            text-align: center;
+            border-top: 3px solid var(--primary);
+        }
+
+        .stat-card.green { border-top-color: var(--success); }
+        .stat-card.purple { border-top-color: var(--secondary); }
+
+        .stat-card .number {
+            font-size: 28pt;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .stat-card.green .number { color: var(--success); }
+        .stat-card.purple .number { color: var(--secondary); }
+
+        .stat-card .label {
+            font-size: 9pt;
+            color: var(--gray);
+            margin-top: 2mm;
+        }
+
+        /* ================================================
+           ТАРИФЫ
+           ================================================ */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4mm;
+        }
+
+        .pricing-card {
+            background: var(--white);
+            border: 1px solid #e2e8f0;
+            border-radius: 4mm;
+            padding: 5mm;
+            text-align: center;
+            position: relative;
+        }
+
+        .pricing-card.featured {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--white);
+            border: none;
+            transform: scale(1.02);
+        }
+
+        .pricing-card .badge {
+            position: absolute;
+            top: -3mm;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: var(--white);
+            padding: 1mm 4mm;
+            border-radius: 2mm;
+            font-size: 7pt;
+            font-weight: 600;
+        }
+
+        .pricing-card h4 {
+            font-size: 12pt;
+            font-weight: 700;
+            margin-bottom: 2mm;
+        }
+
+        .pricing-card.featured h4 {
+            color: var(--white);
+        }
+
+        .pricing-card .price {
+            font-size: 18pt;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .pricing-card.featured .price {
+            color: var(--white);
+        }
+
+        .pricing-card .period {
+            font-size: 8pt;
+            color: var(--gray);
+            margin-bottom: 3mm;
+        }
+
+        .pricing-card.featured .period {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .pricing-card ul {
+            list-style: none;
+            text-align: left;
+            font-size: 8pt;
+        }
+
+        .pricing-card li {
+            padding: 1.5mm 0;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 2mm;
+        }
+
+        .pricing-card.featured li {
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .pricing-card li .check {
+            color: var(--success);
+            font-size: 9pt;
+        }
+
+        .pricing-card.featured li .check {
+            color: #86efac;
+        }
+
+        .pricing-card li .cross {
+            color: var(--light-gray);
+            font-size: 9pt;
+        }
+
+        /* ================================================
+           КОНТАКТЫ
+           ================================================ */
+        .contact-hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 4mm;
+            padding: 8mm;
+            color: var(--white);
+            text-align: center;
+            margin-bottom: 6mm;
+        }
+
+        .contact-hero .logo {
+            font-size: 36pt;
+            margin-bottom: 3mm;
+        }
+
+        .contact-hero h3 {
+            font-size: 18pt;
+            font-weight: 700;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4mm;
+            margin-bottom: 5mm;
+        }
+
+        .contact-item {
+            background: var(--light);
+            border-radius: 3mm;
+            padding: 4mm;
+            display: flex;
+            align-items: center;
+            gap: 4mm;
+        }
+
+        .contact-item .icon {
+            font-size: 18pt;
+        }
+
+        .contact-item .label {
+            font-size: 8pt;
+            color: var(--gray);
+        }
+
+        .contact-item .value {
+            font-size: 10pt;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .cta-banner {
+            background: linear-gradient(90deg, var(--success) 0%, #059669 100%);
+            border-radius: 4mm;
+            padding: 6mm;
+            text-align: center;
+            color: var(--white);
+        }
+
+        .cta-banner h4 {
+            font-size: 14pt;
+            font-weight: 700;
+            margin-bottom: 2mm;
+        }
+
+        .cta-banner p {
+            font-size: 10pt;
+            opacity: 0.9;
+        }
+
+        /* ================================================
+           МУЛЬТИФИЛИАЛЬНОСТЬ
+           ================================================ */
+        .branch-diagram {
+            text-align: center;
+            padding: 5mm 0;
+        }
+
+        .branch-main {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--white);
+            padding: 4mm 8mm;
+            border-radius: 3mm;
+            font-size: 11pt;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .branch-line {
+            width: 2px;
+            height: 8mm;
+            background: var(--primary);
+            margin: 0 auto;
+        }
+
+        .branch-children {
+            display: flex;
+            justify-content: center;
+            gap: 6mm;
+        }
+
+        .branch-child {
+            background: var(--light);
+            border: 2px solid var(--primary);
+            padding: 3mm 6mm;
+            border-radius: 3mm;
+            font-size: 9pt;
+            font-weight: 500;
+        }
+
+        .role-hierarchy {
+            background: var(--light);
+            border-radius: 4mm;
+            padding: 5mm;
+            margin-top: 5mm;
+        }
+
+        .role-hierarchy h4 {
+            font-size: 10pt;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 3mm;
+            text-align: center;
+        }
+
+        .role-flow {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3mm;
+        }
+
+        .role-item {
+            background: var(--white);
+            padding: 2mm 4mm;
+            border-radius: 2mm;
+            font-size: 8pt;
+            font-weight: 500;
+        }
+
+        .role-arrow {
+            color: var(--primary);
+            font-size: 10pt;
+        }
+
+        /* ================================================
+           ФИНАЛЬНЫЙ СЛАЙД
+           ================================================ */
+        .slide-final {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--white);
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .slide-final::before {
+            display: none;
+        }
+
+        .slide-final .logo {
+            font-size: 64pt;
+            margin-bottom: 6mm;
+        }
+
+        .slide-final h2 {
+            font-size: 28pt;
+            font-weight: 800;
+            margin-bottom: 4mm;
+        }
+
+        .slide-final .tagline {
+            font-size: 14pt;
+            opacity: 0.9;
+            margin-bottom: 10mm;
+        }
+
+        .slide-final .cta-box {
+            background: rgba(255,255,255,0.2);
+            padding: 5mm 10mm;
+            border-radius: 4mm;
+            display: inline-block;
+        }
+
+        .slide-final .cta-box h4 {
+            font-size: 12pt;
+            font-weight: 600;
+        }
+
+        /* ================================================
+           PRINT СТИЛИ
+           ================================================ */
+        @media print {
+            body {
+                background: white;
+            }
+
+            .slide {
+                margin: 0;
+                box-shadow: none;
+                width: 210mm;
+                height: 297mm;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+
+        /* Инструкция для пользователя (скрывается при печати) */
+        .print-instructions {
+            background: #fef3c7;
+            border: 2px solid var(--accent);
+            border-radius: 4mm;
+            padding: 5mm;
+            margin: 5mm auto;
+            max-width: 210mm;
+            text-align: center;
+        }
+
+        .print-instructions h3 {
+            color: var(--accent);
+            margin-bottom: 2mm;
+        }
+
+        .print-instructions p {
+            font-size: 10pt;
+            color: var(--dark);
+        }
+
+        @media print {
+            .print-instructions {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Нұсқаулық -->
+<div class="print-instructions">
+    <h3>📄 PDF форматында сақтау үшін:</h3>
+    <p><strong>Ctrl+P</strong> (немесе Mac-та Cmd+P) басыңыз → <strong>"PDF ретінде сақтау"</strong> таңдаңыз → Формат: A4</p>
+</div>
+
+<!-- ============================================
+     СЛАЙД 1: МҰҚАБА
+     ============================================ -->
+<section class="slide slide-cover">
+    <div class="logo">🎓</div>
+    <h1>Qazaq Education CRM</h1>
+    <p class="tagline">Оқу орталығын басқарудың заманауи жүйесі</p>
+    <div class="cta-text">Автоматтандыру • Бақылау • Өсу</div>
+</section>
+
+<!-- ============================================
+     СЛАЙД 2: МӘСЕЛЕЛЕР
+     ============================================ -->
+<section class="slide">
+    <div class="slide-header">
+        <h2><span class="icon">📊</span> Таныс мәселелер ме?</h2>
+        <p class="subtitle">Оқу орталықтары күнделікті қандай қиындықтарға тап болады</p>
+    </div>
+    <div class="slide-content">
+        <div class="grid-2" style="margin-bottom: 4mm;">
+            <div class="problem-card">
+                <h4>📋 Оқушылар Excel-де</h4>
+                <p>Деректер жоғалады, қайталанады, ақпаратты тез табу мүмкін емес</p>
+            </div>
+            <div class="problem-card">
+                <h4>📅 Кесте қағазда</h4>
+                <p>Уақыт қақтығыстары, кабинеттердегі шатасу, клиенттердің шағымдары</p>
+            </div>
+        </div>
+        <div class="grid-2" style="margin-bottom: 4mm;">
+            <div class="problem-card">
+                <h4>💸 Төлемдер дәптерде</h4>
+                <p>Қарыздарлар жоғалады, ақша кетеді, қаржылық жағдай түсініксіз</p>
+            </div>
+            <div class="problem-card">
+                <h4>📞 Лидтер есте</h4>
+                <p>Клиенттер ұмытылады, follow-up жүйесі жоқ, өтінімдердің 50%-ы жоғалады</p>
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="problem-card">
+                <h4>🔕 Еске салулар жоқ</h4>
+                <p>Клиенттер сабақтарды ұмытады, төлемді өткізіп жібереді, қызығушылығын жоғалтады</p>
+            </div>
+            <div class="problem-card">
+                <h4>📉 Аналитика жоқ</h4>
+                <p>Шешімдер «көзбен» қабылданады, нақты жағдай түсініксіз</p>
+            </div>
+        </div>
+        <div class="loss-banner">
+            <h3>💸 Нәтиже: ай сайын табыстың 30%-ына дейін жоғалту</h3>
+        </div>
+    </div>
+    <div class="slide-number">2 / 12</div>
+</section>
+
+<!-- ============================================
+     СЛАЙД 3: ШЕШІМ
+     ============================================ -->
+<section class="slide">
+    <div class="slide-header">
+        <h2><span class="icon">✅</span> Шешім: Qazaq Education CRM</h2>
+        <p class="subtitle">Оқу орталығының барлық процестерін басқаруға арналған бірыңғай платформа</p>
+    </div>
+    <div class="slide-content">
+        <div class="grid-2" style="gap: 5mm;">
+            <div class="feature-card">
+                <div class="icon-box">👥</div>
+                <h4>Оқушыларды басқару</h4>
+                <ul>
+                    <li>Оқу тарихы бар толық карточка</li>
+                    <li>Ата-аналардың байланыс деректері</li>
+                    <li>Прогресс пен балансты бақылау</li>
+                    <li>Жылдам іздеу және сүзгілеу</li>
+                </ul>
+            </div>
+            <div class="feature-card green">
+                <div class="icon-box">📚</div>
+                <h4>Топтар мен курстар</h4>
+                <ul>
+                    <li>Топтық және жеке сабақтар</li>
+                    <li>Оқытушыларға байланыстыру</li>
+                    <li>Пәндер мен бағдарламаларды есепке алу</li>
+                    <li>Топтардың толуын бақылау</li>
+                </ul>
+            </div>
+            <div class="feature-card purple">
+                <div class="icon-box">📅</div>
+                <h4>Кесте</h4>
+                <ul>
+                    <li>Визуалды сабақ кестесі</li>
+                    <li>Аптаға арналған типтік үлгілер</li>
+                    <li>Қақтығыстарды автоматты тексеру</li>
+                    <li>FullCalendar интеграциясы</li>
+                </ul>
+            </div>
+            <div class="feature-card orange">
+                <div class="icon-box">✅</div>
+                <h4>Қатысу</h4>
+                <ul>
+                    <li>Бір басу арқылы белгілеу</li>
+                    <li>Баланстан автоматты есептен шығару</li>
+                    <li>Оқушы бойынша қатысу тарихы</li>
+                    <li>Топтар мен кезеңдер бойынша есептер</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="slide-number">3 / 12</div>
+</section>
+
+<!-- ============================================
+     СЛАЙД 4: ҚАРЖЫ
+     ============================================ -->
+<section class="slide">
+    <div class="slide-header">
+        <h2><span class="icon">💰</span> Қаржы модулі</h2>
+        <p class="subtitle">Оқу орталығыңыздың ақша ағындарын толық бақылау</p>
+    </div>
+    <div class="slide-content">
+        <div class="grid-3" style="margin-bottom: 6mm;">
+            <div class="feature-card">
+                <div class="icon-box">📝</div>
+                <h4>Тарифтер мен пакеттер</h4>
+                <ul>
+                    <li>Икемді баға белгілеу</li>
+                    <li>Сабақ пакеттері (ай, тоқсан, жыл)</li>
+                    <li>Жеке шарттар</li>
+                    <li>Жеңілдіктер мен акциялар</li>
+                </ul>
+            </div>
+            <div class="feature-card green">
+                <div class="icon-box">💳</div>
+                <h4>Төлемдерді қабылдау</h4>
+                <ul>
+                    <li>Барлық төлемдерді есепке алу</li>
+                    <li>Транзакциялар тарихы</li>
+                    <li>Әртүрлі төлем әдістері</li>
+                    <li>Квитанциялар мен чектер</li>
+                </ul>
+            </div>
+            <div class="feature-card purple">
+                <div class="icon-box">📊</div>
+                <h4>Қарыздарларды бақылау</h4>
+                <ul>
+                    <li>Балансты автоматты есептеу</li>
+                    <li>Төлем туралы SMS еске салулар</li>
+                    <li>Қарыздар бойынша есептер</li>
+                    <li>Түсімдер болжамы</li>
+                </ul>
+            </div>
+        </div>
+        <div class="card" style="background: linear-gradient(90deg, #dbeafe 0%, #e0e7ff 100%); padding: 5mm;">
+            <h4 style="text-align: center; font-size: 12pt; margin-bottom: 3mm;">💼 Оқытушылардың жалақысы</h4>
+            <div class="grid-4" style="gap: 3mm;">
+                <div style="text-align: center;">
+                    <div style="font-size: 16pt;">📊</div>
+                    <p style="font-size: 8pt;">Қатысу бойынша есептеу</p>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 16pt;">💵</div>
+                    <p style="font-size: 8pt;">Сабақ үшін ставкалар</p>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 16pt;">🎁</div>
+                    <p style="font-size: 8pt;">Бонустар мен ұстаулар</p>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 16pt;">✅</div>
+                    <p style="font-size: 8pt;">Бекіту және төлеу</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-number">4 / 12</div>
+</section>
+
+<!-- ============================================
+     СЛАЙД 5: SMS ЖӘНЕ WHATSAPP ХАБАРЛАНДЫРУЛАР
+     ============================================ -->
+<section class="slide">
+    <div class="slide-header">
+        <h2><span class="icon">📱</span> SMS және WhatsApp хабарландырулар</h2>
+        <p class="subtitle">Автоматты еске салулар — ешкім сабақты ұмытпайды</p>
+    </div>
+    <div class="slide-content">
+        <div class="sms-hero">
+            <h3>📨 Автоматты тарату</h3>
+            <p>Қазақстанның танымал SMS-провайдерлерімен интеграция</p>
+            <div class="sms-providers">
+                <span class="sms-provider">📡 Mobizon</span>
+                <span class="sms-provider">📡 SMS.kz</span>
+            </div>
+        </div>
+
+        <h4 style="font-size: 11pt; margin-bottom: 4mm; color: var(--dark);">🔔 Дайын хабарландыру үлгілері:</h4>
+        <div class="grid-3" style="margin-bottom: 5mm;">
+            <div class="template-card">
+                <div class="emoji">⏰</div>
+                <h5>Сабақ туралы еске салу</h5>
+                <p>Сабаққа бір күн немесе бір сағат қалғанда</p>
+            </div>
+            <div class="template-card">
+                <div class="emoji">🚫</div>
+                <h5>Сабақтың болмауы</h5>
+                <p>Лезде хабарландыру</p>
+            </div>
+            <div class="template-card">
+                <div class="emoji">💸</div>
+                <h5>Қарыз</h5>
+                <p>Төлем туралы еске салу</p>
+            </div>
+            <div class="template-card">
+                <div class="emoji">✅</div>
+                <h5>Төлем қабылданды</h5>
+                <p>Төлемді растау</p>
+            </div>
+            <div class="template-card">
+                <div class="emoji">🎂</div>
+                <h5>Туған күн</h5>
+                <p>Оқушыны құттықтау</p>
+            </div>
+            <div class="template-card">
+                <div class="emoji">🎓</div>
+                <h5>Сынақ сабағы</h5>
+                <p>Сынақ сабаққа шақыру</p>
+            </div>
+        </div>
+
+        <div class="grid-2" style="gap: 4mm;">
+            <div class="card card-white" style="padding: 4mm;">
+                <h4 style="font-size: 10pt;">📝 Хабарламаларды жекелендіру</h4>
+                <p style="font-size: 8.5pt; color: var(--gray);">
+                    Айнымалыларды қолданыңыз: <code style="background: #f1f5f9; padding: 1mm 2mm; border-radius: 2mm;">{name}</code>
+                    <code style="background: #f1f5f9; padding: 1mm 2mm; border-radius: 2mm;">{date}</code>
+                    <code style="background: #f1f5f9; padding: 1mm 2mm; border-radius: 2mm;">{time}</code>
+                    <code style="background: #f1f5f9; padding: 1mm 2mm; border-radius: 2mm;">{amount}</code>
+                </p>
+            </div>
+            <div class="card card-white" style="padding: 4mm;">
+                <h4 style="font-size: 10pt;">📊 Тарих және аналитика</h4>
+                <p style="font-size: 8.5pt; color: var(--gray);">
+                    Жеткізу статустары, жаппай тарату, барлық жіберулерді тіркеу
+                </p>
+            </div>
+        </div>
+
+        <div class="whatsapp-soon">
+            <div class="icon">💬</div>
+            <div>
+                <h4>WhatsApp Business API — жақында!</h4>
+                <p>Көбірек қамту үшін WhatsApp арқылы хабарландырулар тарату</p>
+            </div>
+        </div>
+    </div>
+    <div class="slide-number">5 / 12</div>
+</section>
+
+<!-- ============================================
+     СЛАЙД 6: САТУ ВОРОНКАСЫ
+     ============================================ -->
+<section class="slide">
+    <div class="slide-header">
+        <h2><span class="icon">📈</span> Сату воронкасы (Лидтер)</h2>
+        <p class="subtitle">Потенциалды клиенттерді енді жоғалтпаңыз</p>
+    </div>
+    <div class="slide-content">
+        <div class="card" style="background: var(--white); border: 1px solid #e2e8f0; padding: 5mm; margin-bottom: 5mm;">
+            <div class="funnel-visual">
+                <div class="funnel-step">
+                    <div class="circle">📥</div>
+                    <h5>Жаңа</h5>
+                    <p>Өтінім</p>
+                </div>
+                <div class="funnel-step">
+                    <div class="circle">📞</div>
+                    <h5>Байланыс</h5>
+                    <p>Хабарластық</p>
+                </div>
+                <div class="funnel-step">
+                    <div class="circle">🎓</div>
+                    <h5>Сынақ</h5>
+                    <p>Сабақта</p>
+                </div>
+                <div class="funnel-step">
+                    <div class="circle">🤔</div>
+                    <h5>Ойланады</h5>
+                    <p>Шешеді</p>
+                </div>
+                <div class="funnel-step">
+                    <div class="circle">✅</div>
+                    <h5>Төледі</h5>
+                    <p>Оқушы!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2" style="gap: 5mm; margin-bottom: 5mm;">
+            <div class="card card-white" style="padding: 5mm;">
+                <h4 style="margin-bottom: 3mm;">📊 CRM мүмкіндіктері</h4>
+                <ul style="font-size: 9pt;">
+                    <li>Воронканың әр кезеңіндегі конверсия</li>
+                    <li>Қоңыраулар мен follow-up еске салулары</li>
+                    <li>Барлық коммуникациялар тарихы</li>
+                    <li>Лидке менеджер тағайындау</li>
+                    <li>Клиентті жоғалту себептері</li>
+                </ul>
+            </div>
+            <div class="card card-white" style="padding: 5mm;">
+                <h4 style="margin-bottom: 3mm;">📱 Лидтер көздері</h4>
+                <div class="sources-list">
+                    <span class="source-tag">📸 Instagram</span>
+                    <span class="source-tag">💬 WhatsApp</span>
+                    <span class="source-tag">📍 2GIS</span>
+                    <span class="source-tag">🌐 Сайт</span>
+                    <span class="source-tag">👥 Ұсыныс</span>
+                    <span class="source-tag">🚶 Өзі келді</span>
+                    <span class="source-tag">📞 Қоңырау</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="background: linear-gradient(90deg, #dcfce7 0%, #d1fae5 100%); padding: 4mm; text-align: center;">
+            <h4 style="color: var(--success); font-size: 12pt;">🎯 Нәтиже: лидтерден оқушыларға конверсия +35%</h4>
+        </div>
+    </div>
+    <div class="slide-number">6 / 12</div>
+</section>
+
+<!-- ============================================
+     СЛАЙД 7: КӨПФИЛИАЛДЫЛЫҚ
+     ============================================ -->
+<section class="slide">
+    <div class="slide-header">
+        <h2><span class="icon">🏢</span> Көпфилиалдылық және рөлдер</h2>
+        <p class="subtitle">Бір аккаунт — барлық филиалдар бақылауда</p>
+    </div>
+    <div class="slide-content">
+        <div class="card card-white" style="padding: 6mm; margin-bottom: 5mm;">
+            <div class="branch-diagram">
+                <div class="branch-main">🏛️ Бас офис (Бас директор)</div>
+                <div class="branch-line"></div>
+                <div class="branch-children">
+                    <div class="branch-child">📍 Филиал 1</div>
+                    <div class="branch-child">📍 Филиал 2</div>
+                    <div class="branch-child">📍 Филиал 3</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2" style="gap: 5mm; margin-bottom: 5mm;">
+            <div class="card card-white" style="padding: 5mm;">
+                <h4 style="margin-bottom: 3mm;">🗄️ Бірыңғай жүйе</h4>
+                <ul style="font-size: 9pt;">
+                    <li>Оқушылар мен топтардың ортақ базасы</li>
+                    <li>Шоғырландырылған қаржылық есептер</li>
+                    <li>Жазылымдарды бірыңғай басқару</li>
+                    <li>Филиалдар арасында лимиттерді бөлу</li>
+                </ul>
+            </div>
+            <div class="card card-white" style="padding: 5mm;">
+                <h4 style="margin-bottom: 3mm;">🔐 Қолжетімділікті бөлу</h4>
+                <ul style="font-size: 9pt;">
+                    <li>Әр филиал тек өз деректерін көреді</li>
+                    <li>Филиал директоры — толық бақылау</li>
+                    <li>Бас директор — барлық филиалдар</li>
+                    <li>Әр филиалды тәуелсіз басқару</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="role-hierarchy">
+            <h4>👥 Жүйедегі рөлдер иерархиясы</h4>
+            <div class="role-flow">
+                <span class="role-item" style="background: var(--primary); color: white;">Бас директор</span>
+                <span class="role-arrow">→</span>
+                <span class="role-item" style="background: #dbeafe;">Директор</span>
+                <span class="role-arrow">→</span>
+                <span class="role-item" style="background: #d1fae5;">Әкімші</span>
+                <span class="role-arrow">→</span>
+                <span class="role-item" style="background: #fef3c7;">Оқытушы</span>
+            </div>
+        </div>
+
+        <div class="grid-3" style="margin-top: 5mm;">
+            <div class="card" style="text-align: center; padding: 4mm;">
+                <div style="font-size: 20pt;">🇷🇺</div>
+                <p style="font-size: 9pt; font-weight: 500;">Орысша</p>
+            </div>
+            <div class="card" style="text-align: center; padding: 4mm;">
+                <div style="font-size: 20pt;">🇰🇿</div>
+                <p style="font-size: 9pt; font-weight: 500;">Қазақша</p>
+            </div>
+            <div class="card" style="text-align: center; padding: 4mm;">
+                <div style="font-size: 20pt;">🇬🇧</div>
+                <p style="font-size: 9pt; font-weight: 500;">English</p>
+            </div>
+        </div>
+    </div>
+    <div class="slide-number">7 / 12</div>
+</section>
+
+<!-- ============================================
+     СЛАЙД 8: ЕСЕПТЕР ЖӘНЕ АНАЛИТИКА
+     ============================================ -->
+<section class="slide">
+    <div class="slide-header">
+        <h2><span class="icon">📊</span> Есептер және аналитика</h2>
+        <p class="subtitle">Интуицияға емес, деректерге негізделген шешімдер қабылдаңыз</p>
+    </div>
+    <div class="slide-content">
+        <div class="grid-3" style="margin-bottom: 5mm;">
+            <div class="feature-card">
+                <div class="icon-box">📅</div>
+                <h4>Күнделікті есеп</h4>
+                <ul>
+                    <li>Күндегі қатысу</li>
+                    <li>Алынған төлемдер</li>
+                    <li>Шығындар мен шығыстар</li>
+                    <li>Топтар бойынша белсенділік</li>
+                </ul>
+            </div>
+            <div class="feature-card green">
+                <div class="icon-box">📆</div>
+                <h4>Айлық есеп</h4>
+                <ul>
+                    <li>Оқушылар динамикасы</li>
+                    <li>Қаржылық көрсеткіштер</li>
+                    <li>Топтардың толуы</li>
+                    <li>Лидтер конверсиясы</li>
+                </ul>
+            </div>
+            <div class="feature-card purple">
+                <div class="icon-box">👨‍🏫</div>
+                <h4>Оқытушылар бойынша</h4>
+                <ul>
+                    <li>Сабақтар саны</li>
+                    <li>Топтардың қатысуы</li>
+                    <li>Жалақы есебі</li>
+                    <li>Жұмыс тиімділігі</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card" style="background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%); padding: 5mm;">
+            <h4 style="text-align: center; font-size: 12pt; margin-bottom: 4mm;">🔐 Деректер қауіпсіздігі</h4>
+            <div class="grid-4" style="gap: 3mm;">
+                <div style="text-align: center;">
+                    <div style="font-size: 18pt;">👥</div>
+                    <p style="font-size: 8pt; font-weight: 500;">Рөлдік қолжетім</p>
+                    <p style="font-size: 7pt; color: var(--gray);">Әркім тек өзінікін көреді</p>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 18pt;">🛡️</div>
+                    <p style="font-size: 8pt; font-weight: 500;">Деректер изоляциясы</p>
+                    <p style="font-size: 7pt; color: var(--gray);">Ұйымдар бөлінген</p>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 18pt;">📝</div>
+                    <p style="font-size: 8pt; font-weight: 500;">Өзгерістер тарихы</p>
+                    <p style="font-size: 7pt; color: var(--gray);">Кім, қашан, не</p>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 18pt;">💾</div>
+                    <p style="font-size: 8pt; font-weight: 500;">Резервтік көшірмелер</p>
+                    <p style="font-size: 7pt; color: var(--gray);">Автоматты сақтау</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-number">8 / 12</div>
+</section>
+
+<!-- ============================================
+     СЛАЙД 9: НӘТИЖЕЛЕР
+     ============================================ -->
+<section class="slide">
+    <div class="slide-header">
+        <h2><span class="icon">🏆</span> Біздің клиенттеріміздің нәтижелері</h2>
+        <p class="subtitle">Қолданудан 3 ай өткеннен кейінгі орташа көрсеткіштер</p>
+    </div>
+    <div class="slide-content">
+        <div class="grid-3" style="margin-bottom: 5mm;">
+            <div class="stat-card green">
+                <div class="number">+25%</div>
+                <div class="label">оқушылар санының өсуі</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">-40%</div>
+                <div class="label">табыс шығынының төмендеуі</div>
+            </div>
+            <div class="stat-card purple">
+                <div class="number">-60%</div>
+                <div class="label">күнделікті жұмысқа уақытты үнемдеу</div>
+            </div>
+        </div>
+        <div class="grid-3" style="margin-bottom: 6mm;">
+            <div class="stat-card">
+                <div class="number">98%</div>
+                <div class="label">қатысуды есепке алу дәлдігі</div>
+            </div>
+            <div class="stat-card green">
+                <div class="number">+35%</div>
+                <div class="label">лидтер конверсиясының өсуі</div>
+            </div>
+            <div class="stat-card purple">
+                <div class="number">+50%</div>
+                <div class="label">клиенттердің қанағаттануы</div>
+            </div>
+        </div>
+
+        <div class="grid-2" style="gap: 5mm;">
+            <div class="card card-white" style="padding: 5mm;">
+                <h4 style="margin-bottom: 3mm;">💎 Артықшылықтар</h4>
+                <ul style="font-size: 9pt;">
+                    <li><strong>Локализация</strong> — Қазақстан үшін жасалған</li>
+                    <li><strong>Қарапайымдылық</strong> — 1 күнде үйрену</li>
+                    <li><strong>Бұлтты</strong> — кез келген жерден қолжетім</li>
+                    <li><strong>Мобильді</strong> — телефонда жұмыс істейді</li>
+                    <li><strong>Қолдау</strong> — орыс және қазақ тілдерінде</li>
+                    <li><strong>Даму</strong> — тұрақты жаңартулар</li>
+                </ul>
+            </div>
+            <div class="card card-white" style="padding: 5mm;">
+                <h4 style="margin-bottom: 3mm;">🚀 Енгізу</h4>
+                <div style="font-size: 9pt;">
+                    <p style="margin-bottom: 2mm;"><strong>1-қадам:</strong> Тіркелу — 2 минут</p>
+                    <p style="margin-bottom: 2mm;"><strong>2-қадам:</strong> Деректерді импорттау — тегін көмектесеміз</p>
+                    <p style="margin-bottom: 2mm;"><strong>3-қадам:</strong> Команданы оқыту — 1 күн</p>
+                    <p><strong>4-қадам:</strong> Жұмыс — мәңгілік!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-number">9 / 12</div>
+</section>
+
+<!-- ============================================
+     СЛАЙД 10: ТАРИФТЕР
+     ============================================ -->
+<section class="slide">
+    <div class="slide-header">
+        <h2><span class="icon">💵</span> Тарифтік жоспарлар</h2>
+        <p class="subtitle">Оқу орталығыңызға сәйкес келетін жоспарды таңдаңыз</p>
+    </div>
+    <div class="slide-content">
+        <div class="pricing-grid" style="margin-bottom: 5mm;">
+            <div class="pricing-card">
+                <h4>Free</h4>
+                <div class="price">0 ₸</div>
+                <div class="period">тегін</div>
+                <ul>
+                    <li><span class="check">✓</span> 20 оқушыға дейін</li>
+                    <li><span class="check">✓</span> 2 оқытушы</li>
+                    <li><span class="check">✓</span> 5 топ</li>
+                    <li><span class="check">✓</span> 1 филиал</li>
+                    <li><span class="cross">✗</span> SMS хабарландырулар</li>
+                    <li><span class="cross">✗</span> Кеңейтілген есептер</li>
+                </ul>
+            </div>
+            <div class="pricing-card">
+                <h4>Basic</h4>
+                <div class="price">9 990 ₸</div>
+                <div class="period">айына</div>
+                <ul>
+                    <li><span class="check">✓</span> 100 оқушыға дейін</li>
+                    <li><span class="check">✓</span> 10 оқытушы</li>
+                    <li><span class="check">✓</span> 30 топ</li>
+                    <li><span class="check">✓</span> 1 филиал</li>
+                    <li><span class="check">✓</span> SMS хабарландырулар</li>
+                    <li><span class="check">✓</span> Базалық есептер</li>
+                </ul>
+            </div>
+            <div class="pricing-card featured">
+                <div class="badge">Танымал</div>
+                <h4>Pro</h4>
+                <div class="price">29 990 ₸</div>
+                <div class="period">айына</div>
+                <ul>
+                    <li><span class="check">✓</span> 500 оқушыға дейін</li>
+                    <li><span class="check">✓</span> 50 оқытушы</li>
+                    <li><span class="check">✓</span> 150 топ</li>
+                    <li><span class="check">✓</span> 3 филиал</li>
+                    <li><span class="check">✓</span> SMS + лидтер воронкасы</li>
+                    <li><span class="check">✓</span> Барлық есептер + API</li>
+                </ul>
+            </div>
+            <div class="pricing-card">
+                <h4>Enterprise</h4>
+                <div class="price">99 990 ₸</div>
+                <div class="period">айына</div>
+                <ul>
+                    <li><span class="check">✓</span> Шексіз оқушылар</li>
+                    <li><span class="check">✓</span> Шексіз оқытушылар</li>
+                    <li><span class="check">✓</span> Шексіз топтар</li>
+                    <li><span class="check">✓</span> Шексіз филиалдар</li>
+                    <li><span class="check">✓</span> Барлық функциялар</li>
+                    <li><span class="check">✓</span> Жеке менеджер</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="grid-2" style="gap: 4mm;">
+            <div class="card" style="background: linear-gradient(90deg, #dcfce7 0%, #d1fae5 100%); padding: 4mm; text-align: center;">
+                <h4 style="color: var(--success); font-size: 11pt;">🎁 Жылдық төлемде 20% жеңілдік!</h4>
+            </div>
+            <div class="card" style="background: linear-gradient(90deg, #dbeafe 0%, #e0e7ff 100%); padding: 4mm; text-align: center;">
+                <h4 style="color: var(--primary); font-size: 11pt;">🆓 14 күн тегін сынақ мерзімі</h4>
+            </div>
+        </div>
+    </div>
+    <div class="slide-number">10 / 12</div>
+</section>
+
+<!-- ============================================
+     СЛАЙД 11: ЖИІ ҚОЙЫЛАТЫН СҰРАҚТАР
+     ============================================ -->
+<section class="slide">
+    <div class="slide-header">
+        <h2><span class="icon">❓</span> Жиі қойылатын сұрақтар</h2>
+    </div>
+    <div class="slide-content">
+        <div class="grid-2" style="gap: 4mm;">
+            <div class="card card-white" style="padding: 4mm;">
+                <h4 style="font-size: 10pt; color: var(--primary);">Бірдеңе орнату керек пе?</h4>
+                <p style="font-size: 9pt;">Жоқ! Жүйе браузерде жұмыс істейді. Тек сайтты ашыңыз және кез келген құрылғыдан жұмыс істеңіз.</p>
+            </div>
+            <div class="card card-white" style="padding: 4mm;">
+                <h4 style="font-size: 10pt; color: var(--primary);">Excel-ден деректерді қалай көшіруге болады?</h4>
+                <p style="font-size: 9pt;">Біз көмектесеміз! Барлық жаңа клиенттер үшін тегін деректер импорты.</p>
+            </div>
+            <div class="card card-white" style="padding: 4mm;">
+                <h4 style="font-size: 10pt; color: var(--primary);">Қызметкерлерге оқыту бар ма?</h4>
+                <p style="font-size: 9pt;">Иә, онлайн оқыту өткіземіз және видео нұсқаулықтар береміз. Әдетте меңгеруге 1 күн кетеді.</p>
+            </div>
+            <div class="card card-white" style="padding: 4mm;">
+                <h4 style="font-size: 10pt; color: var(--primary);">Жүйе келмесе ше?</h4>
+                <p style="font-size: 9pt;">14 күн тегін сынақ мерзімі. Келмесе — жай ғана жалғастырмаңыз.</p>
+            </div>
+            <div class="card card-white" style="padding: 4mm;">
+                <h4 style="font-size: 10pt; color: var(--primary);">Бізге бейімдеуге болады ма?</h4>
+                <p style="font-size: 9pt;">Иә! Сіздің қажеттіліктеріңізді талқылаймыз және жеке шешім ұсынамыз.</p>
+            </div>
+            <div class="card card-white" style="padding: 4mm;">
+                <h4 style="font-size: 10pt; color: var(--primary);">SMS тарату қалай жұмыс істейді?</h4>
+                <p style="font-size: 9pt;">Mobizon және SMS.kz-бен интеграция жасаймыз. Сіз провайдерден SMS пакет сатып аласыз, біз жібереміз.</p>
+            </div>
+        </div>
+    </div>
+    <div class="slide-number">11 / 12</div>
+</section>
+
+<!-- ============================================
+     СЛАЙД 12: БАЙЛАНЫС
+     ============================================ -->
+<section class="slide">
+    <div class="slide-header">
+        <h2><span class="icon">📞</span> Бізбен байланысыңыз</h2>
+    </div>
+    <div class="slide-content">
+        <div class="contact-hero">
+            <div class="logo">🎓</div>
+            <h3>Qazaq Education CRM</h3>
+        </div>
+
+        <div class="contact-grid">
+            <div class="contact-item">
+                <div class="icon">📱</div>
+                <div>
+                    <div class="label">Телефон</div>
+                    <div class="value">+7 (7XX) XXX-XX-XX</div>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="icon">💬</div>
+                <div>
+                    <div class="label">WhatsApp</div>
+                    <div class="value">+7 (7XX) XXX-XX-XX</div>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="icon">📧</div>
+                <div>
+                    <div class="label">Email</div>
+                    <div class="value">info@qazeducrm.kz</div>
+                </div>
+            </div>
+            <div class="contact-item">
+                <div class="icon">🌐</div>
+                <div>
+                    <div class="label">Сайт</div>
+                    <div class="value">www.qazeducrm.kz</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-banner">
+            <h4>🚀 Бүгін тегін бастаңыз!</h4>
+            <p>14 күн сынақ мерзімі • Тегін деректер импорты • Команданы оқыту</p>
+        </div>
+    </div>
+    <div class="slide-number">12 / 12</div>
+</section>
+
+<!-- ============================================
+     ҚОРЫТЫНДЫ СЛАЙД
+     ============================================ -->
+<section class="slide slide-final">
+    <div class="logo">🎓</div>
+    <h2>Qazaq Education CRM</h2>
+    <p class="tagline">Күнделікті жұмысты автоматтандырыңыз — оқытуға назар аударыңыз!</p>
+    <div class="cta-box">
+        <h4>www.qazeducrm.kz</h4>
+    </div>
+</section>
+
+</body>
+</html>

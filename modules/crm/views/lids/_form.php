@@ -5,8 +5,11 @@ use app\helpers\OrganizationUrl;
 use app\models\Lids;
 use app\models\User;
 use app\components\ActiveRecord;
+use app\widgets\tailwind\Icon;
+use app\widgets\tailwind\StatusBadge;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
+use yii\helpers\Json;
 
 /** @var yii\web\View $this */
 /** @var app\models\Lids $model */
@@ -22,19 +25,23 @@ $managers = User::find()
 $dateValue = $model->date ? date('Y-m-d', strtotime($model->date)) : date('Y-m-d');
 $nextContactDate = $model->next_contact_date ? date('Y-m-d', strtotime($model->next_contact_date)) : '';
 
-// Status colors mapping for buttons
-$statusColors = [
-    Lids::STATUS_NEW => 'bg-blue-500 hover:bg-blue-600',
-    Lids::STATUS_CONTACTED => 'bg-indigo-500 hover:bg-indigo-600',
-    Lids::STATUS_TRIAL => 'bg-yellow-500 hover:bg-yellow-600',
-    Lids::STATUS_THINKING => 'bg-gray-500 hover:bg-gray-600',
-    Lids::STATUS_ENROLLED => 'bg-purple-500 hover:bg-purple-600',
-    Lids::STATUS_PAID => 'bg-green-500 hover:bg-green-600',
-    Lids::STATUS_LOST => 'bg-red-500 hover:bg-red-600',
+// Правила валидации
+$validationRules = [
+    'fio' => ['required' => true, 'minLength' => 2],
+    'phone' => ['phone' => true],
+];
+
+// Данные для Alpine.js компонента
+$lidsFormData = [
+    'status' => $model->status ?: Lids::STATUS_NEW,
+    'lostStatus' => Lids::STATUS_LOST,
+    'isSubmitting' => false,
 ];
 ?>
 
-<form action="" method="post" id="lids-form" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<form action="" method="post" id="lids-form" class="grid grid-cols-1 lg:grid-cols-3 gap-6"
+      x-data="{ ...formValidation(<?= Json::htmlEncode($validationRules) ?>), ...<?= Json::htmlEncode($lidsFormData) ?> }"
+      @submit="handleSubmit($event)">
     <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
 
     <!-- Main Content -->
@@ -47,14 +54,19 @@ $statusColors = [
             <div class="card-body">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="form-label" for="lids-fio">ФИО <span class="text-danger-500">*</span></label>
+                        <label class="form-label form-label-required" for="lids-fio">ФИО</label>
                         <?= Html::activeTextInput($model, 'fio', [
                             'class' => 'form-input',
                             'id' => 'lids-fio',
-                            'placeholder' => 'ФИО клиента'
+                            'placeholder' => 'ФИО клиента',
+                            ':class' => 'inputClass("fio")',
+                            '@blur' => 'validateField("fio", $event.target.value)',
                         ]) ?>
+                        <template x-if="hasError('fio')">
+                            <p class="form-error-message" x-text="getError('fio')"></p>
+                        </template>
                         <?php if ($model->hasErrors('fio')): ?>
-                            <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('fio') ?></p>
+                            <p class="form-error-message"><?= $model->getFirstError('fio') ?></p>
                         <?php endif; ?>
                     </div>
                     <div>
@@ -62,11 +74,16 @@ $statusColors = [
                         <?= Html::activeTextInput($model, 'phone', [
                             'class' => 'form-input',
                             'id' => 'lids-phone',
-                            'type' => 'tel',
-                            'placeholder' => '+7(XXX)XXXXXXX'
+                            'placeholder' => '+7 (XXX) XXX-XX-XX',
+                            'x-mask-phone' => true,
+                            ':class' => 'inputClass("phone")',
+                            '@blur' => 'validateField("phone", $event.target.value)',
                         ]) ?>
+                        <template x-if="hasError('phone')">
+                            <p class="form-error-message" x-text="getError('phone')"></p>
+                        </template>
                         <?php if ($model->hasErrors('phone')): ?>
-                            <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('phone') ?></p>
+                            <p class="form-error-message"><?= $model->getFirstError('phone') ?></p>
                         <?php endif; ?>
                     </div>
                     <div>
@@ -97,10 +114,11 @@ $statusColors = [
             <div class="card-body">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="form-label" for="lids-status">Статус <span class="text-danger-500">*</span></label>
+                        <label class="form-label form-label-required" for="lids-status">Статус</label>
                         <?= Html::activeDropDownList($model, 'status', Lids::getStatusList(), [
                             'class' => 'form-select',
-                            'id' => 'lids-status'
+                            'id' => 'lids-status',
+                            'x-model' => 'status',
                         ]) ?>
                     </div>
                     <div>
@@ -129,8 +147,8 @@ $statusColors = [
                     </div>
                 </div>
 
-                <!-- Lost reason (shown conditionally via JS) -->
-                <div id="lost-reason-field" class="mt-4" style="display: <?= $model->status == Lids::STATUS_LOST ? 'block' : 'none' ?>;">
+                <!-- Lost reason (shown conditionally via Alpine.js) -->
+                <div class="mt-4" x-show="status == lostStatus" x-cloak>
                     <label class="form-label" for="lids-lost_reason">Причина потери</label>
                     <?= Html::activeTextInput($model, 'lost_reason', [
                         'class' => 'form-input',
@@ -197,11 +215,17 @@ $statusColors = [
 
         <!-- Actions (mobile) -->
         <div class="lg:hidden flex items-center gap-3">
-            <button type="submit" class="btn btn-primary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                Сохранить
+            <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
+                <template x-if="!isSubmitting">
+                    <?= Icon::show('check', 'sm') ?>
+                </template>
+                <template x-if="isSubmitting">
+                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </template>
+                <span x-text="isSubmitting ? 'Сохранение...' : 'Сохранить'"></span>
             </button>
             <a href="<?= OrganizationUrl::to(['lids/index']) ?>" class="btn btn-secondary">Отмена</a>
         </div>
@@ -214,19 +238,46 @@ $statusColors = [
             <div class="card-header">
                 <h3 class="text-lg font-semibold text-gray-900">Статус</h3>
             </div>
-            <div class="card-body space-y-2">
-                <?php foreach (Lids::getStatusList() as $status => $label): ?>
-                    <?php
-                    $bgColor = $statusColors[$status] ?? 'bg-gray-500 hover:bg-gray-600';
-                    $isActive = $model->status == $status;
-                    ?>
-                    <button type="button"
-                            class="status-btn w-full px-4 py-2 rounded-lg text-sm font-medium transition-all <?= $isActive ? $bgColor . ' text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' ?>"
-                            data-status="<?= $status ?>"
-                            data-active-class="<?= $bgColor ?> text-white">
-                        <?= Html::encode($label) ?>
-                    </button>
-                <?php endforeach; ?>
+            <div class="card-body">
+                <?php
+                $statuses = \app\helpers\StatusHelper::getStatuses('lids');
+                ?>
+                <div class="flex flex-wrap gap-2">
+                    <?php foreach ($statuses as $value => $config): ?>
+                        <?php
+                        $color = $config['color'];
+                        $label = $config['label'];
+
+                        $activeClasses = [
+                            'primary' => 'bg-primary-600 text-white ring-2 ring-primary-600 ring-offset-2',
+                            'success' => 'bg-success-600 text-white ring-2 ring-success-600 ring-offset-2',
+                            'warning' => 'bg-warning-500 text-white ring-2 ring-warning-500 ring-offset-2',
+                            'danger' => 'bg-danger-600 text-white ring-2 ring-danger-600 ring-offset-2',
+                            'info' => 'bg-blue-600 text-white ring-2 ring-blue-600 ring-offset-2',
+                            'gray' => 'bg-gray-600 text-white ring-2 ring-gray-600 ring-offset-2',
+                            'purple' => 'bg-purple-600 text-white ring-2 ring-purple-600 ring-offset-2',
+                            'indigo' => 'bg-indigo-600 text-white ring-2 ring-indigo-600 ring-offset-2',
+                        ];
+
+                        $inactiveClasses = [
+                            'primary' => 'bg-primary-50 text-primary-700 hover:bg-primary-100',
+                            'success' => 'bg-success-50 text-success-700 hover:bg-success-100',
+                            'warning' => 'bg-warning-50 text-warning-700 hover:bg-warning-100',
+                            'danger' => 'bg-danger-50 text-danger-700 hover:bg-danger-100',
+                            'info' => 'bg-blue-50 text-blue-700 hover:bg-blue-100',
+                            'gray' => 'bg-gray-50 text-gray-700 hover:bg-gray-100',
+                            'purple' => 'bg-purple-50 text-purple-700 hover:bg-purple-100',
+                            'indigo' => 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100',
+                        ];
+                        ?>
+                        <button type="button"
+                                @click="status = '<?= $value ?>'"
+                                :class="status == '<?= $value ?>' ? '<?= $activeClasses[$color] ?? $activeClasses['gray'] ?>' : '<?= $inactiveClasses[$color] ?? $inactiveClasses['gray'] ?>'"
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all">
+                            <?= Html::encode($label) ?>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
             </div>
         </div>
 
@@ -251,60 +302,19 @@ $statusColors = [
 
         <!-- Actions (desktop) -->
         <div class="hidden lg:flex flex-col gap-2">
-            <button type="submit" class="btn btn-primary w-full justify-center">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                Сохранить
+            <button type="submit" class="btn btn-primary w-full justify-center" :disabled="isSubmitting">
+                <template x-if="!isSubmitting">
+                    <?= Icon::show('check', 'sm') ?>
+                </template>
+                <template x-if="isSubmitting">
+                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </template>
+                <span x-text="isSubmitting ? 'Сохранение...' : 'Сохранить'"></span>
             </button>
             <a href="<?= OrganizationUrl::to(['lids/index']) ?>" class="btn btn-secondary w-full justify-center">Отмена</a>
         </div>
     </div>
 </form>
-
-<?php
-$lostStatus = Lids::STATUS_LOST;
-$js = <<<JS
-document.addEventListener('DOMContentLoaded', function() {
-    const statusSelect = document.getElementById('lids-status');
-    const lostReasonField = document.getElementById('lost-reason-field');
-    const statusButtons = document.querySelectorAll('.status-btn');
-
-    // Toggle lost reason field visibility
-    function toggleLostReason() {
-        if (statusSelect.value == '{$lostStatus}') {
-            lostReasonField.style.display = 'block';
-        } else {
-            lostReasonField.style.display = 'none';
-        }
-    }
-
-    statusSelect.addEventListener('change', toggleLostReason);
-
-    // Status button click handlers
-    statusButtons.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const status = this.dataset.status;
-            statusSelect.value = status;
-
-            // Reset all buttons
-            statusButtons.forEach(function(b) {
-                b.classList.remove('text-white');
-                b.className = b.className.replace(/bg-\w+-\d+/g, '');
-                b.classList.add('bg-gray-100', 'text-gray-700');
-            });
-
-            // Activate clicked button
-            this.classList.remove('bg-gray-100', 'text-gray-700');
-            const activeClass = this.dataset.activeClass;
-            activeClass.split(' ').forEach(function(cls) {
-                if (cls) btn.classList.add(cls);
-            });
-
-            toggleLostReason();
-        });
-    });
-});
-JS;
-$this->registerJs($js);
-?>

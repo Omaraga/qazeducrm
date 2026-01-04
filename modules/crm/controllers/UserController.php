@@ -5,16 +5,15 @@ namespace app\modules\crm\controllers;
 use app\helpers\OrganizationRoles;
 use app\helpers\SystemRoles;
 use app\models\forms\TeacherForm;
-use app\models\User;
 use app\models\search\UserSearch;
-use yii\base\BaseObject;
+use app\models\User;
 use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 
 /**
- * UserController implements the CRUD actions for User model.
+ * UserController - управление сотрудниками организации
  */
 class UserController extends Controller
 {
@@ -27,13 +26,13 @@ class UserController extends Controller
             parent::behaviors(),
             [
                 'verbs' => [
-                    'class' => VerbFilter::className(),
+                    'class' => VerbFilter::class,
                     'actions' => [
                         'delete' => ['POST'],
                     ],
                 ],
                 'access' => [
-                    'class' => AccessControl::className(),
+                    'class' => AccessControl::class,
                     'rules' => [
                         [
                             'allow' => true,

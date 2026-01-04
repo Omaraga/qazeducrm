@@ -34,6 +34,10 @@ class TailwindAsset extends AssetBundle
         'js/toast.js',
         // Form validation (загружается перед Alpine.js)
         'js/validation.js',
+        // Loading states
+        'js/loading.js',
+        // AJAX wrapper with error handling
+        'js/ajax.js',
         // Alpine.js для интерактивности (dropdowns, modals, tabs)
         'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js',
         // Chart.js для графиков

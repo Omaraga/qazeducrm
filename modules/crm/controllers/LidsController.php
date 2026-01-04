@@ -3,26 +3,16 @@
 namespace app\modules\crm\controllers;
 
 use app\helpers\OrganizationRoles;
-use app\helpers\OrganizationUrl;
 use app\helpers\SystemRoles;
-use app\models\forms\EducationForm;
-use app\models\forms\PaymentForm;
 use app\models\Lids;
-use app\models\Payment;
-use app\models\Pupil;
-use app\models\PupilEducation;
 use app\models\search\LidsSearch;
-use app\models\search\PupilSearch;
-use app\models\services\PupilService;
-use yii\base\BaseObject;
-use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 
 /**
- * PupilController implements the CRUD actions for Lids model.
+ * LidsController - управление лидами (воронка продаж)
  */
 class LidsController extends Controller
 {
@@ -35,14 +25,13 @@ class LidsController extends Controller
             parent::behaviors(),
             [
                 'verbs' => [
-                    'class' => VerbFilter::className(),
+                    'class' => VerbFilter::class,
                     'actions' => [
                         'delete' => ['POST'],
-                        'delete-edu' => ['POST']
                     ],
                 ],
                 'access' => [
-                    'class' => AccessControl::className(),
+                    'class' => AccessControl::class,
                     'rules' => [
                         [
                             'allow' => true,
@@ -64,7 +53,7 @@ class LidsController extends Controller
     }
 
     /**
-     * Lists all Pupil models.
+     * Список всех лидов
      *
      * @return string
      */
@@ -80,10 +69,11 @@ class LidsController extends Controller
     }
 
     /**
-     * Displays a single Pupil model.
+     * Просмотр лида
+     *
      * @param int $id ID
      * @return string
-     * @throws NotFoundHttpException if the model cannot be found
+     * @throws NotFoundHttpException
      */
     public function actionView($id)
     {
@@ -93,8 +83,8 @@ class LidsController extends Controller
     }
 
     /**
-     * Creates a new Pupil model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
+     * Создание нового лида
+     *
      * @return string|\yii\web\Response
      */
     public function actionCreate()
@@ -115,11 +105,11 @@ class LidsController extends Controller
     }
 
     /**
-     * Updates an existing Pupil model.
-     * If update is successful, the browser will be redirected to the 'view' page.
+     * Редактирование лида
+     *
      * @param int $id ID
      * @return string|\yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
+     * @throws NotFoundHttpException
      */
     public function actionUpdate($id)
     {
@@ -134,11 +124,11 @@ class LidsController extends Controller
     }
 
     /**
-     * Deletes an existing Pupil model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
+     * Удаление лида
+     *
      * @param int $id ID
      * @return \yii\web\Response
-     * @throws NotFoundHttpException if the model cannot be found
+     * @throws NotFoundHttpException
      */
     public function actionDelete($id)
     {
@@ -147,21 +137,25 @@ class LidsController extends Controller
         return $this->redirect(['index']);
     }
 
-
-
     /**
-     * Finds the Pupil model based on its primary key value.
-     * If the model is not found, a 404 HTTP exception will be thrown.
+     * Поиск модели лида по ID
+     *
      * @param int $id ID
-     * @return Lids the loaded model
-     * @throws NotFoundHttpException if the model cannot be found
+     * @return Lids
+     * @throws NotFoundHttpException
      */
     protected function findModel($id)
     {
-        if (($model = Lids::findOne(['id' => $id])) !== null) {
-            return $model;
+        $model = Lids::find()
+            ->byOrganization()
+            ->andWhere(['id' => $id])
+            ->notDeleted()
+            ->one();
+
+        if ($model === null) {
+            throw new NotFoundHttpException(\Yii::t('main', 'Лид не найден.'));
         }
 
-        throw new NotFoundHttpException('The requested page does not exist.');
+        return $model;
     }
 }

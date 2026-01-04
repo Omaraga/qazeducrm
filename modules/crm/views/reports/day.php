@@ -2,6 +2,8 @@
 
 use app\helpers\OrganizationUrl;
 use app\helpers\OrganizationRoles;
+use app\widgets\tailwind\EmptyState;
+use app\widgets\tailwind\Icon;
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
@@ -34,26 +36,20 @@ $this->params['breadcrumbs'][] = $this->title;
     <div class="border-b border-gray-200">
         <nav class="flex flex-wrap gap-2" aria-label="Tabs">
             <a href="<?= OrganizationUrl::to(['reports/day', 'type' => 1, 'DateSearch[date]' => $searchModel->date]) ?>"
-               class="px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 <?= $type == 1 ? 'border-primary-500 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' ?>">
-                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                </svg>
+               class="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 <?= $type == 1 ? 'border-primary-500 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' ?>">
+                <?= Icon::show('check', 'sm') ?>
                 Посещаемость по группам
             </a>
             <?php if (Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR) || Yii::$app->user->can(OrganizationRoles::DIRECTOR)): ?>
             <a href="<?= OrganizationUrl::to(['reports/day', 'type' => 2, 'DateSearch[date]' => $searchModel->date]) ?>"
-               class="px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 <?= $type == 2 ? 'border-primary-500 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' ?>">
-                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
+               class="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 <?= $type == 2 ? 'border-primary-500 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' ?>">
+                <?= Icon::show('wallet', 'sm') ?>
                 Оплата преподавателям
             </a>
             <?php endif; ?>
             <a href="<?= OrganizationUrl::to(['reports/day', 'type' => 3, 'DateSearch[date]' => $searchModel->date]) ?>"
-               class="px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 <?= $type == 3 ? 'border-primary-500 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' ?>">
-                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+               class="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 <?= $type == 3 ? 'border-primary-500 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' ?>">
+                <?= Icon::show('payment', 'sm') ?>
                 Принятые платежи
             </a>
         </nav>
@@ -67,14 +63,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attendances' => $dataArray['attendances']
             ]) ?>
         <?php else: ?>
-            <div class="card">
-                <div class="card-body text-center py-12">
-                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    <p class="text-lg font-medium text-gray-900"><?= Html::encode($searchModel->date) ?> нет ни одного занятия</p>
-                </div>
-            </div>
+            <?= EmptyState::card('calendar', $searchModel->date . ' нет ни одного занятия', 'Выберите другую дату для просмотра отчёта') ?>
         <?php endif; ?>
     <?php elseif ($type == 2): ?>
         <?php if (!empty($dataArray['teachers'])): ?>
@@ -84,14 +73,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'lessonPupilSalary' => $dataArray['lessonPupilSalary']
             ]) ?>
         <?php else: ?>
-            <div class="card">
-                <div class="card-body text-center py-12">
-                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    <p class="text-lg font-medium text-gray-900"><?= Html::encode($searchModel->date) ?> нет ни одного занятия</p>
-                </div>
-            </div>
+            <?= EmptyState::card('calendar', $searchModel->date . ' нет ни одного занятия', 'Выберите другую дату для просмотра отчёта') ?>
         <?php endif; ?>
     <?php elseif ($type == 3): ?>
         <?php if (!empty($dataArray)): ?>
@@ -99,14 +81,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'payments' => $dataArray,
             ]) ?>
         <?php else: ?>
-            <div class="card">
-                <div class="card-body text-center py-12">
-                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <p class="text-lg font-medium text-gray-900"><?= Html::encode($searchModel->date) ?> нет ни одной оплаты</p>
-                </div>
-            </div>
+            <?= EmptyState::card('payment', $searchModel->date . ' нет ни одной оплаты', 'Выберите другую дату для просмотра отчёта') ?>
         <?php endif; ?>
     <?php endif; ?>
 </div>

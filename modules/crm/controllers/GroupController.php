@@ -7,17 +7,14 @@ use app\helpers\OrganizationUrl;
 use app\helpers\SystemRoles;
 use app\models\Group;
 use app\models\Pupil;
-use app\models\relations\EducationGroup;
 use app\models\relations\TeacherGroup;
 use app\models\search\GroupSearch;
-use app\models\Subject;
-use yii\base\BaseObject;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 
 /**
  * GroupController implements the CRUD actions for Group model.
@@ -33,13 +30,13 @@ class GroupController extends Controller
             parent::behaviors(),
             [
                 'verbs' => [
-                    'class' => VerbFilter::className(),
+                    'class' => VerbFilter::class,
                     'actions' => [
                         'delete' => ['POST'],
                     ],
                 ],
                 'access' => [
-                    'class' => AccessControl::className(),
+                    'class' => AccessControl::class,
                     'rules' => [
                         [
                             'allow' => true,

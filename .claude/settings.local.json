@@ -26,7 +26,11 @@
       "Bash(./node_modules/.bin/tailwindcss:*)",
       "Bash(node ./node_modules/@tailwindcss/cli/dist/index.mjs:*)",
       "Bash(grep:*)",
-      "Bash(xargs -I {} sh -c 'echo \"\"=== {} ===\"\" && head -20 {}')"
+      "Bash(xargs -I {} sh -c 'echo \"\"=== {} ===\"\" && head -20 {}')",
+      "WebSearch",
+      "Bash(xargs:*)",
+      "Bash(for file in modules/crm/controllers/*.php)",
+      "Bash(do php -l:*)"
     ]
   }
 }

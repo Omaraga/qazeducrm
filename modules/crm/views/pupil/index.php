@@ -55,32 +55,32 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <!-- Table -->
     <div class="card">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+        <div class="table-container table-container-scrollable">
+            <table class="data-table data-table-sticky">
+                <thead>
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ИИН</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ФИО</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Класс</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Контакты</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Родители</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Баланс</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+                        <th>ID</th>
+                        <th>ИИН</th>
+                        <th>ФИО</th>
+                        <th>Класс</th>
+                        <th>Контакты</th>
+                        <th>Родители</th>
+                        <th>Баланс</th>
+                        <th class="text-right">Действия</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody>
                     <?php foreach ($dataProvider->getModels() as $model): ?>
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= $model->id ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= Html::encode($model->iin) ?></td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900"><?= Html::encode($model->fio) ?></div>
+                    <tr>
+                        <td class="text-gray-500"><?= $model->id ?></td>
+                        <td><?= Html::encode($model->iin) ?></td>
+                        <td>
+                            <div class="font-medium"><?= Html::encode($model->fio) ?></div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="badge badge-secondary"><?= \app\helpers\Lists::getGrades()[$model->class_id] ?? '-' ?></span>
+                        <td>
+                            <span class="badge badge-gray"><?= \app\helpers\Lists::getGrades()[$model->class_id] ?? '-' ?></span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="text-gray-500">
                             <?php if ($model->phone): ?>
                                 <div>+<?= Html::encode($model->phone) ?></div>
                             <?php endif; ?>
@@ -88,27 +88,32 @@ $this->params['breadcrumbs'][] = $this->title;
                                 <div class="text-gray-400">+<?= Html::encode($model->home_phone) ?></div>
                             <?php endif; ?>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="text-gray-500">
                             <?php if ($model->parent_fio): ?>
                                 <div><?= Html::encode($model->parent_fio) ?></div>
                                 <div class="text-gray-400">+<?= Html::encode($model->parent_phone) ?></div>
                             <?php endif; ?>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td>
                             <?php if ($model->balance > 0): ?>
-                                <span class="text-sm font-semibold text-primary-600"><?= number_format($model->balance, 0, '.', ' ') ?> ₸</span>
+                                <span class="font-semibold text-primary-600"><?= number_format($model->balance, 0, '.', ' ') ?> ₸</span>
                             <?php else: ?>
-                                <span class="text-sm font-semibold text-danger-600"><?= number_format($model->balance, 0, '.', ' ') ?> ₸</span>
+                                <span class="font-semibold text-danger-600"><?= number_format($model->balance, 0, '.', ' ') ?> ₸</span>
                             <?php endif; ?>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                            <?= Html::a('Посмотреть', OrganizationUrl::to(['pupil/view', 'id' => $model->id]), ['class' => 'btn btn-sm btn-secondary']) ?>
+                        <td class="text-right">
+                            <a href="<?= OrganizationUrl::to(['pupil/view', 'id' => $model->id]) ?>" class="table-action-btn" title="Посмотреть">
+                                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </a>
                         </td>
                     </tr>
                     <?php endforeach; ?>
                     <?php if (empty($dataProvider->getModels())): ?>
                     <tr>
-                        <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                        <td colspan="8" class="!py-12 text-center text-gray-500">
                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
                             </svg>

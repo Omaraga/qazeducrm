@@ -2,15 +2,12 @@
 
 namespace app\modules\crm\controllers;
 
-use app\components\ActiveRecord;
 use app\helpers\OrganizationRoles;
 use app\helpers\SystemRoles;
 use app\models\Organizations;
+use app\models\services\TeacherService;
 use app\models\TeacherRate;
 use app\models\TeacherSalary;
-use app\models\TeacherSalaryDetail;
-use app\models\User;
-use app\models\relations\UserOrganization;
 use app\models\search\TeacherSalarySearch;
 use app\models\search\TeacherRateSearch;
 use Yii;
@@ -102,12 +99,7 @@ class SalaryController extends Controller
      */
     public function actionCalculate()
     {
-        $teachers = User::find()
-            ->innerJoinWith(['currentUserOrganizations' => function ($q) {
-                $q->andWhere(['<>', 'user_organization.is_deleted', ActiveRecord::DELETED])
-                    ->andWhere(['in', 'user_organization.role', [OrganizationRoles::TEACHER]]);
-            }])
-            ->all();
+        $teachers = TeacherService::getOrganizationTeachers();
 
         if (Yii::$app->request->isPost) {
             $teacherId = Yii::$app->request->post('teacher_id');
@@ -260,12 +252,7 @@ class SalaryController extends Controller
         $model->organization_id = Organizations::getCurrentOrganizationId();
         $model->is_active = true;
 
-        $teachers = User::find()
-            ->innerJoinWith(['currentUserOrganizations' => function ($q) {
-                $q->andWhere(['<>', 'user_organization.is_deleted', ActiveRecord::DELETED])
-                    ->andWhere(['in', 'user_organization.role', [OrganizationRoles::TEACHER]]);
-            }])
-            ->all();
+        $teachers = TeacherService::getOrganizationTeachers();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             Yii::$app->session->setFlash('success', 'Ставка создана');
@@ -285,12 +272,7 @@ class SalaryController extends Controller
     {
         $model = $this->findRate($id);
 
-        $teachers = User::find()
-            ->innerJoinWith(['currentUserOrganizations' => function ($q) {
-                $q->andWhere(['<>', 'user_organization.is_deleted', ActiveRecord::DELETED])
-                    ->andWhere(['in', 'user_organization.role', [OrganizationRoles::TEACHER]]);
-            }])
-            ->all();
+        $teachers = TeacherService::getOrganizationTeachers();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             Yii::$app->session->setFlash('success', 'Ставка обновлена');

@@ -2,6 +2,8 @@
 
 use app\helpers\OrganizationUrl;
 use app\models\TeacherSalary;
+use app\widgets\tailwind\Icon;
+use app\widgets\tailwind\StatusBadge;
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
@@ -11,23 +13,14 @@ use yii\helpers\Html;
 $this->title = 'Зарплата: ' . ($model->teacher ? $model->teacher->fio : 'ID ' . $model->teacher_id);
 $this->params['breadcrumbs'][] = ['label' => 'Зарплаты учителей', 'url' => OrganizationUrl::to(['salary/index'])];
 $this->params['breadcrumbs'][] = $this->title;
-
-$statusClass = match($model->status) {
-    TeacherSalary::STATUS_DRAFT => 'badge-secondary',
-    TeacherSalary::STATUS_APPROVED => 'badge-warning',
-    TeacherSalary::STATUS_PAID => 'badge-success',
-    default => 'badge-secondary'
-};
 ?>
 
 <div class="space-y-6">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-lg bg-success-100 flex items-center justify-center">
-                <svg class="w-6 h-6 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                </svg>
+            <div class="w-12 h-12 rounded-lg bg-success-100 flex items-center justify-center text-success-600">
+                <?= Icon::show('wallet', 'lg') ?>
             </div>
             <div>
                 <h1 class="text-2xl font-bold text-gray-900"><?= Html::encode($this->title) ?></h1>
@@ -36,9 +29,7 @@ $statusClass = match($model->status) {
         </div>
         <div>
             <a href="<?= OrganizationUrl::to(['salary/index']) ?>" class="btn btn-secondary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
+                <?= Icon::show('arrow-left', 'sm') ?>
                 Назад
             </a>
         </div>
@@ -51,7 +42,7 @@ $statusClass = match($model->status) {
             <div class="card">
                 <div class="card-header flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-900">Информация</h3>
-                    <span class="badge <?= $statusClass ?>"><?= $model->getStatusLabel() ?></span>
+                    <?= StatusBadge::show('salary', $model->status) ?>
                 </div>
                 <div class="card-body">
                     <dl class="space-y-3">
@@ -116,23 +107,17 @@ $statusClass = match($model->status) {
                 <div class="card-body space-y-2">
                     <?php if ($model->status == TeacherSalary::STATUS_DRAFT): ?>
                     <a href="<?= OrganizationUrl::to(['salary/update', 'id' => $model->id]) ?>" class="btn btn-secondary w-full justify-center">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                        </svg>
+                        <?= Icon::show('edit', 'sm') ?>
                         Редактировать
                     </a>
                     <a href="<?= OrganizationUrl::to(['salary/recalculate', 'id' => $model->id]) ?>" class="btn btn-secondary w-full justify-center">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
+                        <?= Icon::show('refresh', 'sm') ?>
                         Пересчитать
                     </a>
                     <form action="<?= OrganizationUrl::to(['salary/approve', 'id' => $model->id]) ?>" method="post">
                         <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
                         <button type="submit" class="btn btn-success w-full justify-center">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
+                            <?= Icon::show('check', 'sm') ?>
                             Утвердить
                         </button>
                     </form>
@@ -142,9 +127,7 @@ $statusClass = match($model->status) {
                     <form action="<?= OrganizationUrl::to(['salary/pay', 'id' => $model->id]) ?>" method="post">
                         <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
                         <button type="submit" class="btn btn-primary w-full justify-center">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                            </svg>
+                            <?= Icon::show('wallet', 'sm') ?>
                             Отметить как выплаченную
                         </button>
                     </form>
@@ -153,9 +136,7 @@ $statusClass = match($model->status) {
                     <?php if ($model->status == TeacherSalary::STATUS_PAID): ?>
                     <div class="bg-success-50 border border-success-200 rounded-lg p-4">
                         <div class="flex items-center gap-2 text-success-800">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
+                            <?= Icon::show('success', 'md') ?>
                             <span class="text-sm font-medium">
                                 Выплачено: <?= Yii::$app->formatter->asDatetime($model->paid_at, 'php:d.m.Y H:i') ?>
                             </span>
@@ -168,9 +149,7 @@ $statusClass = match($model->status) {
                           onsubmit="return confirm('Удалить эту зарплату?')">
                         <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
                         <button type="submit" class="btn btn-danger w-full justify-center">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
+                            <?= Icon::show('trash', 'sm') ?>
                             Удалить
                         </button>
                     </form>

@@ -8,12 +8,12 @@ use app\models\Subject;
 use richardfan\sortable\SortableAction;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
+use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 
 /**
- * SubjectController implements the CRUD actions for Subject model.
+ * SubjectController - управление предметами
  */
 class SubjectController extends Controller
 {
@@ -26,13 +26,13 @@ class SubjectController extends Controller
             parent::behaviors(),
             [
                 'verbs' => [
-                    'class' => VerbFilter::className(),
+                    'class' => VerbFilter::class,
                     'actions' => [
                         'delete' => ['POST'],
                     ],
                 ],
                 'access' => [
-                    'class' => AccessControl::className(),
+                    'class' => AccessControl::class,
                     'rules' => [
                         [
                             'allow' => true,
@@ -51,15 +51,17 @@ class SubjectController extends Controller
         );
     }
 
+    /**
+     * @inheritDoc
+     */
     public function actions()
     {
         return [
             'sort' => [
-                'class' => SortableAction::className(),
+                'class' => SortableAction::class,
                 'activeRecordClassName' => Subject::class,
                 'orderColumn' => 'order_col',
             ],
-            // your other actions
         ];
     }
 

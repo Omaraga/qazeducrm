@@ -244,10 +244,10 @@ class DateSearch extends Model
                         continue;
                     }
                     $pupil = $lessonAttendance->pupil;
-                    $education = $pupilEducationArr[$pupil->id];
-                    if (!$education){
+                    if (!$pupil || !isset($pupilEducationArr[$pupil->id])){
                         continue;
                     }
+                    $education = $pupilEducationArr[$pupil->id];
                     $totalSum = 0;
                     if ($teacherGroup['type'] == TeacherGroup::PRICE_TYPE_FIX){
                         $sum = $teacherGroup['price'];

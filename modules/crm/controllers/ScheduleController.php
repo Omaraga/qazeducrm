@@ -6,14 +6,8 @@ use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
 use app\helpers\SystemRoles;
 use app\models\forms\TypicalLessonForm;
-use app\models\Group;
 use app\models\Lesson;
-use app\models\Organizations;
-use app\models\relations\TeacherGroup;
-use app\models\TypicalSchedule;
-use app\models\User;
-use yii\data\ActiveDataProvider;
-use yii\db\Query;
+use app\models\services\ScheduleService;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -71,59 +65,31 @@ class ScheduleController extends Controller
         return $this->render('index', []);
     }
 
-    public function actionEvents(){
-        $result = [];
+    public function actionEvents()
+    {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        if (\Yii::$app->request->isAjax){
 
-            $query = new Query();
-            $query->select([
-                'lesson.id',
-                'lesson.start_time',
-                'lesson.end_time',
-                'lesson.date',
-                'group.code as code',
-                'group.color as color',
-                'group.name as name',
-                'user.fio as fio',
-            ])->from(Lesson::tableName())->innerJoin(Group::tableName(),
-                'lesson.group_id = group.id AND group.is_deleted != 1')
-                ->innerJoin(User::tableName(), 'lesson.teacher_id = user.id')
-                ->andWhere(['lesson.organization_id' => Organizations::getCurrentOrganizationId()])
-                ->andWhere('lesson.is_deleted != 1')->orderBy('lesson.start_time ASC');
-            $events = $query->all();
-            foreach ($events as $i => $event){
-                $result[$i]['start'] = strtotime($event['date'].' '.$event['start_time']);
-                $result[$i]['end'] = strtotime($event['date'].' '.$event['end_time']);
-                $result[$i]['title'] = $event['code'] .'-'. $event['name'];
-                $result[$i]['color'] = $event['color'];
-                $result[$i]['content'] = $event['fio'];
-                $result[$i]['url'] = OrganizationUrl::to(['schedule/update', 'id' => $event['id']]);
-            }
-            usort($result, function ($a, $b)
-            {
-                $aDif = $a['end'] - $a['start'];
-                $bDif = $b['end'] - $b['start'];
-                return $aDif > $bDif ? 1 : -1;
-            });
-
+        if (!\Yii::$app->request->isAjax) {
+            return [];
         }
-        return $result;
 
+        return ScheduleService::getLessonEvents();
     }
 
-    public function actionTeachers(){
-        $result = [];
-        if (\Yii::$app->request->isAjax && \Yii::$app->request->isPost && $groupId = \Yii::$app->request->post('id')){
-            $group = Group::findOne($groupId);
-            $teacherGroups = TeacherGroup::find()->where(['target_id' => $group->id])->byOrganization()->notDeleted()->all();
-            foreach ($teacherGroups as $i => $teacherGroup){
-                $result[$i]['id'] = $teacherGroup->related_id;
-                $result[$i]['fio'] = $teacherGroup->teacher->fio;
-            }
+    public function actionTeachers()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
+        if (!\Yii::$app->request->isAjax || !\Yii::$app->request->isPost) {
+            return [];
         }
-        return json_encode($result, true);
+
+        $groupId = \Yii::$app->request->post('id');
+        if (!$groupId) {
+            return [];
+        }
+
+        return ScheduleService::getTeachersForGroup($groupId);
     }
 
     /**

@@ -71,12 +71,15 @@ use yii\helpers\Html;
                         <div>
                             <?php if (array_key_exists($lesson->id, $attendances) && array_key_exists($pupil->id, $attendances[$lesson->id])): ?>
                                 <?php $status = $attendances[$lesson->id][$pupil->id]; ?>
+                                <?php $statusList = LessonAttendance::getStatusList(); ?>
                                 <?php if ($status == LessonAttendance::STATUS_VISIT): ?>
-                                    <span class="badge badge-success"><?= LessonAttendance::getStatusList()[$status] ?></span>
+                                    <span class="badge badge-success"><?= $statusList[$status] ?></span>
                                 <?php elseif ($status == LessonAttendance::STATUS_MISS_WITHOUT_PAY): ?>
-                                    <span class="badge badge-danger"><?= LessonAttendance::getStatusList()[$status] ?></span>
+                                    <span class="badge badge-danger"><?= $statusList[$status] ?></span>
+                                <?php elseif (isset($statusList[$status])): ?>
+                                    <span class="badge badge-warning"><?= $statusList[$status] ?></span>
                                 <?php else: ?>
-                                    <span class="badge badge-warning"><?= LessonAttendance::getStatusList()[$status] ?></span>
+                                    <span class="badge badge-secondary">Не выставлено</span>
                                 <?php endif; ?>
                             <?php else: ?>
                                 <span class="badge badge-secondary">Не выставлено</span>

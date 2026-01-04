@@ -3,8 +3,10 @@
 use app\helpers\OrganizationUrl;
 use app\models\Payment;
 use app\models\PayMethod;
+use app\widgets\tailwind\Icon;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
+use yii\helpers\Json;
 
 /** @var yii\web\View $this */
 /** @var \app\models\forms\PaymentForm $model */
@@ -32,6 +34,17 @@ if ($model->date) {
 
 $payMethods = ArrayHelper::map(PayMethod::find()->byOrganization()->all(), 'id', 'name');
 $purposes = Payment::getPurposeList();
+
+// Правила валидации
+$validationRules = [
+    'amount' => ['required' => true, 'min' => 1],
+    'date' => ['required' => true],
+];
+
+if ($model->type == Payment::TYPE_PAY) {
+    $validationRules['purpose_id'] = ['required' => true];
+    $validationRules['method_id'] = ['required' => true];
+}
 ?>
 
 <div class="space-y-6">
@@ -51,7 +64,9 @@ $purposes = Payment::getPurposeList();
         </div>
     </div>
 
-    <form action="" method="post" class="space-y-6">
+    <form action="" method="post" class="space-y-6"
+          x-data="formValidation(<?= Json::htmlEncode($validationRules) ?>)"
+          @submit="handleSubmit($event)">
         <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
         <input type="hidden" name="PaymentForm[type]" value="<?= $model->type ?>">
         <input type="hidden" name="PaymentForm[pupil_id]" value="<?= $model->pupil_id ?>">
@@ -70,23 +85,33 @@ $purposes = Payment::getPurposeList();
                 <?php if ($model->type == Payment::TYPE_PAY): ?>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="form-label" for="paymentform-purpose_id">Назначение платежа <span class="text-danger-500">*</span></label>
+                        <label class="form-label form-label-required" for="paymentform-purpose_id">Назначение платежа</label>
                         <?= Html::activeDropDownList($model, 'purpose_id', $purposes, [
                             'class' => 'form-select',
                             'id' => 'paymentform-purpose_id',
+                            ':class' => 'inputClass("purpose_id")',
+                            '@change' => 'validateField("purpose_id", $event.target.value)',
                         ]) ?>
+                        <template x-if="hasError('purpose_id')">
+                            <p class="form-error-message" x-text="getError('purpose_id')"></p>
+                        </template>
                         <?php if ($model->hasErrors('purpose_id')): ?>
-                            <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('purpose_id') ?></p>
+                            <p class="form-error-message"><?= $model->getFirstError('purpose_id') ?></p>
                         <?php endif; ?>
                     </div>
                     <div>
-                        <label class="form-label" for="paymentform-method_id">Способ оплаты <span class="text-danger-500">*</span></label>
+                        <label class="form-label form-label-required" for="paymentform-method_id">Способ оплаты</label>
                         <?= Html::activeDropDownList($model, 'method_id', $payMethods, [
                             'class' => 'form-select',
                             'id' => 'paymentform-method_id',
+                            ':class' => 'inputClass("method_id")',
+                            '@change' => 'validateField("method_id", $event.target.value)',
                         ]) ?>
+                        <template x-if="hasError('method_id')">
+                            <p class="form-error-message" x-text="getError('method_id')"></p>
+                        </template>
                         <?php if ($model->hasErrors('method_id')): ?>
-                            <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('method_id') ?></p>
+                            <p class="form-error-message"><?= $model->getFirstError('method_id') ?></p>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -102,30 +127,41 @@ $purposes = Payment::getPurposeList();
                             'placeholder' => 'Номер документа'
                         ]) ?>
                         <?php if ($model->hasErrors('number')): ?>
-                            <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('number') ?></p>
+                            <p class="form-error-message"><?= $model->getFirstError('number') ?></p>
                         <?php endif; ?>
                     </div>
                     <?php endif; ?>
 
                     <div>
-                        <label class="form-label" for="paymentform-amount">Сумма (₸) <span class="text-danger-500">*</span></label>
+                        <label class="form-label form-label-required" for="paymentform-amount">Сумма (₸)</label>
                         <?= Html::activeTextInput($model, 'amount', [
                             'class' => 'form-input',
                             'id' => 'paymentform-amount',
                             'type' => 'number',
-                            'min' => '0',
-                            'placeholder' => '0'
+                            'min' => '1',
+                            'placeholder' => '0',
+                            ':class' => 'inputClass("amount")',
+                            '@blur' => 'validateField("amount", $event.target.value)',
                         ]) ?>
+                        <template x-if="hasError('amount')">
+                            <p class="form-error-message" x-text="getError('amount')"></p>
+                        </template>
                         <?php if ($model->hasErrors('amount')): ?>
-                            <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('amount') ?></p>
+                            <p class="form-error-message"><?= $model->getFirstError('amount') ?></p>
                         <?php endif; ?>
                     </div>
 
                     <div>
-                        <label class="form-label" for="paymentform-date">Дата и время <span class="text-danger-500">*</span></label>
-                        <input type="datetime-local" name="PaymentForm[date]" id="paymentform-date" class="form-input" value="<?= $dateValue ?>" autocomplete="off">
+                        <label class="form-label form-label-required" for="paymentform-date">Дата и время</label>
+                        <input type="datetime-local" name="PaymentForm[date]" id="paymentform-date"
+                               class="form-input" value="<?= $dateValue ?>" autocomplete="off"
+                               :class="inputClass('date')"
+                               @blur="validateField('date', $event.target.value)">
+                        <template x-if="hasError('date')">
+                            <p class="form-error-message" x-text="getError('date')"></p>
+                        </template>
                         <?php if ($model->hasErrors('date')): ?>
-                            <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('date') ?></p>
+                            <p class="form-error-message"><?= $model->getFirstError('date') ?></p>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -144,11 +180,17 @@ $purposes = Payment::getPurposeList();
 
         <!-- Actions -->
         <div class="flex items-center gap-3">
-            <button type="submit" class="btn <?= $model->type == Payment::TYPE_PAY ? 'btn-primary' : 'btn-warning' ?>">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                <?= Yii::t('main', 'Сохранить') ?>
+            <button type="submit" class="btn <?= $model->type == Payment::TYPE_PAY ? 'btn-primary' : 'btn-warning' ?>" :disabled="isSubmitting">
+                <template x-if="!isSubmitting">
+                    <?= Icon::show('check', 'sm') ?>
+                </template>
+                <template x-if="isSubmitting">
+                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </template>
+                <span x-text="isSubmitting ? 'Сохранение...' : 'Сохранить'"></span>
             </button>
             <a href="<?= OrganizationUrl::to(['pupil/payment', 'id' => $model->pupil_id]) ?>" class="btn btn-secondary">Отмена</a>
         </div>
