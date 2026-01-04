@@ -2,7 +2,9 @@
 
 namespace app\modules\crm\controllers;
 
+use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
+use app\helpers\SystemRoles;
 use app\models\forms\TypicalLessonForm;
 use app\models\Group;
 use app\models\Lesson;
@@ -10,15 +12,15 @@ use app\models\Organizations;
 use app\models\relations\TeacherGroup;
 use app\models\TypicalSchedule;
 use app\models\User;
-use yii\base\BaseObject;
 use yii\data\ActiveDataProvider;
 use yii\db\Query;
+use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
 /**
- * TypicalScheduleController implements the CRUD actions for TypicalSchedule model.
+ * ScheduleController implements the CRUD actions for Lesson model.
  */
 class ScheduleController extends Controller
 {
@@ -31,9 +33,28 @@ class ScheduleController extends Controller
             parent::behaviors(),
             [
                 'verbs' => [
-                    'class' => VerbFilter::className(),
+                    'class' => VerbFilter::class,
                     'actions' => [
                         'delete' => ['POST'],
+                    ],
+                ],
+                'access' => [
+                    'class' => AccessControl::class,
+                    'rules' => [
+                        [
+                            'allow' => true,
+                            'roles' => [
+                                SystemRoles::SUPER,
+                                OrganizationRoles::ADMIN,
+                                OrganizationRoles::DIRECTOR,
+                                OrganizationRoles::GENERAL_DIRECTOR,
+                                OrganizationRoles::TEACHER,
+                            ]
+                        ],
+                        [
+                            'allow' => false,
+                            'roles' => ['?']
+                        ]
                     ],
                 ],
             ]
@@ -200,7 +221,7 @@ class ScheduleController extends Controller
     }
 
     /**
-     * Finds the TypicalSchedule model based on its primary key value.
+     * Finds the Lesson model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param int $id ID
      * @return Lesson the loaded model
@@ -208,10 +229,16 @@ class ScheduleController extends Controller
      */
     protected function findModel($id)
     {
-        if (($model = Lesson::findOne($id)) !== null) {
-            return $model;
+        $model = Lesson::find()
+            ->byOrganization()
+            ->andWhere(['id' => $id])
+            ->notDeleted()
+            ->one();
+
+        if ($model === null) {
+            throw new NotFoundHttpException(\Yii::t('main', 'Урок не найден.'));
         }
 
-        throw new NotFoundHttpException(\Yii::t('main', 'The requested page does not exist.'));
+        return $model;
     }
 }

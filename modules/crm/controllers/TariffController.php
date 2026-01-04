@@ -227,10 +227,16 @@ class TariffController extends Controller
      */
     protected function findModel($id)
     {
-        if (($model = Tariff::findOne(['id' => $id])) !== null) {
-            return $model;
+        $model = Tariff::find()
+            ->byOrganization()
+            ->andWhere(['id' => $id])
+            ->notDeleted()
+            ->one();
+
+        if ($model === null) {
+            throw new NotFoundHttpException(\Yii::t('main', 'Тариф не найден.'));
         }
 
-        throw new NotFoundHttpException('The requested page does not exist.');
+        return $model;
     }
 }

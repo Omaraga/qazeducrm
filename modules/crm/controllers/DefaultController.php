@@ -2,12 +2,15 @@
 
 namespace app\modules\crm\controllers;
 
+use app\helpers\OrganizationRoles;
+use app\helpers\SystemRoles;
 use app\models\Group;
 use app\models\Lesson;
 use app\models\Organizations;
 use app\models\Payment;
 use app\models\Pupil;
 use app\models\search\DateSearch;
+use yii\filters\AccessControl;
 use yii\web\Controller;
 
 /**
@@ -15,6 +18,34 @@ use yii\web\Controller;
  */
 class DefaultController extends Controller
 {
+    /**
+     * {@inheritdoc}
+     */
+    public function behaviors()
+    {
+        return [
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'roles' => [
+                            SystemRoles::SUPER,
+                            OrganizationRoles::ADMIN,
+                            OrganizationRoles::DIRECTOR,
+                            OrganizationRoles::GENERAL_DIRECTOR,
+                            OrganizationRoles::TEACHER,
+                        ]
+                    ],
+                    [
+                        'allow' => false,
+                        'roles' => ['?']
+                    ]
+                ],
+            ],
+        ];
+    }
+
     /**
      * Dashboard - главная страница CRM
      */

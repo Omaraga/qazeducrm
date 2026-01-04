@@ -167,10 +167,16 @@ class SubjectController extends Controller
      */
     protected function findModel($id)
     {
-        if (($model = Subject::findOne(['id' => $id])) !== null) {
-            return $model;
+        $model = Subject::find()
+            ->byOrganization()
+            ->andWhere(['id' => $id])
+            ->notDeleted()
+            ->one();
+
+        if ($model === null) {
+            throw new NotFoundHttpException(\Yii::t('main', 'Предмет не найден.'));
         }
 
-        throw new NotFoundHttpException(Yii::t('main', 'The requested page does not exist.'));
+        return $model;
     }
 }

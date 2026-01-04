@@ -2,6 +2,8 @@
 
 namespace app\modules\crm\controllers;
 
+use app\helpers\OrganizationRoles;
+use app\helpers\SystemRoles;
 use app\models\Organizations;
 use app\models\SmsLog;
 use app\models\SmsTemplate;
@@ -9,6 +11,7 @@ use app\models\search\SmsLogSearch;
 use app\services\SmsService;
 use Yii;
 use yii\data\ActiveDataProvider;
+use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -29,6 +32,33 @@ class SmsController extends Controller
                 'actions' => [
                     'delete-template' => ['POST'],
                     'send' => ['POST'],
+                    'test-send' => ['POST'],
+                ],
+            ],
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'actions' => ['settings', 'test-send'],
+                        'roles' => [
+                            SystemRoles::SUPER,
+                            OrganizationRoles::GENERAL_DIRECTOR,
+                        ]
+                    ],
+                    [
+                        'allow' => true,
+                        'roles' => [
+                            SystemRoles::SUPER,
+                            OrganizationRoles::ADMIN,
+                            OrganizationRoles::DIRECTOR,
+                            OrganizationRoles::GENERAL_DIRECTOR,
+                        ]
+                    ],
+                    [
+                        'allow' => false,
+                        'roles' => ['?']
+                    ]
                 ],
             ],
         ];

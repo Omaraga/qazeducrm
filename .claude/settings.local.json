@@ -24,7 +24,9 @@
       "Bash(npm install:*)",
       "Bash(npx tailwindcss init)",
       "Bash(./node_modules/.bin/tailwindcss:*)",
-      "Bash(node ./node_modules/@tailwindcss/cli/dist/index.mjs:*)"
+      "Bash(node ./node_modules/@tailwindcss/cli/dist/index.mjs:*)",
+      "Bash(grep:*)",
+      "Bash(xargs -I {} sh -c 'echo \"\"=== {} ===\"\" && head -20 {}')"
     ]
   }
 }

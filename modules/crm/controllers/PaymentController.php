@@ -2,8 +2,12 @@
 
 namespace app\modules\crm\controllers;
 
+use app\helpers\OrganizationRoles;
+use app\helpers\SystemRoles;
 use app\models\Payment;
 use app\models\search\PaymentSearch;
+use Yii;
+use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -22,9 +26,27 @@ class PaymentController extends Controller
             parent::behaviors(),
             [
                 'verbs' => [
-                    'class' => VerbFilter::className(),
+                    'class' => VerbFilter::class,
                     'actions' => [
                         'delete' => ['POST'],
+                    ],
+                ],
+                'access' => [
+                    'class' => AccessControl::class,
+                    'rules' => [
+                        [
+                            'allow' => true,
+                            'roles' => [
+                                SystemRoles::SUPER,
+                                OrganizationRoles::ADMIN,
+                                OrganizationRoles::DIRECTOR,
+                                OrganizationRoles::GENERAL_DIRECTOR,
+                            ]
+                        ],
+                        [
+                            'allow' => false,
+                            'roles' => ['?']
+                        ]
                     ],
                 ],
             ]
@@ -125,10 +147,16 @@ class PaymentController extends Controller
      */
     protected function findModel($id)
     {
-        if (($model = Payment::findOne(['id' => $id])) !== null) {
-            return $model;
+        $model = Payment::find()
+            ->byOrganization()
+            ->andWhere(['id' => $id])
+            ->notDeleted()
+            ->one();
+
+        if ($model === null) {
+            throw new NotFoundHttpException(Yii::t('main', 'Платёж не найден.'));
         }
 
-        throw new NotFoundHttpException(Yii::t('main', 'The requested page does not exist.'));
+        return $model;
     }
 }

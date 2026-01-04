@@ -148,7 +148,7 @@ class PayMethodController extends Controller
     }
 
     /**
-     * Finds the Subject model based on its primary key value.
+     * Finds the PayMethod model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param int $id ID
      * @return PayMethod the loaded model
@@ -156,10 +156,16 @@ class PayMethodController extends Controller
      */
     protected function findModel($id)
     {
-        if (($model = PayMethod::findOne(['id' => $id])) !== null) {
-            return $model;
+        $model = PayMethod::find()
+            ->byOrganization()
+            ->andWhere(['id' => $id])
+            ->notDeleted()
+            ->one();
+
+        if ($model === null) {
+            throw new NotFoundHttpException(Yii::t('main', 'Способ оплаты не найден.'));
         }
 
-        throw new NotFoundHttpException(Yii::t('main', 'The requested page does not exist.'));
+        return $model;
     }
 }

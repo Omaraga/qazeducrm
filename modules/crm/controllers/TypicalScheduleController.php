@@ -2,19 +2,17 @@
 
 namespace app\modules\crm\controllers;
 
+use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
+use app\helpers\SystemRoles;
 use app\models\Group;
 use app\models\Organizations;
 use app\models\relations\TeacherGroup;
 use app\models\TypicalSchedule;
 use app\models\User;
-use app\models\Users;
-use common\models\relations\UserSection;
-use common\models\Section;
-use common\models\SectionGroup;
-use yii\base\BaseObject;
 use yii\data\ActiveDataProvider;
 use yii\db\Query;
+use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -33,9 +31,28 @@ class TypicalScheduleController extends Controller
             parent::behaviors(),
             [
                 'verbs' => [
-                    'class' => VerbFilter::className(),
+                    'class' => VerbFilter::class,
                     'actions' => [
                         'delete' => ['POST'],
+                    ],
+                ],
+                'access' => [
+                    'class' => AccessControl::class,
+                    'rules' => [
+                        [
+                            'allow' => true,
+                            'roles' => [
+                                SystemRoles::SUPER,
+                                OrganizationRoles::ADMIN,
+                                OrganizationRoles::DIRECTOR,
+                                OrganizationRoles::GENERAL_DIRECTOR,
+                                OrganizationRoles::TEACHER,
+                            ]
+                        ],
+                        [
+                            'allow' => false,
+                            'roles' => ['?']
+                        ]
                     ],
                 ],
             ]
@@ -213,10 +230,16 @@ class TypicalScheduleController extends Controller
      */
     protected function findModel($id)
     {
-        if (($model = TypicalSchedule::findOne(['id' => $id])) !== null) {
-            return $model;
+        $model = TypicalSchedule::find()
+            ->byOrganization()
+            ->andWhere(['id' => $id])
+            ->notDeleted()
+            ->one();
+
+        if ($model === null) {
+            throw new NotFoundHttpException(\Yii::t('main', 'Типовое расписание не найдено.'));
         }
 
-        throw new NotFoundHttpException(\Yii::t('main', 'The requested page does not exist.'));
+        return $model;
     }
 }

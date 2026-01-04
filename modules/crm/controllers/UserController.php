@@ -148,10 +148,16 @@ class UserController extends Controller
      */
     protected function findModel($id)
     {
-        if (($model = User::findOne(['id' => $id])) !== null) {
-            return $model;
+        $model = User::find()
+            ->byOrganization()
+            ->andWhere(['id' => $id])
+            ->notDeleted()
+            ->one();
+
+        if ($model === null) {
+            throw new NotFoundHttpException(\Yii::t('main', 'Пользователь не найден.'));
         }
 
-        throw new NotFoundHttpException('The requested page does not exist.');
+        return $model;
     }
 }

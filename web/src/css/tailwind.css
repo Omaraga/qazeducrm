@@ -206,6 +206,46 @@
     @apply mb-4;
   }
 
+  /* Validation states */
+  .form-input-error {
+    @apply border-danger-500 focus:border-danger-500 focus:ring-danger-500;
+  }
+
+  .form-input-success {
+    @apply border-success-500 focus:border-success-500 focus:ring-success-500;
+  }
+
+  .form-error-message {
+    @apply mt-1 text-xs text-danger-600;
+  }
+
+  .form-success-message {
+    @apply mt-1 text-xs text-success-600;
+  }
+
+  /* Input with icon (for validation status) */
+  .form-input-wrapper {
+    @apply relative;
+  }
+
+  .form-input-icon {
+    @apply absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none;
+  }
+
+  .form-input-icon-error {
+    @apply text-danger-500;
+  }
+
+  .form-input-icon-success {
+    @apply text-success-500;
+  }
+
+  /* Required field indicator */
+  .form-label-required::after {
+    content: ' *';
+    @apply text-danger-500;
+  }
+
   /* Alerts */
   .alert {
     @apply p-4 rounded-lg border flex items-start gap-3;

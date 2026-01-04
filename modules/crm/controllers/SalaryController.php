@@ -4,6 +4,7 @@ namespace app\modules\crm\controllers;
 
 use app\components\ActiveRecord;
 use app\helpers\OrganizationRoles;
+use app\helpers\SystemRoles;
 use app\models\Organizations;
 use app\models\TeacherRate;
 use app\models\TeacherSalary;
@@ -33,8 +34,36 @@ class SalaryController extends Controller
                 'class' => VerbFilter::class,
                 'actions' => [
                     'delete' => ['POST'],
+                    'delete-rate' => ['POST'],
                     'approve' => ['POST'],
                     'pay' => ['POST'],
+                ],
+            ],
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'actions' => ['approve', 'pay', 'delete'],
+                        'roles' => [
+                            SystemRoles::SUPER,
+                            OrganizationRoles::DIRECTOR,
+                            OrganizationRoles::GENERAL_DIRECTOR,
+                        ]
+                    ],
+                    [
+                        'allow' => true,
+                        'roles' => [
+                            SystemRoles::SUPER,
+                            OrganizationRoles::ADMIN,
+                            OrganizationRoles::DIRECTOR,
+                            OrganizationRoles::GENERAL_DIRECTOR,
+                        ]
+                    ],
+                    [
+                        'allow' => false,
+                        'roles' => ['?']
+                    ]
                 ],
             ],
         ];

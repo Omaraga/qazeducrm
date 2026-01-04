@@ -4,13 +4,45 @@ namespace app\modules\crm\controllers;
 
 use app\components\ActiveRecord;
 use app\helpers\OrganizationRoles;
+use app\helpers\SystemRoles;
 use app\models\Organizations;
 use app\models\search\DateSearch;
 use app\models\User;
-use yii\base\BaseObject;
+use yii\filters\AccessControl;
+use yii\web\Controller;
 
-class ReportsController extends \yii\web\Controller
+/**
+ * ReportsController - отчёты CRM
+ */
+class ReportsController extends Controller
 {
+    /**
+     * {@inheritdoc}
+     */
+    public function behaviors()
+    {
+        return [
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'roles' => [
+                            SystemRoles::SUPER,
+                            OrganizationRoles::ADMIN,
+                            OrganizationRoles::DIRECTOR,
+                            OrganizationRoles::GENERAL_DIRECTOR,
+                        ]
+                    ],
+                    [
+                        'allow' => false,
+                        'roles' => ['?']
+                    ]
+                ],
+            ],
+        ];
+    }
+
     /**
      * Главная страница отчётов - редирект на дневной отчёт
      */

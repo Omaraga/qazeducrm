@@ -30,6 +30,10 @@ class TailwindAsset extends AssetBundle
     ];
 
     public $js = [
+        // Toast notifications (загружается перед Alpine.js)
+        'js/toast.js',
+        // Form validation (загружается перед Alpine.js)
+        'js/validation.js',
         // Alpine.js для интерактивности (dropdowns, modals, tabs)
         'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js',
         // Chart.js для графиков
