@@ -18,7 +18,8 @@
       "Bash(done)",
       "Bash(for file in AttendanceController.php GroupController.php LidsController.php PaymentController.php PayMethodController.php PupilController.php ReportsController.php ScheduleController.php SubjectController.php TariffController.php TypicalScheduleController.php UserController.php)",
       "Bash(do sed -i 's/namespace app\\\\\\\\controllers;/namespace app\\\\\\\\modules\\\\\\\\crm\\\\\\\\controllers;/' \"$file\")",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(curl:*)"
     ]
   }
 }

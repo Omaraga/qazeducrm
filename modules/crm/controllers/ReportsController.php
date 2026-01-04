@@ -11,6 +11,14 @@ use yii\base\BaseObject;
 
 class ReportsController extends \yii\web\Controller
 {
+    /**
+     * Главная страница отчётов - редирект на дневной отчёт
+     */
+    public function actionIndex()
+    {
+        return $this->redirect(['day']);
+    }
+
     public function actionEmployer()
     {
 
