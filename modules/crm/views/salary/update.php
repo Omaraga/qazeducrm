@@ -1,116 +1,19 @@
 <?php
 
+use app\helpers\OrganizationUrl;
 use yii\helpers\Html;
-use yii\helpers\Url;
 
 /** @var yii\web\View $this */
 /** @var app\models\TeacherSalary $model */
 
 $this->title = 'Редактирование: ' . ($model->teacher ? $model->teacher->fio : 'ID ' . $model->teacher_id);
-$this->params['breadcrumbs'][] = ['label' => 'Зарплаты учителей', 'url' => ['index']];
-$this->params['breadcrumbs'][] = ['label' => $model->teacher ? $model->teacher->fio : 'ID ' . $model->teacher_id, 'url' => ['view', 'id' => $model->id]];
+$this->params['breadcrumbs'][] = ['label' => 'Зарплаты учителей', 'url' => OrganizationUrl::to(['salary/index'])];
+$this->params['breadcrumbs'][] = ['label' => $model->teacher ? $model->teacher->fio : 'ID ' . $model->teacher_id, 'url' => OrganizationUrl::to(['salary/view', 'id' => $model->id])];
 $this->params['breadcrumbs'][] = 'Редактирование';
-?>
 
-<div class="salary-update">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0"><?= Html::encode($this->title) ?></h1>
-        <a href="<?= Url::to(['view', 'id' => $model->id]) ?>" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left"></i> Назад
-        </a>
-    </div>
-
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Бонусы и вычеты</h5>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        <?= Html::hiddenInput(Yii::$app->request->csrfParam, Yii::$app->request->csrfToken) ?>
-
-                        <div class="alert alert-info">
-                            <strong>Период:</strong> <?= $model->getPeriodLabel() ?><br>
-                            <strong>Базовая сумма:</strong> <?= number_format($model->base_amount, 0, ',', ' ') ?> ₸
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Бонусы</label>
-                            <div class="input-group">
-                                <input type="number" name="bonus_amount" class="form-control"
-                                       value="<?= $model->bonus_amount ?>" min="0" step="100">
-                                <span class="input-group-text">₸</span>
-                            </div>
-                            <small class="text-muted">Дополнительные начисления (за качество, переработку и т.д.)</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Вычеты</label>
-                            <div class="input-group">
-                                <input type="number" name="deduction_amount" class="form-control"
-                                       value="<?= $model->deduction_amount ?>" min="0" step="100">
-                                <span class="input-group-text">₸</span>
-                            </div>
-                            <small class="text-muted">Удержания (штрафы, авансы и т.д.)</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Примечания</label>
-                            <textarea name="notes" class="form-control" rows="3"><?= Html::encode($model->notes) ?></textarea>
-                        </div>
-
-                        <hr>
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>Итого:</strong>
-                                <span class="fs-4 text-primary" id="total-preview">
-                                    <?= number_format($model->total_amount, 0, ',', ' ') ?> ₸
-                                </span>
-                            </div>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Сохранить
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Информация</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-sm">
-                        <tr>
-                            <td class="text-muted">Преподаватель</td>
-                            <td><?= $model->teacher ? Html::encode($model->teacher->fio) : 'Не указан' ?></td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted">Уроков</td>
-                            <td><?= $model->lessons_count ?></td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted">Учеников с оплатой</td>
-                            <td><?= $model->students_count ?></td>
-                        </tr>
-                        <tr>
-                            <td class="text-muted">Создано</td>
-                            <td><?= Yii::$app->formatter->asDatetime($model->created_at, 'php:d.m.Y H:i') ?></td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
+$js = <<<JS
 document.addEventListener('DOMContentLoaded', function() {
-    const baseAmount = <?= $model->base_amount ?>;
+    const baseAmount = {$model->base_amount};
     const bonusInput = document.querySelector('input[name="bonus_amount"]');
     const deductionInput = document.querySelector('input[name="deduction_amount"]');
     const totalPreview = document.getElementById('total-preview');
@@ -125,4 +28,118 @@ document.addEventListener('DOMContentLoaded', function() {
     bonusInput.addEventListener('input', updateTotal);
     deductionInput.addEventListener('input', updateTotal);
 });
-</script>
+JS;
+$this->registerJs($js);
+?>
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900"><?= Html::encode($this->title) ?></h1>
+            <p class="text-gray-500 mt-1"><?= $model->getPeriodLabel() ?></p>
+        </div>
+        <div>
+            <a href="<?= OrganizationUrl::to(['salary/view', 'id' => $model->id]) ?>" class="btn btn-secondary">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Назад
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Form -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-lg font-semibold text-gray-900">Бонусы и вычеты</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" class="space-y-4">
+                    <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
+
+                    <div class="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                        <dl class="space-y-1 text-sm">
+                            <div class="flex justify-between">
+                                <dt class="text-primary-700">Период:</dt>
+                                <dd class="font-medium text-primary-900"><?= $model->getPeriodLabel() ?></dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-primary-700">Базовая сумма:</dt>
+                                <dd class="font-medium text-primary-900"><?= number_format($model->base_amount, 0, ',', ' ') ?> ₸</dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Бонусы</label>
+                        <div class="relative">
+                            <input type="number" name="bonus_amount" class="form-input pr-12"
+                                   value="<?= $model->bonus_amount ?>" min="0" step="100">
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">₸</span>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">Дополнительные начисления (за качество, переработку и т.д.)</p>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Вычеты</label>
+                        <div class="relative">
+                            <input type="number" name="deduction_amount" class="form-input pr-12"
+                                   value="<?= $model->deduction_amount ?>" min="0" step="100">
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">₸</span>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">Удержания (штрафы, авансы и т.д.)</p>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Примечания</label>
+                        <textarea name="notes" rows="3" class="form-input"><?= Html::encode($model->notes) ?></textarea>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-200 flex items-center justify-between">
+                        <div>
+                            <span class="text-sm text-gray-500">Итого:</span>
+                            <span class="text-xl font-bold text-primary-600 ml-2" id="total-preview">
+                                <?= number_format($model->total_amount, 0, ',', ' ') ?> ₸
+                            </span>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Info -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-lg font-semibold text-gray-900">Информация</h3>
+            </div>
+            <div class="card-body">
+                <dl class="space-y-3">
+                    <div class="flex justify-between">
+                        <dt class="text-sm text-gray-500">Преподаватель</dt>
+                        <dd class="text-sm text-gray-900"><?= $model->teacher ? Html::encode($model->teacher->fio) : 'Не указан' ?></dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-sm text-gray-500">Уроков</dt>
+                        <dd class="text-sm text-gray-900"><?= $model->lessons_count ?></dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-sm text-gray-500">Учеников с оплатой</dt>
+                        <dd class="text-sm text-gray-900"><?= $model->students_count ?></dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-sm text-gray-500">Создано</dt>
+                        <dd class="text-sm text-gray-900"><?= Yii::$app->formatter->asDatetime($model->created_at, 'php:d.m.Y H:i') ?></dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>

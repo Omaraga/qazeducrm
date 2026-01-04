@@ -27,9 +27,9 @@ $statusColors = [
     Lids::STATUS_NEW => 'bg-blue-500 hover:bg-blue-600',
     Lids::STATUS_CONTACTED => 'bg-indigo-500 hover:bg-indigo-600',
     Lids::STATUS_TRIAL => 'bg-yellow-500 hover:bg-yellow-600',
+    Lids::STATUS_THINKING => 'bg-gray-500 hover:bg-gray-600',
     Lids::STATUS_ENROLLED => 'bg-purple-500 hover:bg-purple-600',
     Lids::STATUS_PAID => 'bg-green-500 hover:bg-green-600',
-    Lids::STATUS_ACTIVE => 'bg-emerald-500 hover:bg-emerald-600',
     Lids::STATUS_LOST => 'bg-red-500 hover:bg-red-600',
 ];
 ?>

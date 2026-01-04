@@ -16,9 +16,9 @@ $statusColors = [
     Lids::STATUS_NEW => 'bg-blue-500',
     Lids::STATUS_CONTACTED => 'bg-indigo-500',
     Lids::STATUS_TRIAL => 'bg-yellow-500',
+    Lids::STATUS_THINKING => 'bg-gray-500',
     Lids::STATUS_ENROLLED => 'bg-purple-500',
     Lids::STATUS_PAID => 'bg-green-500',
-    Lids::STATUS_ACTIVE => 'bg-emerald-500',
     Lids::STATUS_LOST => 'bg-red-500',
 ];
 $statusBgColor = $statusColors[$model->status] ?? 'bg-gray-500';
