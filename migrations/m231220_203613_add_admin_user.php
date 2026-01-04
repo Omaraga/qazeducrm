@@ -19,7 +19,7 @@ class m231220_203613_add_admin_user extends Migration
         $user->setPassword('123456789');
         $user->generateAuthKey();
         $user->generateEmailVerificationToken();
-        $user->save();
+        $user->save(false);
     }
 
     /**

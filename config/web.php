@@ -5,10 +5,12 @@ $db = require __DIR__ . '/db.php';
 
 $config = [
     'id' => 'basic',
+    'name' => 'Qazaq Education CRM',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log', 'urlManager'],
     'language' => 'ru-RU',
     'timeZone' => 'Asia/Almaty',
+    'defaultRoute' => 'landing/index',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
@@ -71,23 +73,45 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
-                '<oid:\d+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => '<controller>/<action>',
+                // Публичные страницы
+                '' => 'landing/index',
+                'pricing' => 'landing/pricing',
+                'features' => 'landing/features',
+                'contact' => 'landing/contact',
+                'login' => 'site/login',
+                'logout' => 'site/logout',
+                'register' => 'registration/index',
+
+                // CRM модуль
+                'crm' => 'crm/default/index',
+                'crm/<controller:\w+>' => 'crm/<controller>/index',
+                'crm/<controller:\w+>/<action:\w+>' => 'crm/<controller>/<action>',
+                'crm/<controller:\w+>/<action:\w+>/<id:\d+>' => 'crm/<controller>/<action>',
+
+                // Superadmin модуль
+                'superadmin' => 'superadmin/default/index',
+                'superadmin/<controller:\w+>' => 'superadmin/<controller>/index',
+                'superadmin/<controller:\w+>/<action:\w+>' => 'superadmin/<controller>/<action>',
+                'superadmin/<controller:\w+>/<action:\w+>/<id:\d+>' => 'superadmin/<controller>/<action>',
+
+                // Legacy routes с organization id (для обратной совместимости)
+                '<oid:\d+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => 'crm/<controller>/<action>',
                 '<oid:\d+>/<module:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => '<module>/<controller>/<action>',
-                '<oid:\d+>/<module:\w+-\w+|\w+>/<module2:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => '<module>/<module2>/<controller>/<action>',
-                '<oid:\d+>/<module:\w+-\w+|\w+>/<module2:\w+-\w+|\w+>/<module3:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => '<module>/<module2>/<module3>/<controller>/<action>',
-                '<oid:\d+>/<module:\w+-\w+|\w+>/<module2:\w+-\w+|\w+>/<module3:\w+-\w+|\w+>/<module4:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => '<module>/<module2>/<module3>/<module4>/<controller>/<action>',
 
-
-                '<module:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>'=>'<module>/<controller>',
-                '<module:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>'=>'<module>/<controller>/<action>',
-                '<module:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>/*'=>'<module>/<controller>/<action>',
-
-                '<controller:\w+-\w+|\w+>'=>'<controller>',
-                '<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>'=>'<controller>/<action>',
-                '<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>/*'=>'<controller>/<action>',
+                // Общие правила
+                '<controller:\w+-\w+|\w+>' => '<controller>',
+                '<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => '<controller>/<action>',
             ],
         ],
 
+    ],
+    'modules' => [
+        'crm' => [
+            'class' => 'app\modules\crm\Module',
+        ],
+        'superadmin' => [
+            'class' => 'app\modules\superadmin\Module',
+        ],
     ],
     'params' => $params,
 ];

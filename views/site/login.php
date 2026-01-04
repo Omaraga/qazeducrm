@@ -6,44 +6,127 @@
 
 use yii\bootstrap4\ActiveForm;
 use yii\bootstrap4\Html;
+use yii\helpers\Url;
 
-$this->title = 'Login';
-$this->params['breadcrumbs'][] = $this->title;
+$this->title = 'Вход в систему';
 ?>
-<div class="site-login">
-    <h1><?= Html::encode($this->title) ?></h1>
 
-    <p>Please fill out the following fields to login:</p>
+<style>
+.login-container {
+    max-width: 420px;
+    margin: 0 auto;
+}
+.login-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+.login-subtitle {
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+}
+.form-group label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+.form-control {
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-dark);
+}
+.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(254, 141, 0, 0.15);
+}
+.btn-login {
+    width: 100%;
+    padding: 12px;
+    font-weight: 500;
+    border-radius: var(--radius);
+}
+.remember-me {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+.remember-me .custom-control-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+.forgot-link {
+    color: var(--primary);
+    font-size: 0.9rem;
+}
+.forgot-link:hover {
+    color: var(--primary-hover);
+}
+.divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+    color: var(--text-light);
+    font-size: 0.85rem;
+}
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+.divider span {
+    padding: 0 1rem;
+}
+</style>
 
-    <?php $form = ActiveForm::begin([
-        'id' => 'login-form',
-        'layout' => 'horizontal',
-        'fieldConfig' => [
-            'template' => "{label}\n{input}\n{error}",
-            'labelOptions' => ['class' => 'col-lg-1 col-form-label mr-lg-3'],
-            'inputOptions' => ['class' => 'col-lg-3 form-control'],
-            'errorOptions' => ['class' => 'col-lg-7 invalid-feedback'],
-        ],
-    ]); ?>
+<div class="login-container">
+    <div class="guest-card p-4 p-md-5">
+        <h1 class="login-title">Добро пожаловать</h1>
+        <p class="login-subtitle">Войдите в свой аккаунт</p>
 
-        <?= $form->field($model, 'username')->textInput(['autofocus' => true]) ?>
+        <?php $form = ActiveForm::begin([
+            'id' => 'login-form',
+            'enableClientValidation' => true,
+        ]); ?>
 
-        <?= $form->field($model, 'password')->passwordInput() ?>
+        <?= $form->field($model, 'username')->textInput([
+            'autofocus' => true,
+            'placeholder' => 'Введите email',
+        ])->label('Email') ?>
 
-        <?= $form->field($model, 'rememberMe')->checkbox([
-            'template' => "<div class=\"offset-lg-1 col-lg-3 custom-control custom-checkbox\">{input} {label}</div>\n<div class=\"col-lg-8\">{error}</div>",
-        ]) ?>
+        <?= $form->field($model, 'password')->passwordInput([
+            'placeholder' => 'Введите пароль',
+        ])->label('Пароль') ?>
 
-        <div class="form-group">
-            <div class="offset-lg-1 col-lg-11">
-                <?= Html::submitButton('Login', ['class' => 'btn btn-primary', 'name' => 'login-button']) ?>
+        <div class="remember-me">
+            <div class="custom-control custom-checkbox">
+                <?= Html::activeCheckbox($model, 'rememberMe', [
+                    'class' => 'custom-control-input',
+                    'id' => 'remember-me',
+                ]) ?>
+                <label class="custom-control-label" for="remember-me">Запомнить меня</label>
             </div>
+            <a href="#" class="forgot-link">Забыли пароль?</a>
         </div>
 
-    <?php ActiveForm::end(); ?>
+        <?= Html::submitButton('Войти', [
+            'class' => 'btn btn-primary btn-login',
+            'name' => 'login-button',
+        ]) ?>
 
-    <div class="offset-lg-1" style="color:#999;">
-        You may login with <strong>admin/admin</strong> or <strong>demo/demo</strong>.<br>
-        To modify the username/password, please check out the code <code>app\models\User::$users</code>.
+        <?php ActiveForm::end(); ?>
+
+        <div class="divider"><span>или</span></div>
+
+        <p class="text-center mb-0">
+            <span class="text-muted">Нет аккаунта?</span>
+            <a href="<?= Url::to(['/register']) ?>">Зарегистрироваться</a>
+        </p>
     </div>
 </div>

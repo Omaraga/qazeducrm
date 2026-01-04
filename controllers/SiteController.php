@@ -62,21 +62,16 @@ class SiteController extends Controller
     }
 
     /**
-     * Displays homepage.
+     * Displays homepage - redirect to CRM or Landing.
      *
-     * @return string
+     * @return Response
      */
     public function actionIndex()
     {
         if (Yii::$app->user->isGuest) {
-            return $this->redirect('site/login');
+            return $this->redirect(['/']);
         }
-        $search = new DateSearch();
-
-        return $this->render('index',[
-            'data' => $search->getWeekPayments(),
-            'week' => $search->getWeeks(true),
-        ]);
+        return $this->redirect(['/crm']);
     }
 
     /**
@@ -87,12 +82,15 @@ class SiteController extends Controller
     public function actionLogin()
     {
         if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
+            return $this->redirect(['/crm']);
         }
+
+        $this->layout = 'guest';
 
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
+            // После успешного логина - в CRM
+            return $this->redirect(['/crm']);
         }
 
         $model->password = '';
@@ -110,7 +108,7 @@ class SiteController extends Controller
     {
         Yii::$app->user->logout();
 
-        return $this->goHome();
+        return $this->redirect(['/']);
     }
 
     /**
@@ -141,13 +139,14 @@ class SiteController extends Controller
         return $this->render('about');
     }
 
-    public function actionChangeRole(){
+    public function actionChangeRole()
+    {
         $user = Yii::$app->user->identity;
         $userOrganization = UserOrganization::findOne(Yii::$app->request->get('id'));
         $user->active_organization_id = $userOrganization->target_id;
         $user->active_role = $userOrganization->role;
         $user->save(false);
 
-        return $this->redirect(Url::to(['/site/index', 'oid' => $userOrganization->target_id]));
+        return $this->redirect(['/crm']);
     }
 }

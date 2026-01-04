@@ -16,16 +16,45 @@ use yii\helpers\ArrayHelper;
  * This is the model class for table "organization".
  *
  * @property int              $id
+ * @property int|null         $parent_id
+ * @property string           $type
  * @property string           $name
+ * @property string           $status
+ * @property string|null      $email
+ * @property string|null      $email_verified_at
+ * @property string|null      $verification_token
+ * @property string|null      $bin
+ * @property string|null      $legal_name
+ * @property string|null      $logo
+ * @property string           $timezone
+ * @property string           $locale
  * @property int              $is_deleted
  * @property string           $info
  * @property string           $address
  * @property string           $phone
+ * @property string           $created_at
+ * @property string           $updated_at
  *
+ * @property Organizations|null $parentOrganization
+ * @property Organizations[] $branches
+ * @property OrganizationSubscription[] $subscriptions
+ * @property OrganizationSubscription|null $activeSubscription
+ * @property OrganizationPayment[] $payments
+ * @property OrganizationActivityLog[] $activityLogs
  */
 class Organizations extends ActiveRecord
 {
     use UpdateInsteadOfDeleteTrait, AttributesToInfoTrait;
+
+    // Типы организации
+    const TYPE_HEAD = 'head';
+    const TYPE_BRANCH = 'branch';
+
+    // Статусы организации
+    const STATUS_PENDING = 'pending';
+    const STATUS_ACTIVE = 'active';
+    const STATUS_SUSPENDED = 'suspended';
+    const STATUS_BLOCKED = 'blocked';
 
     public function preload()
     {
@@ -53,32 +82,15 @@ class Organizations extends ActiveRecord
     public function rules()
     {
         return [
-            [
-                [
-                    'name',
-                    'phone',
-                    'address',
-                ],
-                'string'
-            ],
-
-            [
-                [
-                    'region_id',
-                    'locality_id',
-                    'province_id',
-                    'type',
-                    'server_id',
-                    'edu_type',
-                    'age_from',
-                    'age_to',
-                    'is_active',
-                    'ownership_type',
-                    'server_id',
-                    'parent_id',
-                ],
-                'integer'
-            ],
+            [['name', 'phone', 'address', 'email', 'bin', 'legal_name', 'logo', 'verification_token'], 'string'],
+            [['status', 'type', 'timezone', 'locale'], 'string', 'max' => 50],
+            [['email'], 'email'],
+            [['bin'], 'string', 'max' => 12],
+            [['status'], 'in', 'range' => [self::STATUS_PENDING, self::STATUS_ACTIVE, self::STATUS_SUSPENDED, self::STATUS_BLOCKED]],
+            [['type'], 'in', 'range' => [self::TYPE_HEAD, self::TYPE_BRANCH]],
+            [['email_verified_at'], 'safe'],
+            [['parent_id', 'is_deleted'], 'integer'],
+            [['parent_id'], 'exist', 'targetClass' => self::class, 'targetAttribute' => 'id', 'skipOnEmpty' => true],
         ];
     }
 
@@ -233,5 +245,221 @@ class Organizations extends ActiveRecord
     public static function getId(Organizations $organization): int
     {
         return $organization->id;
+    }
+
+    // ==================== BRANCH RELATIONS ====================
+
+    /**
+     * Связь с головной организацией
+     */
+    public function getParentOrganization()
+    {
+        return $this->hasOne(self::class, ['id' => 'parent_id']);
+    }
+
+    /**
+     * Связь с филиалами
+     */
+    public function getBranches()
+    {
+        return $this->hasMany(self::class, ['parent_id' => 'id']);
+    }
+
+    /**
+     * Это головная организация?
+     */
+    public function isHead(): bool
+    {
+        return $this->type === self::TYPE_HEAD || $this->parent_id === null;
+    }
+
+    /**
+     * Это филиал?
+     */
+    public function isBranch(): bool
+    {
+        return $this->type === self::TYPE_BRANCH && $this->parent_id !== null;
+    }
+
+    /**
+     * Получить головную организацию (для филиала - родитель, для головной - сама)
+     */
+    public function getHeadOrganization(): self
+    {
+        return $this->isHead() ? $this : $this->parentOrganization;
+    }
+
+    /**
+     * Количество филиалов
+     */
+    public function getBranchCount(): int
+    {
+        return $this->getBranches()->count();
+    }
+
+    // ==================== SUBSCRIPTION RELATIONS ====================
+
+    /**
+     * Связь со всеми подписками
+     */
+    public function getSubscriptions()
+    {
+        return $this->hasMany(OrganizationSubscription::class, ['organization_id' => 'id']);
+    }
+
+    /**
+     * Активная подписка (для филиала берём подписку головной)
+     */
+    public function getActiveSubscription(): ?OrganizationSubscription
+    {
+        $headOrg = $this->getHeadOrganization();
+        return OrganizationSubscription::findActiveByOrganization($headOrg->id);
+    }
+
+    /**
+     * Связь с платежами
+     */
+    public function getPayments()
+    {
+        return $this->hasMany(OrganizationPayment::class, ['organization_id' => 'id']);
+    }
+
+    /**
+     * Связь с логами активности
+     */
+    public function getActivityLogs()
+    {
+        return $this->hasMany(OrganizationActivityLog::class, ['organization_id' => 'id']);
+    }
+
+    // ==================== STATUS METHODS ====================
+
+    /**
+     * Список статусов
+     */
+    public static function getStatusList(): array
+    {
+        return [
+            self::STATUS_PENDING => Yii::t('main', 'Ожидает'),
+            self::STATUS_ACTIVE => Yii::t('main', 'Активна'),
+            self::STATUS_SUSPENDED => Yii::t('main', 'Приостановлена'),
+            self::STATUS_BLOCKED => Yii::t('main', 'Заблокирована'),
+        ];
+    }
+
+    /**
+     * Название статуса
+     */
+    public function getStatusLabel(): string
+    {
+        return self::getStatusList()[$this->status] ?? $this->status;
+    }
+
+    /**
+     * Список типов
+     */
+    public static function getTypeList(): array
+    {
+        return [
+            self::TYPE_HEAD => Yii::t('main', 'Головная'),
+            self::TYPE_BRANCH => Yii::t('main', 'Филиал'),
+        ];
+    }
+
+    /**
+     * Название типа
+     */
+    public function getTypeLabel(): string
+    {
+        return self::getTypeList()[$this->type] ?? $this->type;
+    }
+
+    /**
+     * Активна ли организация
+     */
+    public function isActiveStatus(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE;
+    }
+
+    // ==================== SUBSCRIPTION LIMITS ====================
+
+    /**
+     * Проверить, есть ли активная подписка
+     */
+    public function hasActiveSubscription(): bool
+    {
+        return $this->getActiveSubscription() !== null;
+    }
+
+    /**
+     * Получить текущий тарифный план
+     */
+    public function getCurrentPlan(): ?SaasPlan
+    {
+        $subscription = $this->getActiveSubscription();
+        return $subscription ? $subscription->saasPlan : null;
+    }
+
+    /**
+     * Получить лимит из подписки
+     */
+    public function getLimit(string $field): int
+    {
+        $subscription = $this->getActiveSubscription();
+        return $subscription ? $subscription->getLimit($field) : 0;
+    }
+
+    /**
+     * Проверить, превышен ли лимит
+     * @param string $field Поле лимита (max_pupils, max_teachers, etc.)
+     * @param int $currentCount Текущее количество
+     */
+    public function isLimitExceeded(string $field, int $currentCount): bool
+    {
+        $limit = $this->getLimit($field);
+        // 0 означает безлимит
+        if ($limit === 0) {
+            return false;
+        }
+        return $currentCount >= $limit;
+    }
+
+    /**
+     * Можно ли добавить ещё одну единицу (ученика, учителя и т.д.)
+     */
+    public function canAdd(string $field, int $currentCount): bool
+    {
+        return !$this->isLimitExceeded($field, $currentCount);
+    }
+
+    // ==================== EMAIL VERIFICATION ====================
+
+    /**
+     * Сгенерировать токен верификации
+     */
+    public function generateVerificationToken(): string
+    {
+        $this->verification_token = Yii::$app->security->generateRandomString(64);
+        return $this->verification_token;
+    }
+
+    /**
+     * Подтвердить email
+     */
+    public function verifyEmail(): bool
+    {
+        $this->email_verified_at = date('Y-m-d H:i:s');
+        $this->verification_token = null;
+        $this->status = self::STATUS_ACTIVE;
+        return $this->save(false);
+    }
+
+    /**
+     * Email подтверждён?
+     */
+    public function isEmailVerified(): bool
+    {
+        return $this->email_verified_at !== null;
     }
 }
