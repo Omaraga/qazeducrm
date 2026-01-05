@@ -68,12 +68,12 @@ $this->title = 'Подписка #' . $model->id;
                         <table class="table table-borderless">
                             <tr>
                                 <td class="text-muted">Дата начала</td>
-                                <td><?= Yii::$app->formatter->asDatetime($model->started_at) ?></td>
+                                <td><?= Yii::$app->formatter->asDatetime($model->started_at, 'php:d.m.Y H:i') ?></td>
                             </tr>
                             <?php if ($model->trial_ends_at): ?>
                             <tr>
                                 <td class="text-muted">Trial до</td>
-                                <td><?= Yii::$app->formatter->asDatetime($model->trial_ends_at) ?></td>
+                                <td><?= Yii::$app->formatter->asDatetime($model->trial_ends_at, 'php:d.m.Y') ?></td>
                             </tr>
                             <?php endif; ?>
                             <tr>
@@ -81,12 +81,12 @@ $this->title = 'Подписка #' . $model->id;
                                 <td>
                                     <?php if ($model->expires_at): ?>
                                         <?php if ($model->isExpired()): ?>
-                                            <span class="text-danger"><?= Yii::$app->formatter->asDatetime($model->expires_at) ?></span>
+                                            <span class="text-danger"><?= Yii::$app->formatter->asDatetime($model->expires_at, 'php:d.m.Y') ?></span>
                                         <?php elseif ($model->isExpiringSoon()): ?>
-                                            <?= Yii::$app->formatter->asDatetime($model->expires_at) ?>
+                                            <?= Yii::$app->formatter->asDatetime($model->expires_at, 'php:d.m.Y') ?>
                                             <span class="badge badge-warning">Скоро</span>
                                         <?php else: ?>
-                                            <?= Yii::$app->formatter->asDatetime($model->expires_at) ?>
+                                            <?= Yii::$app->formatter->asDatetime($model->expires_at, 'php:d.m.Y') ?>
                                         <?php endif; ?>
                                     <?php else: ?>
                                         —
@@ -156,11 +156,11 @@ $this->title = 'Подписка #' . $model->id;
                     <tbody>
                         <?php foreach ($payments as $payment): ?>
                         <tr>
-                            <td><?= Yii::$app->formatter->asDate($payment->created_at) ?></td>
+                            <td><?= Yii::$app->formatter->asDate($payment->created_at, 'php:d.m.Y') ?></td>
                             <td><?= number_format($payment->amount, 0, '', ' ') ?> <?= $payment->currency ?></td>
                             <td>
-                                <?= Yii::$app->formatter->asDate($payment->period_start) ?> —
-                                <?= Yii::$app->formatter->asDate($payment->period_end) ?>
+                                <?= Yii::$app->formatter->asDate($payment->period_start, 'php:d.m.Y') ?> —
+                                <?= Yii::$app->formatter->asDate($payment->period_end, 'php:d.m.Y') ?>
                             </td>
                             <td>
                                 <?php
@@ -239,11 +239,11 @@ $this->title = 'Подписка #' . $model->id;
                     </tr>
                     <tr>
                         <td class="text-muted">Создано</td>
-                        <td><?= Yii::$app->formatter->asDatetime($model->created_at) ?></td>
+                        <td><?= Yii::$app->formatter->asDatetime($model->created_at, 'php:d.m.Y H:i') ?></td>
                     </tr>
                     <tr>
                         <td class="text-muted">Обновлено</td>
-                        <td><?= Yii::$app->formatter->asDatetime($model->updated_at) ?></td>
+                        <td><?= Yii::$app->formatter->asDatetime($model->updated_at, 'php:d.m.Y H:i') ?></td>
                     </tr>
                 </table>
             </div>

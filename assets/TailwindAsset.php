@@ -26,7 +26,7 @@ class TailwindAsset extends AssetBundle
 
     public $css = [
         'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
-        'css/tailwind.css',
+        'dist/css/app.css',
     ];
 
     public $js = [
@@ -41,7 +41,7 @@ class TailwindAsset extends AssetBundle
         // AJAX wrapper with error handling
         'js/ajax.js',
         // Schedule calendar component (загружается перед Alpine.js)
-        'js/schedule-calendar.js?v=2',
+        'js/schedule-calendar.js?v=10',
         // Alpine.js Collapse plugin (должен загружаться ДО основного Alpine.js)
         'https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js',
         // Alpine.js для интерактивности (dropdowns, modals, tabs)
@@ -63,7 +63,7 @@ class TailwindAsset extends AssetBundle
      */
     public $publishOptions = [
         'only' => [
-            'css/tailwind.css',
+            'dist/css/app.css',
         ],
     ];
 }

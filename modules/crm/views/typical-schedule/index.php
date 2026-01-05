@@ -16,10 +16,18 @@ var myCalendar = $('#calendar').Calendar({
     showNavigateButton: false,
     unixTimestamp: moment('2024-01-01').format('X'),
     weekday:{
+        dayline: {
+            format: 'dddd DD.MM'
+        },
         timeline:{
             fromHour:8,
             toHour:22,
             intervalMinutes: 60
+        }
+    },
+    month: {
+        day: {
+            format: 'DD.MM'
         }
     }
 });

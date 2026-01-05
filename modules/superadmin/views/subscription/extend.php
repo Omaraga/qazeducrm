@@ -35,10 +35,10 @@ $this->title = 'Продление подписки #' . $model->id;
                             <td>
                                 <?php if ($model->expires_at): ?>
                                     <?php if ($model->isExpired()): ?>
-                                        <span class="text-danger"><?= Yii::$app->formatter->asDate($model->expires_at) ?></span>
+                                        <span class="text-danger"><?= Yii::$app->formatter->asDate($model->expires_at, 'php:d.m.Y') ?></span>
                                         <span class="badge badge-danger">Истёк</span>
                                     <?php else: ?>
-                                        <?= Yii::$app->formatter->asDate($model->expires_at) ?>
+                                        <?= Yii::$app->formatter->asDate($model->expires_at, 'php:d.m.Y') ?>
                                     <?php endif; ?>
                                 <?php else: ?>
                                     —
@@ -108,7 +108,7 @@ $this->title = 'Продление подписки #' . $model->id;
                     <tr>
                         <td class="text-muted">База для расчёта</td>
                         <td>
-                            <?= Yii::$app->formatter->asDate($baseDate) ?>
+                            <?= Yii::$app->formatter->asDate($baseDate, 'php:d.m.Y') ?>
                             <?php if ($model->isExpired()): ?>
                             <small class="text-muted">(от сегодня, т.к. истёк)</small>
                             <?php else: ?>
@@ -119,13 +119,13 @@ $this->title = 'Продление подписки #' . $model->id;
                     <tr>
                         <td class="text-muted">При продлении на месяц</td>
                         <td class="text-success">
-                            до <?= Yii::$app->formatter->asDate(date('Y-m-d', strtotime('+1 month', strtotime($baseDate)))) ?>
+                            до <?= Yii::$app->formatter->asDate(date('Y-m-d', strtotime('+1 month', strtotime($baseDate))), 'php:d.m.Y') ?>
                         </td>
                     </tr>
                     <tr>
                         <td class="text-muted">При продлении на год</td>
                         <td class="text-success">
-                            до <?= Yii::$app->formatter->asDate(date('Y-m-d', strtotime('+1 year', strtotime($baseDate)))) ?>
+                            до <?= Yii::$app->formatter->asDate(date('Y-m-d', strtotime('+1 year', strtotime($baseDate))), 'php:d.m.Y') ?>
                         </td>
                     </tr>
                 </table>

@@ -88,7 +88,7 @@ $expiring = Yii::$app->request->get('expiring');
                     'value' => function ($model) {
                         if (!$model->expires_at) return '—';
 
-                        $date = Yii::$app->formatter->asDate($model->expires_at);
+                        $date = Yii::$app->formatter->asDate($model->expires_at, 'php:d.m.Y');
                         if ($model->isExpiringSoon()) {
                             return $date . ' <span class="badge badge-warning">Скоро</span>';
                         }

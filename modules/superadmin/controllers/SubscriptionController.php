@@ -212,7 +212,7 @@ class SubscriptionController extends Controller
                 $model->organization_id,
                 OrganizationActivityLog::ACTION_SUBSCRIPTION_ACTIVATED,
                 OrganizationActivityLog::CATEGORY_SUBSCRIPTION,
-                "Подписка продлена до " . Yii::$app->formatter->asDate($model->expires_at)
+                "Подписка продлена до " . Yii::$app->formatter->asDate($model->expires_at, 'php:d.m.Y')
             );
 
             Yii::$app->session->setFlash('success', 'Подписка продлена.');

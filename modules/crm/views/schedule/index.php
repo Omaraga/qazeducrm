@@ -23,6 +23,8 @@ $config = [
         'move' => OrganizationUrl::to(['schedule/move']),
         'details' => OrganizationUrl::to(['schedule/details']),
         'teachers' => OrganizationUrl::to(['schedule/teachers']),
+        'settings' => OrganizationUrl::to(['schedule/settings']),
+        'saveSettings' => OrganizationUrl::to(['schedule/save-settings']),
     ],
 ];
 ?>
@@ -133,6 +135,19 @@ $config = [
 
             <!-- View Mode Toggle -->
             <div class="flex items-center gap-4">
+                <!-- Grid interval selector (only for day/week views) -->
+                <div x-show="viewMode !== 'month'" class="flex items-center gap-2">
+                    <label class="text-sm text-gray-500">Сетка:</label>
+                    <select x-model.number="gridInterval"
+                            @change="saveGridInterval()"
+                            class="form-select form-select-sm py-1 px-2 text-sm w-20">
+                        <option value="60">1 час</option>
+                        <option value="30">30 мин</option>
+                        <option value="15">15 мин</option>
+                        <option value="10">10 мин</option>
+                    </select>
+                </div>
+
                 <!-- Day view mode toggle (timeline/rooms) -->
                 <div x-show="viewMode === 'day' && filterOptions.rooms.length > 0" class="view-mode-toggle">
                     <button type="button"
@@ -192,27 +207,41 @@ $config = [
                     </div>
 
                     <!-- Time slots -->
-                    <template x-for="hour in hoursRange" :key="hour">
+                    <template x-for="slot in timeSlots" :key="slot.key">
                         <div class="contents">
-                            <div class="calendar-time-col" x-text="hour + ':00'"></div>
+                            <div class="calendar-time-col" x-text="slot.label"></div>
                             <div class="calendar-time-slot calendar-time-slot-clickable"
+                                 :style="{ position: 'relative', minHeight: slotHeight + 'px' }"
                                  :class="{
                                      'calendar-today': formatDate(currentDate) === formatDate(new Date()),
-                                     'calendar-drop-target': isDropTarget(formatDate(currentDate), hour)
+                                     'calendar-drop-target': isDropTarget(formatDate(currentDate), slot.hour, slot.minute)
                                  }"
-                                 @click="openCreateModal(formatDate(currentDate), hour)"
-                                 @dragover.prevent="onDragOver($event, formatDate(currentDate), hour)"
+                                 @click="openCreateModal(formatDate(currentDate), slot.hour, slot.minute)"
+                                 @dragover.prevent="onDragOver($event, formatDate(currentDate), slot.hour, slot.minute)"
                                  @dragleave="onDragLeave()"
-                                 @drop="onDrop($event, formatDate(currentDate), hour)">
-                                <template x-for="event in getEventsForDateHour(formatDate(currentDate), hour)" :key="event.id">
+                                 @drop="onDrop($event, formatDate(currentDate), slot.hour, slot.minute)">
+                                <!-- События с абсолютным позиционированием для отображения длительности -->
+                                <template x-for="event in getEventsStartingInSlot(formatDate(currentDate), slot.hour, slot.minute)" :key="event.id">
                                     <div class="calendar-day-event"
-                                         :style="{ backgroundColor: event.color }"
-                                         :title="event.title + ' - ' + event.teacher"
+                                         :style="{
+                                             backgroundColor: event.color,
+                                             position: 'absolute',
+                                             top: getEventTopOffsetPx(event, slot.hour, slot.minute) + 'px',
+                                             height: getEventHeightPx(event) + 'px',
+                                             left: getEventLeftPercent(event, formatDate(currentDate)) + '%',
+                                             width: getEventWidthPercent(event, formatDate(currentDate)) + '%',
+                                             minWidth: '100px',
+                                             zIndex: getEventZIndex(event),
+                                             overflow: 'hidden'
+                                         }"
+                                         :title="event.title + ' - ' + event.teacher + '\n' + event.start_time + ' - ' + event.end_time"
                                          draggable="true"
                                          :class="{ 'calendar-event-dragging': isDragging(event.id) }"
                                          @click.stop="openViewModal(event.id)"
                                          @dragstart="onDragStart($event, event.id)"
-                                         @dragend="onDragEnd()">
+                                         @dragend="onDragEnd()"
+                                         @mouseenter="$event.currentTarget.style.zIndex = 200"
+                                         @mouseleave="$event.currentTarget.style.zIndex = getEventZIndex(event)">
                                         <div class="calendar-day-event-title" x-text="event.title"></div>
                                         <div class="calendar-day-event-time" x-text="event.start_time + ' - ' + event.end_time"></div>
                                         <div class="calendar-day-event-teacher" x-text="event.teacher"></div>
@@ -246,24 +275,37 @@ $config = [
 
                     <!-- Time slots with rooms -->
                     <div class="overflow-y-auto" style="max-height: 600px;">
-                        <template x-for="hour in hoursRange" :key="hour">
+                        <template x-for="slot in timeSlots" :key="slot.key">
                             <div class="calendar-grid" :style="'grid-template-columns: 60px repeat(' + (filterOptions.rooms.length + 1) + ', 1fr)'">
-                                <div class="calendar-time-col" x-text="hour + ':00'"></div>
-                                <template x-for="room in filterOptions.rooms" :key="room.id + '-' + hour">
-                                    <div class="calendar-time-slot calendar-time-slot-clickable min-h-[60px]"
+                                <div class="calendar-time-col" x-text="slot.label"></div>
+                                <template x-for="room in filterOptions.rooms" :key="room.id + '-' + slot.key">
+                                    <div class="calendar-time-slot calendar-time-slot-clickable"
+                                         :style="{ position: 'relative', minHeight: slotHeight + 'px' }"
                                          :class="{
-                                             'calendar-drop-target': isDropTarget(formatDate(currentDate) + '-' + room.id, hour)
+                                             'calendar-drop-target': isDropTarget(formatDate(currentDate) + '-' + room.id, slot.hour, slot.minute)
                                          }"
-                                         @click="openCreateModal(formatDate(currentDate), hour)">
-                                        <template x-for="event in getEventsForRoomHour(formatDate(currentDate), room.id, hour)" :key="event.id">
+                                         @click="openCreateModal(formatDate(currentDate), slot.hour, slot.minute)">
+                                        <!-- События с абсолютным позиционированием -->
+                                        <template x-for="(event, idx) in getEventsStartingInRoomSlot(formatDate(currentDate), room.id, slot.hour, slot.minute)" :key="event.id">
                                             <div class="calendar-event"
-                                                 :style="{ backgroundColor: event.color }"
+                                                 :style="{
+                                                     backgroundColor: event.color,
+                                                     position: 'absolute',
+                                                     top: getEventTopOffsetPx(event, slot.hour, slot.minute) + 'px',
+                                                     height: getEventHeightPx(event) + 'px',
+                                                     left: '2px',
+                                                     right: '2px',
+                                                     zIndex: getEventZIndex(event),
+                                                     overflow: 'hidden'
+                                                 }"
                                                  :title="event.title + '\n' + event.teacher + '\n' + event.start_time + ' - ' + event.end_time"
                                                  draggable="true"
                                                  :class="{ 'calendar-event-dragging': isDragging(event.id) }"
                                                  @click.stop="openViewModal(event.id)"
                                                  @dragstart="onDragStart($event, event.id)"
-                                                 @dragend="onDragEnd()">
+                                                 @dragend="onDragEnd()"
+                                                 @mouseenter="$event.currentTarget.style.zIndex = 200"
+                                                 @mouseleave="$event.currentTarget.style.zIndex = getEventZIndex(event)">
                                                 <div class="calendar-event-title" x-text="event.title"></div>
                                                 <div class="calendar-event-time" x-text="event.start_time + ' - ' + event.end_time"></div>
                                                 <div class="calendar-event-teacher text-[10px] opacity-80" x-text="event.teacher"></div>
@@ -272,17 +314,30 @@ $config = [
                                     </div>
                                 </template>
                                 <!-- Column for events without room -->
-                                <div class="calendar-time-slot calendar-time-slot-clickable min-h-[60px] bg-gray-50/50"
-                                     @click="openCreateModal(formatDate(currentDate), hour)">
-                                    <template x-for="event in getEventsWithoutRoomHour(formatDate(currentDate), hour)" :key="event.id">
+                                <div class="calendar-time-slot calendar-time-slot-clickable bg-gray-50/50"
+                                     :style="{ position: 'relative', minHeight: slotHeight + 'px' }"
+                                     @click="openCreateModal(formatDate(currentDate), slot.hour, slot.minute)">
+                                    <!-- События без комнаты с абсолютным позиционированием -->
+                                    <template x-for="(event, idx) in getEventsStartingWithoutRoom(formatDate(currentDate), slot.hour, slot.minute)" :key="event.id">
                                         <div class="calendar-event"
-                                             :style="{ backgroundColor: event.color }"
+                                             :style="{
+                                                 backgroundColor: event.color,
+                                                 position: 'absolute',
+                                                 top: getEventTopOffsetPx(event, slot.hour, slot.minute) + 'px',
+                                                 height: getEventHeightPx(event) + 'px',
+                                                 left: '2px',
+                                                 right: '2px',
+                                                 zIndex: getEventZIndex(event),
+                                                 overflow: 'hidden'
+                                             }"
                                              :title="event.title + '\n' + event.teacher + '\n' + event.start_time + ' - ' + event.end_time"
                                              draggable="true"
                                              :class="{ 'calendar-event-dragging': isDragging(event.id) }"
                                              @click.stop="openViewModal(event.id)"
                                              @dragstart="onDragStart($event, event.id)"
-                                             @dragend="onDragEnd()">
+                                             @dragend="onDragEnd()"
+                                             @mouseenter="$event.currentTarget.style.zIndex = 200"
+                                             @mouseleave="$event.currentTarget.style.zIndex = getEventZIndex(event)">
                                             <div class="calendar-event-title" x-text="event.title"></div>
                                             <div class="calendar-event-time" x-text="event.start_time + ' - ' + event.end_time"></div>
                                             <div class="calendar-event-teacher text-[10px] opacity-80" x-text="event.teacher"></div>
@@ -297,7 +352,7 @@ $config = [
 
             <!-- Week View -->
             <template x-if="viewMode === 'week'">
-                <div>
+                <div class="overflow-x-auto">
                     <!-- Header row -->
                     <div class="calendar-grid calendar-grid-week">
                         <div class="calendar-time-col"></div>
@@ -314,30 +369,44 @@ $config = [
 
                     <!-- Time slots -->
                     <div class="overflow-y-auto" style="max-height: 600px;">
-                        <template x-for="hour in hoursRange" :key="hour">
+                        <template x-for="slot in timeSlots" :key="slot.key">
                             <div class="calendar-grid calendar-grid-week">
-                                <div class="calendar-time-col" x-text="hour + ':00'"></div>
-                                <template x-for="day in weekDays" :key="day.dateStr + '-' + hour">
+                                <div class="calendar-time-col" x-text="slot.label"></div>
+                                <template x-for="day in weekDays" :key="day.dateStr + '-' + slot.key">
                                     <div class="calendar-time-slot calendar-time-slot-clickable"
+                                         :style="{ position: 'relative', minHeight: slotHeight + 'px' }"
                                          :class="{
                                              'calendar-today': day.isToday,
-                                             'calendar-drop-target': isDropTarget(day.dateStr, hour)
+                                             'calendar-drop-target': isDropTarget(day.dateStr, slot.hour, slot.minute)
                                          }"
-                                         @click="openCreateModal(day.dateStr, hour)"
-                                         @dragover.prevent="onDragOver($event, day.dateStr, hour)"
+                                         @click="openCreateModal(day.dateStr, slot.hour, slot.minute)"
+                                         @dragover.prevent="onDragOver($event, day.dateStr, slot.hour, slot.minute)"
                                          @dragleave="onDragLeave()"
-                                         @drop="onDrop($event, day.dateStr, hour)">
-                                        <template x-for="event in getEventsForDateHour(day.dateStr, hour)" :key="event.id">
+                                         @drop="onDrop($event, day.dateStr, slot.hour, slot.minute)">
+                                        <!-- События с абсолютным позиционированием для отображения длительности -->
+                                        <template x-for="event in getEventsStartingInSlot(day.dateStr, slot.hour, slot.minute)" :key="event.id">
                                             <div class="calendar-event"
-                                                 :style="{ backgroundColor: event.color }"
+                                                 :style="{
+                                                     backgroundColor: event.color,
+                                                     position: 'absolute',
+                                                     top: getEventTopOffsetPx(event, slot.hour, slot.minute) + 'px',
+                                                     height: getEventHeightPx(event) + 'px',
+                                                     left: getEventLeftPercent(event, day.dateStr) + '%',
+                                                     width: getEventWidthPercent(event, day.dateStr) + '%',
+                                                     minWidth: '40px',
+                                                     zIndex: getEventZIndex(event),
+                                                     overflow: 'hidden'
+                                                 }"
                                                  :title="event.title + '\n' + event.teacher + '\n' + event.start_time + ' - ' + event.end_time"
                                                  draggable="true"
                                                  :class="{ 'calendar-event-dragging': isDragging(event.id) }"
                                                  @click.stop="openViewModal(event.id)"
                                                  @dragstart="onDragStart($event, event.id)"
-                                                 @dragend="onDragEnd()">
+                                                 @dragend="onDragEnd()"
+                                                 @mouseenter="$event.currentTarget.style.zIndex = 200"
+                                                 @mouseleave="$event.currentTarget.style.zIndex = getEventZIndex(event)">
                                                 <div class="calendar-event-title" x-text="event.title"></div>
-                                                <div class="calendar-event-time" x-text="event.start_time"></div>
+                                                <div class="calendar-event-time" x-text="event.start_time + '-' + event.end_time"></div>
                                             </div>
                                         </template>
                                     </div>
@@ -410,17 +479,17 @@ $config = [
     </div>
 
     <!-- Create Lesson Modal -->
-    <?php Modal::begin(['id' => 'create-lesson-modal', 'title' => 'Новое занятие', 'size' => 'lg']); ?>
+    <?php Modal::begin(['id' => 'create-lesson-modal', 'title' => 'Новое занятие', 'size' => 'xl']); ?>
     <?= $this->render('_modal-form', ['isEdit' => false]) ?>
     <?php Modal::end(); ?>
 
     <!-- View Lesson Modal -->
-    <?php Modal::begin(['id' => 'view-lesson-modal', 'title' => 'Детали занятия', 'size' => 'lg']); ?>
+    <?php Modal::begin(['id' => 'view-lesson-modal', 'title' => 'Детали занятия', 'size' => 'xl']); ?>
     <?= $this->render('_modal-view') ?>
     <?php Modal::end(); ?>
 
     <!-- Edit Lesson Modal -->
-    <?php Modal::begin(['id' => 'edit-lesson-modal', 'title' => 'Редактировать занятие', 'size' => 'lg']); ?>
+    <?php Modal::begin(['id' => 'edit-lesson-modal', 'title' => 'Редактировать занятие', 'size' => 'xl']); ?>
     <?= $this->render('_modal-form', ['isEdit' => true]) ?>
     <?php Modal::end(); ?>
 

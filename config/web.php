@@ -19,6 +19,10 @@ $config = [
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'XIbu0x9zT3z7DofDUWOk_gO06sjiYHgu',
+            // Парсеры для JSON запросов
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ],
         ],
         'i18n' => [
             'translations' => [
@@ -64,6 +68,7 @@ $config = [
         ],
         'formatter' => [
             'dateFormat' => 'dd.MM.yyyy',
+            'datetimeFormat' => 'dd.MM.yyyy HH:mm',
             'decimalSeparator' => ',',
             'thousandSeparator' => ' ',
         ],

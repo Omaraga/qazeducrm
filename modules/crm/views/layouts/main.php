@@ -69,7 +69,14 @@ $menuConfig = [
     <title><?= Html::encode($this->title) ?> — Qazaq Education CRM</title>
     <?php $this->head() ?>
 </head>
-<body class="h-full bg-gray-50 font-sans antialiased" x-data="{ sidebarOpen: false }">
+<body class="h-full bg-gray-50 font-sans antialiased" x-data="{
+    sidebarOpen: false,
+    sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+    toggleSidebar() {
+        this.sidebarCollapsed = !this.sidebarCollapsed;
+        localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed);
+    }
+}">
 <?php $this->beginBody() ?>
 
 <!-- Flash Messages to Toast (hidden, picked up by JS) -->
@@ -173,12 +180,23 @@ endforeach;
      style="display: none;"></div>
 
 <!-- Sidebar -->
-<aside class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col transform transition-transform duration-300 lg:translate-x-0"
-       :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+<aside class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col transform transition-transform duration-300"
+       :class="{
+           'translate-x-0': sidebarOpen,
+           '-translate-x-full': !sidebarOpen && !sidebarCollapsed,
+           'lg:translate-x-0': !sidebarCollapsed,
+           'lg:-translate-x-full': sidebarCollapsed
+       }">
     <!-- Brand -->
-    <div class="flex items-center gap-3 px-6 py-5 border-b border-gray-200">
-        <span class="text-gray-900 font-bold text-xl">QazEdu</span>
-        <span class="bg-primary-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">CRM</span>
+    <div class="flex items-center justify-between px-6 py-5 border-b border-gray-200">
+        <div class="flex items-center gap-3">
+            <span class="text-gray-900 font-bold text-xl">QazEdu</span>
+            <span class="bg-primary-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">CRM</span>
+        </div>
+        <!-- Collapse button (desktop only) -->
+        <button @click="toggleSidebar()" class="hidden lg:flex p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors" title="Свернуть меню">
+            <?= Icon::show('chevron-left', 'w-4 h-4') ?>
+        </button>
     </div>
 
     <!-- Navigation -->
@@ -200,12 +218,20 @@ endforeach;
 </aside>
 
 <!-- Main Content -->
-<div class="lg:ml-64 min-h-screen">
+<div class="min-h-screen transition-[margin] duration-300" :class="sidebarCollapsed ? 'lg:ml-0' : 'lg:ml-64'">
     <!-- Header -->
     <header class="bg-white border-b border-gray-200 px-4 lg:px-6 py-4 flex items-center justify-between sticky top-0 z-30 overflow-visible">
         <div class="flex items-center gap-4">
             <!-- Mobile menu button -->
             <button type="button" class="lg:hidden -ml-2 p-2 text-gray-500 hover:text-gray-700" @click="sidebarOpen = true">
+                <?= Icon::show('menu', 'lg') ?>
+            </button>
+            <!-- Desktop expand button (when collapsed) -->
+            <button type="button"
+                    x-show="sidebarCollapsed"
+                    @click="toggleSidebar()"
+                    class="hidden lg:flex -ml-2 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                    title="Развернуть меню">
                 <?= Icon::show('menu', 'lg') ?>
             </button>
 

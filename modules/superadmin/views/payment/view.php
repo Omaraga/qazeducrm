@@ -71,8 +71,8 @@ $this->title = 'Платёж #' . $model->id;
                                 <td class="text-muted">Период</td>
                                 <td>
                                     <?php if ($model->period_start): ?>
-                                        <?= Yii::$app->formatter->asDate($model->period_start) ?> —
-                                        <?= Yii::$app->formatter->asDate($model->period_end) ?>
+                                        <?= Yii::$app->formatter->asDate($model->period_start, 'php:d.m.Y') ?> —
+                                        <?= Yii::$app->formatter->asDate($model->period_end, 'php:d.m.Y') ?>
                                     <?php else: ?>
                                         —
                                     <?php endif; ?>
@@ -158,17 +158,17 @@ $this->title = 'Платёж #' . $model->id;
                     </tr>
                     <tr>
                         <td class="text-muted">Создан</td>
-                        <td><?= Yii::$app->formatter->asDatetime($model->created_at) ?></td>
+                        <td><?= Yii::$app->formatter->asDatetime($model->created_at, 'php:d.m.Y H:i') ?></td>
                     </tr>
                     <?php if ($model->processed_at): ?>
                     <tr>
                         <td class="text-muted">Обработан</td>
-                        <td><?= Yii::$app->formatter->asDatetime($model->processed_at) ?></td>
+                        <td><?= Yii::$app->formatter->asDatetime($model->processed_at, 'php:d.m.Y H:i') ?></td>
                     </tr>
                     <?php endif; ?>
                     <tr>
                         <td class="text-muted">Обновлён</td>
-                        <td><?= Yii::$app->formatter->asDatetime($model->updated_at) ?></td>
+                        <td><?= Yii::$app->formatter->asDatetime($model->updated_at, 'php:d.m.Y H:i') ?></td>
                     </tr>
                 </table>
             </div>

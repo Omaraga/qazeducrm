@@ -7,6 +7,7 @@ use app\helpers\OrganizationUrl;
 use app\helpers\SystemRoles;
 use app\models\forms\TypicalLessonForm;
 use app\models\Lesson;
+use app\models\Organizations;
 use app\models\Room;
 use app\models\services\ScheduleConflictService;
 use app\models\services\ScheduleService;
@@ -80,10 +81,13 @@ class ScheduleController extends Controller
         }
 
         $request = \Yii::$app->request;
-        $start = $request->post('start');
-        $end = $request->post('end');
-        $groupIds = $request->post('groups', []);
-        $teacherIds = $request->post('teachers', []);
+
+        // Получаем данные из JSON body или POST
+        $bodyParams = $request->getBodyParams();
+        $start = $bodyParams['start'] ?? $request->post('start');
+        $end = $bodyParams['end'] ?? $request->post('end');
+        $groupIds = $bodyParams['groups'] ?? $request->post('groups', []);
+        $teacherIds = $bodyParams['teachers'] ?? $request->post('teachers', []);
 
         // Если переданы timestamps, конвертируем в даты
         if (is_numeric($start)) {
@@ -453,6 +457,63 @@ class ScheduleController extends Controller
         $this->findModel($id)->delete();
 
         return $this->redirect(OrganizationUrl::to(['schedule/index']));
+    }
+
+    /**
+     * AJAX: Получить настройки календаря для организации
+     */
+    public function actionSettings()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $org = Organizations::getCurrentOrganization();
+
+        return [
+            'grid_interval' => $org ? (int)($org->schedule_grid_interval ?? 60) : 60,
+            'view_mode' => $org ? ($org->schedule_view_mode ?? 'week') : 'week',
+        ];
+    }
+
+    /**
+     * AJAX: Сохранить настройки календаря для организации
+     */
+    public function actionSaveSettings()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (!\Yii::$app->request->isPost) {
+            return ['success' => false, 'message' => 'Invalid request'];
+        }
+
+        $org = Organizations::getCurrentOrganization();
+        if (!$org) {
+            return ['success' => false, 'message' => 'Организация не найдена'];
+        }
+
+        // Получаем данные из JSON body или POST
+        $bodyParams = \Yii::$app->request->getBodyParams();
+
+        // Сохраняем grid_interval если передан
+        if (isset($bodyParams['grid_interval'])) {
+            $gridInterval = (int)$bodyParams['grid_interval'];
+            if (in_array($gridInterval, [10, 15, 30, 60])) {
+                $org->schedule_grid_interval = $gridInterval;
+            }
+        }
+
+        // Сохраняем view_mode если передан
+        if (isset($bodyParams['view_mode'])) {
+            $viewMode = $bodyParams['view_mode'];
+            if (in_array($viewMode, ['day', 'week', 'month'])) {
+                $org->schedule_view_mode = $viewMode;
+            }
+        }
+
+        if ($org->save(false)) {
+            return ['success' => true, 'message' => 'Настройки сохранены'];
+        }
+
+        return ['success' => false, 'message' => 'Ошибка сохранения'];
     }
 
     /**

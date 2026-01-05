@@ -103,7 +103,7 @@ $this->title = $model->name;
                             </tr>
                             <tr>
                                 <td class="text-muted">Создана</td>
-                                <td><?= Yii::$app->formatter->asDatetime($model->created_at) ?></td>
+                                <td><?= Yii::$app->formatter->asDatetime($model->created_at, 'php:d.m.Y H:i') ?></td>
                             </tr>
                         </table>
                     </div>
@@ -177,7 +177,7 @@ $this->title = $model->name;
                             <?php foreach ($activityLogs as $log): ?>
                                 <tr>
                                     <td style="width: 150px;">
-                                        <small class="text-muted"><?= Yii::$app->formatter->asDatetime($log->created_at, 'short') ?></small>
+                                        <small class="text-muted"><?= Yii::$app->formatter->asDatetime($log->created_at, 'php:d.m.Y') ?></small>
                                     </td>
                                     <td>
                                         <span class="badge badge-secondary"><?= $log->getCategoryLabel() ?></span>
@@ -228,13 +228,13 @@ $this->title = $model->name;
                         </tr>
                         <tr>
                             <td class="text-muted">Начало</td>
-                            <td><?= $subscription->started_at ? Yii::$app->formatter->asDate($subscription->started_at) : '—' ?></td>
+                            <td><?= $subscription->started_at ? Yii::$app->formatter->asDate($subscription->started_at, 'php:d.m.Y') : '—' ?></td>
                         </tr>
                         <tr>
                             <td class="text-muted">Истекает</td>
                             <td>
                                 <?php if ($subscription->expires_at): ?>
-                                    <?= Yii::$app->formatter->asDate($subscription->expires_at) ?>
+                                    <?= Yii::$app->formatter->asDate($subscription->expires_at, 'php:d.m.Y') ?>
                                     <?php if ($subscription->isExpiringSoon()): ?>
                                         <span class="badge badge-warning">Скоро</span>
                                     <?php endif; ?>
@@ -246,7 +246,7 @@ $this->title = $model->name;
                         <?php if ($subscription->isTrial()): ?>
                             <tr>
                                 <td class="text-muted">Trial до</td>
-                                <td><?= Yii::$app->formatter->asDate($subscription->trial_ends_at) ?></td>
+                                <td><?= Yii::$app->formatter->asDate($subscription->trial_ends_at, 'php:d.m.Y') ?></td>
                             </tr>
                         <?php endif; ?>
                     </table>

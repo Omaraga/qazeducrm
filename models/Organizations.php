@@ -72,7 +72,8 @@ class Organizations extends ActiveRecord
     public function attributesToInfo()
     {
         return [
-
+            'schedule_grid_interval', // Интервал сетки расписания: 10, 15, 30, 60 минут
+            'schedule_view_mode',     // Режим отображения расписания: day, week, month
         ];
     }
 

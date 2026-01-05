@@ -194,6 +194,7 @@ class ScheduleService
                 'start' => strtotime($event['date'] . ' ' . $event['start_time']),
                 'end' => strtotime($event['date'] . ' ' . $event['end_time']),
                 'date' => $event['date'],
+                'date_raw' => $event['date'], // для формы редактирования (input type="date")
                 'start_time' => substr($event['start_time'], 0, 5),
                 'end_time' => substr($event['end_time'], 0, 5),
                 'title' => $event['group_code'] . ' - ' . $event['group_name'],
@@ -211,14 +212,27 @@ class ScheduleService
     }
 
     /**
-     * Получить все группы для фильтра
+     * Получить группы с занятиями для фильтра
      *
      * @return array [{id, code, name, color}]
      */
     public static function getGroupsForFilter(): array
     {
+        // Получаем только группы, у которых есть занятия
+        $groupIdsWithLessons = Lesson::find()
+            ->select(['group_id'])
+            ->byOrganization()
+            ->notDeleted()
+            ->distinct()
+            ->column();
+
+        if (empty($groupIdsWithLessons)) {
+            return [];
+        }
+
         $groups = Group::find()
             ->select(['id', 'code', 'name', 'color'])
+            ->where(['id' => $groupIdsWithLessons])
             ->byOrganization()
             ->notDeleted()
             ->orderBy('code ASC')

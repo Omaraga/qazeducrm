@@ -82,14 +82,14 @@ $currentStatus = Yii::$app->request->get('status');
                     'label' => 'Период',
                     'value' => function ($model) {
                         if (!$model->period_start) return '—';
-                        return Yii::$app->formatter->asDate($model->period_start) . ' — ' . Yii::$app->formatter->asDate($model->period_end);
+                        return Yii::$app->formatter->asDate($model->period_start, 'php:d.m.Y') . ' — ' . Yii::$app->formatter->asDate($model->period_end, 'php:d.m.Y');
                     },
                 ],
                 [
                     'attribute' => 'created_at',
                     'label' => 'Создан',
                     'value' => function ($model) {
-                        return Yii::$app->formatter->asDate($model->created_at);
+                        return Yii::$app->formatter->asDate($model->created_at, 'php:d.m.Y');
                     },
                 ],
                 [

@@ -168,7 +168,7 @@ $revenueChange = $lastMonthRevenue > 0
                                         </span>
                                     </td>
                                     <td>
-                                        <small><?= Yii::$app->formatter->asDatetime($org->created_at, 'short') ?></small>
+                                        <small><?= Yii::$app->formatter->asDatetime($org->created_at, 'php:d.m.Y') ?></small>
                                     </td>
                                     <td>
                                         <a href="<?= Url::to(['/superadmin/organization/view', 'id' => $org->id]) ?>"
@@ -220,7 +220,7 @@ $revenueChange = $lastMonthRevenue > 0
                                     <td><?= Html::encode($payment->organization->name ?? 'N/A') ?></td>
                                     <td><strong><?= $payment->getFormattedAmount() ?></strong></td>
                                     <td>
-                                        <small><?= Yii::$app->formatter->asDatetime($payment->created_at, 'short') ?></small>
+                                        <small><?= Yii::$app->formatter->asDatetime($payment->created_at, 'php:d.m.Y') ?></small>
                                     </td>
                                     <td>
                                         <a href="<?= Url::to(['/superadmin/payment/view', 'id' => $payment->id]) ?>"

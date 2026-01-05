@@ -21,6 +21,7 @@ $groups = Group::find()
 
 $rooms = Room::getList();
 $checkConflictsUrl = OrganizationUrl::to(['schedule/check-conflicts']);
+$teachersUrl = OrganizationUrl::to(['schedule/teachers']);
 ?>
 
 <form @submit.prevent="<?= $isEdit ? "updateEvent(\$event.target, selectedEvent?.id)" : "createEvent(\$event.target)" ?>"
@@ -29,30 +30,33 @@ $checkConflictsUrl = OrganizationUrl::to(['schedule/check-conflicts']);
           teacherId: <?= $isEdit ? "selectedEvent?.teacher?.id || ''" : "''" ?>,
           roomId: <?= $isEdit ? "selectedEvent?.room_id || ''" : "''" ?>,
           date: <?= $isEdit ? "selectedEvent?.date_raw || ''" : "selectedDate || ''" ?>,
-          startTime: <?= $isEdit ? "selectedEvent?.start_time || ''" : "selectedHour ? (selectedHour.toString().padStart(2, '0') + ':00') : '09:00'" ?>,
-          endTime: <?= $isEdit ? "selectedEvent?.end_time || ''" : "selectedHour ? ((selectedHour + 1).toString().padStart(2, '0') + ':00') : '10:00'" ?>,
+          startTime: <?= $isEdit ? "selectedEvent?.start_time || ''" : "selectedHour ? (selectedHour.toString().padStart(2, '0') + ':' + (selectedMinute || 0).toString().padStart(2, '0')) : '09:00'" ?>,
+          endTime: <?= $isEdit ? "selectedEvent?.end_time || ''" : "selectedHour ? ((selectedHour + 1).toString().padStart(2, '0') + ':' + (selectedMinute || 0).toString().padStart(2, '0')) : '10:00'" ?>,
           conflicts: [],
           checkingConflicts: false,
+          initialized: false,
+          teachersUrl: '<?= $teachersUrl ?>',
 
           init() {
               <?php if ($isEdit): ?>
-              this.$watch('selectedEvent', (value) => {
-                  if (value) {
+              this.$watch('selectedEvent', async (value) => {
+                  if (value && !this.initialized) {
+                      this.initialized = true;
                       this.groupId = value.group_id || '';
-                      this.teacherId = value.teacher?.id || '';
                       this.roomId = value.room_id || '';
                       this.date = value.date_raw || '';
                       this.startTime = value.start_time || '';
                       this.endTime = value.end_time || '';
+
+                      // Загружаем учителей и ждём завершения
                       if (value.group_id) {
-                          loadTeachersForGroup(value.group_id, this.$refs.teacherSelect);
-                          setTimeout(() => {
-                              if (this.$refs.teacherSelect && value.teacher) {
-                                  this.$refs.teacherSelect.value = value.teacher.id;
-                                  this.teacherId = value.teacher.id;
-                              }
-                          }, 500);
+                          await loadTeachersForGroup(value.group_id, this.$refs.teacherSelect, this.teachersUrl);
+                          if (this.$refs.teacherSelect && value.teacher) {
+                              this.$refs.teacherSelect.value = value.teacher.id;
+                              this.teacherId = value.teacher.id;
+                          }
                       }
+
                       this.checkConflicts();
                   }
               });
@@ -63,12 +67,21 @@ $checkConflictsUrl = OrganizationUrl::to(['schedule/check-conflicts']);
               });
               this.$watch('selectedHour', (value) => {
                   if (value !== null) {
-                      this.startTime = value.toString().padStart(2, '0') + ':00';
-                      this.endTime = (value + 1).toString().padStart(2, '0') + ':00';
+                      const minute = typeof selectedMinute !== 'undefined' ? selectedMinute : 0;
+                      this.startTime = value.toString().padStart(2, '0') + ':' + minute.toString().padStart(2, '0');
+                      this.endTime = (value + 1).toString().padStart(2, '0') + ':' + minute.toString().padStart(2, '0');
                       this.checkConflicts();
                   }
               });
               <?php endif; ?>
+          },
+
+          async onGroupChange(groupId) {
+              this.teacherId = '';
+              if (groupId) {
+                  await loadTeachersForGroup(groupId, this.$refs.teacherSelect, this.teachersUrl);
+              }
+              this.onFieldChange();
           },
 
           async checkConflicts() {
@@ -111,28 +124,25 @@ $checkConflictsUrl = OrganizationUrl::to(['schedule/check-conflicts']);
               clearTimeout(this._debounce);
               this._debounce = setTimeout(() => this.checkConflicts(), 300);
           }
-      }">
+      }"
+      @close-modal.window="if ($event.detail === '<?= $isEdit ? 'edit-lesson-modal' : 'create-lesson-modal' ?>') { initialized = false; }">
 
     <!-- Предупреждения о конфликтах -->
-    <div x-show="conflicts.length > 0" class="mb-4 p-4 bg-warning-50 border border-warning-200 rounded-lg">
-        <div class="flex items-start gap-3">
-            <?= Icon::show('exclamation-triangle', 'w-5 h-5 text-warning-600 flex-shrink-0 mt-0.5') ?>
+    <div x-show="conflicts.length > 0" class="mb-4 p-3 bg-warning-50 border border-warning-200 rounded-lg">
+        <div class="flex items-start gap-2">
+            <?= Icon::show('exclamation-triangle', 'w-5 h-5 text-warning-600 flex-shrink-0') ?>
             <div class="flex-1">
-                <h4 class="text-sm font-medium text-warning-800 mb-1">Обнаружены пересечения</h4>
-                <ul class="text-sm text-warning-700 space-y-1">
+                <h4 class="text-sm font-medium text-warning-800">Обнаружены пересечения</h4>
+                <ul class="text-sm text-warning-700 mt-1">
                     <template x-for="conflict in conflicts" :key="conflict.type">
-                        <li class="flex items-center gap-2">
-                            <span class="w-1.5 h-1.5 rounded-full bg-warning-500"></span>
-                            <span x-text="conflict.message"></span>
-                        </li>
+                        <li x-text="'• ' + conflict.message"></li>
                     </template>
                 </ul>
-                <p class="text-xs text-warning-600 mt-2">Занятие можно создать, но учитывайте возможные накладки.</p>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="grid grid-cols-2 gap-4">
         <!-- Группа -->
         <div class="form-group">
             <label class="form-label form-label-required">Группа</label>
@@ -140,7 +150,7 @@ $checkConflictsUrl = OrganizationUrl::to(['schedule/check-conflicts']);
                     class="form-select"
                     required
                     x-model="groupId"
-                    @change="loadTeachersForGroup($event.target.value, $refs.teacherSelect); teacherId = ''; onFieldChange()">
+                    @change="onGroupChange($event.target.value)">
                 <option value="">Выберите группу</option>
                 <?php foreach ($groups as $group): ?>
                     <option value="<?= $group['id'] ?>">
@@ -165,7 +175,7 @@ $checkConflictsUrl = OrganizationUrl::to(['schedule/check-conflicts']);
         </div>
 
         <!-- Кабинет -->
-        <div class="form-group md:col-span-2">
+        <div class="form-group col-span-2">
             <label class="form-label">Кабинет</label>
             <select name="Lesson[room_id]"
                     class="form-select"
@@ -178,7 +188,6 @@ $checkConflictsUrl = OrganizationUrl::to(['schedule/check-conflicts']);
                     </option>
                 <?php endforeach; ?>
             </select>
-            <p class="text-xs text-gray-500 mt-1">Необязательно. Если указать, система проверит занятость.</p>
         </div>
 
         <!-- Дата -->
@@ -192,40 +201,41 @@ $checkConflictsUrl = OrganizationUrl::to(['schedule/check-conflicts']);
                    @change="onFieldChange()">
         </div>
 
-        <!-- Время начала -->
+        <!-- Время начала и окончания в одной строке -->
         <div class="form-group">
-            <label class="form-label form-label-required">Время начала</label>
-            <input type="time"
-                   name="Lesson[start_time]"
-                   class="form-input"
-                   required
-                   x-model="startTime"
-                   @change="onFieldChange()">
-        </div>
-
-        <!-- Время окончания -->
-        <div class="form-group md:col-span-2">
-            <label class="form-label form-label-required">Время окончания</label>
-            <input type="time"
-                   name="Lesson[end_time]"
-                   class="form-input"
-                   required
-                   x-model="endTime"
-                   @change="onFieldChange()">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="form-label form-label-required">Начало</label>
+                    <input type="time"
+                           name="Lesson[start_time]"
+                           class="form-input"
+                           required
+                           x-model="startTime"
+                           @change="onFieldChange()">
+                </div>
+                <div>
+                    <label class="form-label form-label-required">Окончание</label>
+                    <input type="time"
+                           name="Lesson[end_time]"
+                           class="form-input"
+                           required
+                           x-model="endTime"
+                           @change="onFieldChange()">
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Footer с кнопками -->
+    <!-- Footer -->
     <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
         <div>
-            <span x-show="checkingConflicts" class="text-sm text-gray-500 flex items-center gap-2">
-                <span class="spinner spinner-sm"></span>
+            <span x-show="checkingConflicts" class="text-sm text-gray-500">
                 Проверка...
             </span>
         </div>
         <div class="flex gap-3">
             <button type="button"
-                    @click="$dispatch('close-modal', '<?= $isEdit ? 'edit-lesson-modal' : 'create-lesson-modal' ?>')"
+                    @click="$dispatch('close-modal', '<?= $isEdit ? 'edit-lesson-modal' : 'create-lesson-modal' ?>'); initialized = false;"
                     class="btn btn-secondary">
                 Отмена
             </button>

@@ -39,7 +39,8 @@
       "Bash(php test_ui_components.php:*)",
       "Bash(php test_schedule_wizard.php:*)",
       "Bash(php test_knowledge.php:*)",
-      "Bash(php test_knowledge_render.php:*)"
+      "Bash(php test_knowledge_render.php:*)",
+      "Bash(php test_grid_setting.php:*)"
     ]
   }
 }

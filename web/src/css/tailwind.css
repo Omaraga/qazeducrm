@@ -641,11 +641,12 @@
   }
 
   .calendar-grid-week {
-    @apply grid-cols-8;
+    grid-template-columns: 50px repeat(7, minmax(100px, 1fr));
+    min-width: 750px;
   }
 
   .calendar-grid-day {
-    @apply grid-cols-2;
+    grid-template-columns: 60px 1fr;
   }
 
   .calendar-grid-month {
@@ -655,6 +656,12 @@
   /* Time slot cell */
   .calendar-time-slot {
     @apply min-h-[60px] border-r border-b border-gray-100 p-1 relative transition-colors;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: flex-start;
+    align-content: flex-start;
   }
 
   .calendar-time-slot:hover {
@@ -667,7 +674,10 @@
 
   /* Calendar event */
   .calendar-event {
-    @apply block p-1.5 rounded text-xs text-white mb-1 cursor-pointer transition-all duration-150;
+    @apply p-1.5 rounded text-xs text-white cursor-pointer transition-all duration-150;
+    flex: 1 1 0%;
+    min-width: 60px;
+    max-width: 100%;
   }
 
   .calendar-event:hover {
@@ -788,7 +798,10 @@
 
   /* Day view specific */
   .calendar-day-event {
-    @apply p-2 rounded text-white mb-1 cursor-pointer;
+    @apply p-2 rounded text-white cursor-pointer;
+    flex: 1 1 0%;
+    min-width: 120px;
+    max-width: 100%;
   }
 
   .calendar-day-event-title {
