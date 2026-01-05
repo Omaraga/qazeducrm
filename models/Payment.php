@@ -72,7 +72,7 @@ class Payment extends ActiveRecord
         return [
             [['organization_id', 'pupil_id', 'purpose_id', 'method_id', 'type', 'is_deleted'], 'integer'],
             [['pupil_id', 'type', 'date'], 'required'],
-            [['amount'], 'number'],
+            [['amount'], 'number', 'min' => 0.01],
             [['date', 'created_at', 'updated_at'], 'safe'],
             [['comment'], 'string'],
             [['number'], 'string', 'max' => 255],

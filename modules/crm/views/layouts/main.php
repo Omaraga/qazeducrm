@@ -4,8 +4,11 @@
 /** @var string $content */
 
 use app\assets\TailwindAsset;
+use app\helpers\Lists;
+use app\models\Organizations;
 use app\widgets\tailwind\Alert;
 use app\widgets\tailwind\Breadcrumbs;
+use app\widgets\tailwind\ConfirmModal;
 use app\widgets\tailwind\Icon;
 use app\widgets\tailwind\SidebarMenu;
 use yii\helpers\Html;
@@ -14,6 +17,10 @@ use yii\helpers\Url;
 TailwindAsset::register($this);
 
 $user = Yii::$app->user->identity;
+$currentOrganization = Organizations::getCurrentOrganization();
+$userOrganizations = $user->userOrganizations ?? [];
+$rolesList = Lists::getRoles();
+$hasMultipleOrganizations = count($userOrganizations) > 1;
 
 // Конфигурация меню
 $menuConfig = [
@@ -24,6 +31,7 @@ $menuConfig = [
             ['label' => 'Ученики', 'icon' => 'users', 'url' => ['/crm/pupil/index'], 'controller' => 'pupil'],
             ['label' => 'Группы', 'icon' => 'group', 'url' => ['/crm/group/index'], 'controller' => 'group'],
             ['label' => 'Расписание', 'icon' => 'calendar', 'url' => ['/crm/schedule/index'], 'controller' => 'schedule'],
+            ['label' => 'Шаблоны расписания', 'icon' => 'template', 'url' => ['/crm/schedule-template/index'], 'controller' => 'schedule-template'],
             ['label' => 'Платежи', 'icon' => 'payment', 'url' => ['/crm/payment/index'], 'controller' => 'payment'],
             ['label' => 'Зарплаты', 'icon' => 'wallet', 'url' => ['/crm/salary/index'], 'controller' => 'salary'],
             ['label' => 'Лиды', 'icon' => 'funnel', 'url' => ['/crm/lids/index'], 'controller' => 'lids'],
@@ -39,7 +47,14 @@ $menuConfig = [
             ['label' => 'Сотрудники', 'icon' => 'user', 'url' => ['/crm/user/index'], 'controller' => 'user'],
             ['label' => 'Предметы', 'icon' => 'book', 'url' => ['/crm/subject/index'], 'controller' => 'subject'],
             ['label' => 'Тарифы', 'icon' => 'tag', 'url' => ['/crm/tariff/index'], 'controller' => 'tariff'],
+            ['label' => 'Кабинеты', 'icon' => 'building-office', 'url' => ['/crm/room/index'], 'controller' => 'room'],
             ['label' => 'Способы оплаты', 'icon' => 'card', 'url' => ['/crm/pay-method/index'], 'controller' => 'pay-method'],
+        ]
+    ],
+    [
+        'section' => 'Помощь',
+        'items' => [
+            ['label' => 'База знаний', 'icon' => 'book-open', 'url' => ['/crm/knowledge/index'], 'controller' => 'knowledge'],
         ]
     ],
 ];
@@ -169,27 +184,25 @@ endforeach;
     <!-- Navigation -->
     <?= SidebarMenu::widget(['items' => $menuConfig]) ?>
 
-    <!-- Footer -->
-    <div class="px-4 py-4 border-t border-gray-200">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-primary-100 text-primary-700 flex items-center justify-center font-semibold">
-                <?= mb_substr($user->username ?? 'U', 0, 1) ?>
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="text-gray-900 text-sm font-medium truncate"><?= Html::encode($user->username ?? 'User') ?></div>
-                <div class="text-gray-500 text-xs"><?= Html::encode($user->active_role ?? 'Пользователь') ?></div>
-            </div>
-            <a href="<?= Url::to(['/logout']) ?>" class="text-gray-400 hover:text-danger-600 p-1 transition-colors" data-method="post" title="Выйти">
-                <?= Icon::show('logout') ?>
-            </a>
+    <!-- Footer: User Info & Logout -->
+    <div class="border-t border-gray-200 px-4 py-3 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-sm font-medium">
+            <?= mb_substr($user->username ?? 'U', 0, 1) ?>
         </div>
+        <div class="flex-1 min-w-0">
+            <div class="text-gray-900 text-sm font-medium truncate"><?= Html::encode($user->fio ?? $user->username ?? 'User') ?></div>
+            <div class="text-gray-500 text-xs truncate"><?= Html::encode($user->email ?? '') ?></div>
+        </div>
+        <a href="<?= Url::to(['/logout']) ?>" class="text-gray-400 hover:text-danger-600 p-1.5 rounded-md hover:bg-gray-100 transition-colors" data-method="post" title="Выйти">
+            <?= Icon::show('logout') ?>
+        </a>
     </div>
 </aside>
 
 <!-- Main Content -->
 <div class="lg:ml-64 min-h-screen">
     <!-- Header -->
-    <header class="bg-white border-b border-gray-200 px-4 lg:px-6 py-4 flex items-center justify-between sticky top-0 z-10">
+    <header class="bg-white border-b border-gray-200 px-4 lg:px-6 py-4 flex items-center justify-between sticky top-0 z-30 overflow-visible">
         <div class="flex items-center gap-4">
             <!-- Mobile menu button -->
             <button type="button" class="lg:hidden -ml-2 p-2 text-gray-500 hover:text-gray-700" @click="sidebarOpen = true">
@@ -205,6 +218,61 @@ endforeach;
         </div>
 
         <div class="flex items-center gap-3">
+            <?php if ($hasMultipleOrganizations): ?>
+            <!-- Organization Switcher -->
+            <div x-data="{ open: false }" class="relative">
+                <button @click="open = !open" type="button"
+                        class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors text-left">
+                    <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    <span class="text-gray-900 text-sm font-medium"><?= Html::encode($currentOrganization->name ?? 'Организация') ?></span>
+                    <svg class="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200" :class="open && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div x-show="open"
+                     @click.outside="open = false"
+                     x-transition:enter="transition ease-out duration-100"
+                     x-transition:enter-start="opacity-0 transform scale-95"
+                     x-transition:enter-end="opacity-100 transform scale-100"
+                     x-transition:leave="transition ease-in duration-75"
+                     x-transition:leave-start="opacity-100 transform scale-100"
+                     x-transition:leave-end="opacity-0 transform scale-95"
+                     class="absolute right-0 mt-2 w-80 origin-top-right bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[100]"
+                     style="display: none;">
+                    <div class="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                        Переключить филиал
+                    </div>
+                    <div class="max-h-72 overflow-y-auto">
+                        <?php foreach ($userOrganizations as $userOrg): ?>
+                            <?php
+                            $isActive = $currentOrganization && $userOrg->target_id == $currentOrganization->id;
+                            $orgName = $userOrg->organization->name ?? 'Организация';
+                            $roleName = $rolesList[$userOrg->role] ?? $userOrg->role;
+                            ?>
+                            <a href="<?= Url::to(['/site/change-role', 'id' => $userOrg->id]) ?>"
+                               class="block px-3 py-2.5 hover:bg-gray-50 transition-colors <?= $isActive ? 'bg-primary-50' : '' ?>">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="min-w-0">
+                                        <div class="text-sm <?= $isActive ? 'text-primary-700 font-medium' : 'text-gray-900' ?>"><?= Html::encode($orgName) ?></div>
+                                        <div class="text-xs text-gray-500"><?= Html::encode($roleName) ?></div>
+                                    </div>
+                                    <?php if ($isActive): ?>
+                                        <svg class="w-5 h-5 text-primary-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                    <?php endif; ?>
+                                </div>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <?php if (Yii::$app->user->can('superadmin')): ?>
                 <a href="<?= Url::to(['/superadmin']) ?>" class="btn btn-outline btn-sm">
                     <?= Icon::show('settings', 'sm') ?>
@@ -220,6 +288,8 @@ endforeach;
         <?= $content ?>
     </main>
 </div>
+
+<?= ConfirmModal::widget() ?>
 
 <?php $this->endBody() ?>
 </body>

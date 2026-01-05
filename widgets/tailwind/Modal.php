@@ -130,31 +130,39 @@ HTML;
 
         return <<<HTML
 <div x-data="{ open: false }"
-     x-show="open"
      x-on:open-modal.window="if (\$event.detail === '{$this->id}') open = true"
      x-on:close-modal.window="if (\$event.detail === '{$this->id}') open = false"
-     x-on:keydown.escape.window="open = false"
-     class="modal"
-     style="display: none;">
+     x-on:keydown.escape.window="open = false">
 
     <!-- Backdrop -->
-    <div class="modal-backdrop" @click="open = false" x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"></div>
+    <div x-show="open"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-gray-900/50 z-[60]"
+         @click="open = false"
+         style="display: none;"></div>
 
-    <!-- Modal Content -->
-    <div class="modal-content {$sizeClass}{$contentClass}"
-         x-show="open"
+    <!-- Modal -->
+    <div x-show="open"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0 scale-95"
          x-transition:enter-end="opacity-100 scale-100"
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95"
-         @click.stop>
-        {$header}
-        <div class="modal-body">
-            {$content}
+         class="fixed inset-0 z-[70] flex items-center justify-center p-4"
+         style="display: none;">
+        <div class="modal-content {$sizeClass}{$contentClass}" @click.stop>
+            {$header}
+            <div class="modal-body">
+                {$content}
+            </div>
+            {$footer}
         </div>
-        {$footer}
     </div>
 </div>
 HTML;

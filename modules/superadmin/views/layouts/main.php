@@ -19,6 +19,7 @@ $menuItems = [
     ['label' => 'Тарифы', 'icon' => 'fa-tags', 'url' => ['/superadmin/plan/index'], 'controller' => 'plan'],
     ['label' => 'Подписки', 'icon' => 'fa-credit-card', 'url' => ['/superadmin/subscription/index'], 'controller' => 'subscription'],
     ['label' => 'Платежи', 'icon' => 'fa-money-bill-wave', 'url' => ['/superadmin/payment/index'], 'controller' => 'payment'],
+    ['label' => 'База знаний', 'icon' => 'fa-book', 'url' => ['/superadmin/knowledge/index'], 'controller' => 'knowledge'],
 ];
 ?>
 <?php $this->beginPage() ?>

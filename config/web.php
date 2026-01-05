@@ -82,21 +82,23 @@ $config = [
                 'logout' => 'site/logout',
                 'register' => 'registration/index',
 
-                // CRM модуль
+                // Legacy routes с organization id (должны быть первыми для правильной генерации URL с oid)
+                '<oid:\d+>/<controller:[\w-]+>/<action:[\w-]+>/<id:\d+>' => 'crm/<controller>/<action>',
+                '<oid:\d+>/<controller:[\w-]+>/<action:[\w-]+>' => 'crm/<controller>/<action>',
+                '<oid:\d+>/<controller:[\w-]+>' => 'crm/<controller>/index',
+                '<oid:\d+>/<module:[\w-]+>/<controller:[\w-]+>/<action:[\w-]+>' => '<module>/<controller>/<action>',
+
+                // CRM модуль (без oid)
                 'crm' => 'crm/default/index',
-                'crm/<controller:\w+>' => 'crm/<controller>/index',
-                'crm/<controller:\w+>/<action:\w+>' => 'crm/<controller>/<action>',
-                'crm/<controller:\w+>/<action:\w+>/<id:\d+>' => 'crm/<controller>/<action>',
+                'crm/<controller:[\w-]+>' => 'crm/<controller>/index',
+                'crm/<controller:[\w-]+>/<action:[\w-]+>' => 'crm/<controller>/<action>',
+                'crm/<controller:[\w-]+>/<action:[\w-]+>/<id:\d+>' => 'crm/<controller>/<action>',
 
                 // Superadmin модуль
                 'superadmin' => 'superadmin/default/index',
-                'superadmin/<controller:\w+>' => 'superadmin/<controller>/index',
-                'superadmin/<controller:\w+>/<action:\w+>' => 'superadmin/<controller>/<action>',
-                'superadmin/<controller:\w+>/<action:\w+>/<id:\d+>' => 'superadmin/<controller>/<action>',
-
-                // Legacy routes с organization id (для обратной совместимости)
-                '<oid:\d+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => 'crm/<controller>/<action>',
-                '<oid:\d+>/<module:\w+-\w+|\w+>/<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => '<module>/<controller>/<action>',
+                'superadmin/<controller:[\w-]+>' => 'superadmin/<controller>/index',
+                'superadmin/<controller:[\w-]+>/<action:[\w-]+>' => 'superadmin/<controller>/<action>',
+                'superadmin/<controller:[\w-]+>/<action:[\w-]+>/<id:\d+>' => 'superadmin/<controller>/<action>',
 
                 // Общие правила
                 '<controller:\w+-\w+|\w+>' => '<controller>',

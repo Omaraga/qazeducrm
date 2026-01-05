@@ -84,14 +84,6 @@ abstract class CrmBaseController extends Controller
         ];
     }
 
-    /**
-     * Вернуть JSON ответ
-     */
-    protected function asJson($data): Response
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        return $this->asJson($data);
-    }
 
     /**
      * Вернуть успешный JSON ответ

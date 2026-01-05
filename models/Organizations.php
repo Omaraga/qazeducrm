@@ -110,6 +110,18 @@ class Organizations extends ActiveRecord
         return ArrayHelper::map($users, 'id', 'fio');
     }
 
+    /**
+     * Получить всех учителей текущей организации
+     * @return User[]
+     */
+    public static function getOrganizationTeachers(): array
+    {
+        return User::find()->innerJoinWith(['currentUserOrganizations' => function($q){
+            $q->andWhere(['<>','user_organization.is_deleted', ActiveRecord::DELETED])
+              ->andWhere(['in', 'user_organization.role', [OrganizationRoles::TEACHER]]);
+        }])->all();
+    }
+
 
     public static function setCurrentOrganization($organization = null, $id = null)
     {

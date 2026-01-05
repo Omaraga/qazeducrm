@@ -12,8 +12,10 @@ use yii\db\Expression;
  *
  * @property int $id
  * @property int|null $organization_id
+ * @property int|null $template_id
  * @property int|null $group_id
  * @property int|null $teacher_id
+ * @property int|null $room_id
  * @property int|null $week
  * @property string|null $start_time
  * @property string|null $end_time
@@ -25,7 +27,8 @@ use yii\db\Expression;
  *
  * @property Group $group
  * @property User $teacher
-
+ * @property Room $room
+ * @property ScheduleTemplate $template
  *
  */
 class TypicalSchedule extends ActiveRecord
@@ -61,8 +64,9 @@ class TypicalSchedule extends ActiveRecord
     public function rules()
     {
         return [
-            [['group_id', 'teacher_id', 'week'], 'integer'],
+            [['group_id', 'teacher_id', 'room_id', 'week', 'template_id'], 'integer'],
             [['group_id', 'teacher_id', 'week', 'start_time', 'end_time'], 'required'],
+            [['room_id'], 'safe'],
             [['start_time', 'end_time', 'date', 'created_at'], 'safe'],
             [['start_time', 'end_time'], 'time','format' => 'php:H:i'],
         ];
@@ -91,8 +95,10 @@ class TypicalSchedule extends ActiveRecord
         return [
             'id' => Yii::t('main', 'ID'),
             'organization_id' => Yii::t('main', 'Organization ID'),
+            'template_id' => Yii::t('main', 'Шаблон'),
             'group_id' => Yii::t('main', 'Группа'),
             'teacher_id' => Yii::t('main', 'Преподаватель'),
+            'room_id' => Yii::t('main', 'Кабинет'),
             'week' => Yii::t('main', 'День недели'),
             'start_time' => Yii::t('main', ' Время начала'),
             'end_time' => Yii::t('main', ' Время окончания'),
@@ -115,5 +121,19 @@ class TypicalSchedule extends ActiveRecord
      */
     public function getTeacher(){
         return $this->hasOne(User::class, ['id' => 'teacher_id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getRoom(){
+        return $this->hasOne(Room::class, ['id' => 'room_id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getTemplate(){
+        return $this->hasOne(ScheduleTemplate::class, ['id' => 'template_id']);
     }
 }

@@ -30,7 +30,16 @@
       "WebSearch",
       "Bash(xargs:*)",
       "Bash(for file in modules/crm/controllers/*.php)",
-      "Bash(do php -l:*)"
+      "Bash(do php -l:*)",
+      "Bash(xargs ls:*)",
+      "Bash(cat:*)",
+      "Bash(CSRF=\"uHbRlXuQcJvhVnSiBzPysVAigjFJmqXIO-eEYDbW28TCPbe4N_xJ7IpnAeZVe7iIZ0HGXTvikPxol8Y6V4-yvQ==\")",
+      "Bash(CSRF=\"3b-meTICVceL7PvmyV83GgmRuEk4kDWH_YUlpPcVx1Cl5fQjC2Mxj9GEl6-dHVNIY9bgfXC9fLO3zF_Fs0OmOQ==\")",
+      "Bash(php test_schedule_template.php:*)",
+      "Bash(php test_ui_components.php:*)",
+      "Bash(php test_schedule_wizard.php:*)",
+      "Bash(php test_knowledge.php:*)",
+      "Bash(php test_knowledge_render.php:*)"
     ]
   }
 }

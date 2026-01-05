@@ -7,6 +7,8 @@ use app\helpers\OrganizationUrl;
 use app\helpers\SystemRoles;
 use app\models\forms\TypicalLessonForm;
 use app\models\Lesson;
+use app\models\Room;
+use app\models\services\ScheduleConflictService;
 use app\models\services\ScheduleService;
 use yii\filters\AccessControl;
 use yii\web\Controller;
@@ -65,6 +67,10 @@ class ScheduleController extends Controller
         return $this->render('index', []);
     }
 
+    /**
+     * AJAX: Получить события с фильтрами
+     * POST: start, end, groups[], teachers[]
+     */
     public function actionEvents()
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -73,7 +79,159 @@ class ScheduleController extends Controller
             return [];
         }
 
-        return ScheduleService::getLessonEvents();
+        $request = \Yii::$app->request;
+        $start = $request->post('start');
+        $end = $request->post('end');
+        $groupIds = $request->post('groups', []);
+        $teacherIds = $request->post('teachers', []);
+
+        // Если переданы timestamps, конвертируем в даты
+        if (is_numeric($start)) {
+            $start = date('Y-m-d', $start);
+        }
+        if (is_numeric($end)) {
+            $end = date('Y-m-d', $end);
+        }
+
+        // Если даты не переданы, используем текущую неделю
+        if (!$start || !$end) {
+            $today = new \DateTime();
+            $start = $today->modify('monday this week')->format('Y-m-d');
+            $end = $today->modify('sunday this week')->format('Y-m-d');
+        }
+
+        return ScheduleService::getLessonEventsFiltered($start, $end, $groupIds, $teacherIds);
+    }
+
+    /**
+     * AJAX: Получить данные для фильтров (группы, учителя, кабинеты)
+     */
+    public function actionFilters()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        return [
+            'groups' => ScheduleService::getGroupsForFilter(),
+            'teachers' => ScheduleService::getTeachersForFilter(),
+            'rooms' => ScheduleService::getRoomsForFilter(),
+        ];
+    }
+
+    /**
+     * AJAX: Получить детали урока для модального просмотра
+     */
+    public function actionDetails($id)
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $details = ScheduleService::getLessonDetails($id);
+
+        if (!$details) {
+            return ['success' => false, 'message' => 'Урок не найден'];
+        }
+
+        return ['success' => true, 'data' => $details];
+    }
+
+    /**
+     * AJAX: Создать урок (модальная форма)
+     */
+    public function actionAjaxCreate()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (!\Yii::$app->request->isAjax || !\Yii::$app->request->isPost) {
+            return ['success' => false, 'message' => 'Invalid request'];
+        }
+
+        $model = new Lesson();
+
+        if ($model->load(\Yii::$app->request->post()) && $model->save()) {
+            return [
+                'success' => true,
+                'message' => 'Занятие успешно создано',
+                'id' => $model->id,
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Ошибка при создании занятия',
+            'errors' => $model->errors,
+        ];
+    }
+
+    /**
+     * AJAX: Обновить урок (модальная форма)
+     */
+    public function actionAjaxUpdate($id)
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (!\Yii::$app->request->isAjax || !\Yii::$app->request->isPost) {
+            return ['success' => false, 'message' => 'Invalid request'];
+        }
+
+        $model = $this->findModel($id);
+
+        if ($model->load(\Yii::$app->request->post()) && $model->save()) {
+            return [
+                'success' => true,
+                'message' => 'Занятие успешно обновлено',
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Ошибка при обновлении занятия',
+            'errors' => $model->errors,
+        ];
+    }
+
+    /**
+     * AJAX: Удалить урок
+     */
+    public function actionAjaxDelete($id)
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (!\Yii::$app->request->isAjax || !\Yii::$app->request->isPost) {
+            return ['success' => false, 'message' => 'Invalid request'];
+        }
+
+        try {
+            $this->findModel($id)->delete();
+            return ['success' => true, 'message' => 'Занятие удалено'];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Ошибка при удалении'];
+        }
+    }
+
+    /**
+     * AJAX: Переместить урок (drag & drop)
+     * POST: id, newDate, newStartTime
+     */
+    public function actionMove()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (!\Yii::$app->request->isAjax || !\Yii::$app->request->isPost) {
+            return ['success' => false, 'message' => 'Invalid request'];
+        }
+
+        $id = \Yii::$app->request->post('id');
+        $newDate = \Yii::$app->request->post('newDate');
+        $newStartTime = \Yii::$app->request->post('newStartTime');
+
+        if (!$id || !$newDate || !$newStartTime) {
+            return ['success' => false, 'message' => 'Недостаточно данных'];
+        }
+
+        if (ScheduleService::moveLesson($id, $newDate, $newStartTime)) {
+            return ['success' => true, 'message' => 'Занятие перемещено'];
+        }
+
+        return ['success' => false, 'message' => 'Ошибка при перемещении'];
     }
 
     public function actionTeachers()
@@ -90,6 +248,59 @@ class ScheduleController extends Controller
         }
 
         return ScheduleService::getTeachersForGroup($groupId);
+    }
+
+    /**
+     * AJAX: Получить список кабинетов
+     */
+    public function actionRooms()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        return Room::getList();
+    }
+
+    /**
+     * AJAX: Проверить конфликты расписания
+     * POST: teacher_id, group_id, room_id, date, start_time, end_time, exclude_id
+     */
+    public function actionCheckConflicts()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (!\Yii::$app->request->isAjax || !\Yii::$app->request->isPost) {
+            return ['success' => false, 'conflicts' => []];
+        }
+
+        $request = \Yii::$app->request;
+
+        $teacherId = $request->post('teacher_id');
+        $groupId = $request->post('group_id');
+        $roomId = $request->post('room_id');
+        $date = $request->post('date');
+        $startTime = $request->post('start_time');
+        $endTime = $request->post('end_time');
+        $excludeId = $request->post('exclude_id');
+
+        if (!$date || !$startTime || !$endTime) {
+            return ['success' => false, 'conflicts' => [], 'message' => 'Недостаточно данных'];
+        }
+
+        $conflicts = ScheduleConflictService::checkAllConflicts(
+            $teacherId ? (int) $teacherId : null,
+            $groupId ? (int) $groupId : null,
+            $roomId ? (int) $roomId : null,
+            $date,
+            $startTime,
+            $endTime,
+            $excludeId ? (int) $excludeId : null
+        );
+
+        return [
+            'success' => true,
+            'conflicts' => $conflicts,
+            'hasConflicts' => count($conflicts) > 0,
+        ];
     }
 
     /**
@@ -110,12 +321,70 @@ class ScheduleController extends Controller
         $model->loadDefault();
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
+                \Yii::$app->session->setFlash('success', 'Расписание успешно создано');
                 return $this->redirect(OrganizationUrl::to(['schedule/index']));
             }
         }
         return $this->render('typical-schedule', [
             'model' => $model,
         ]);
+    }
+
+    /**
+     * AJAX: Получить события типового расписания для календаря
+     */
+    public function actionTypicalEvents()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        return ScheduleService::getTypicalScheduleEventsForCalendar();
+    }
+
+    /**
+     * AJAX: Получить предпросмотр генерации из типового расписания
+     * POST: date_start, date_end
+     */
+    public function actionTypicalPreview()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (!\Yii::$app->request->isAjax || !\Yii::$app->request->isPost) {
+            return ['success' => false, 'message' => 'Invalid request'];
+        }
+
+        $dateStart = \Yii::$app->request->post('date_start');
+        $dateEnd = \Yii::$app->request->post('date_end');
+
+        if (!$dateStart || !$dateEnd) {
+            return ['success' => false, 'message' => 'Укажите даты'];
+        }
+
+        return ScheduleService::getTypicalSchedulePreview($dateStart, $dateEnd);
+    }
+
+    /**
+     * AJAX: Создать расписание из типового
+     * POST: date_start, date_end, skip_conflicts
+     */
+    public function actionTypicalGenerate()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (!\Yii::$app->request->isAjax || !\Yii::$app->request->isPost) {
+            return ['success' => false, 'message' => 'Invalid request'];
+        }
+
+        $dateStart = \Yii::$app->request->post('date_start');
+        $dateEnd = \Yii::$app->request->post('date_end');
+        $skipConflicts = \Yii::$app->request->post('skip_conflicts', false);
+
+        if (!$dateStart || !$dateEnd) {
+            return ['success' => false, 'message' => 'Укажите даты'];
+        }
+
+        $result = ScheduleService::generateFromTypicalSchedule($dateStart, $dateEnd, $skipConflicts);
+
+        return $result;
     }
 
     /**

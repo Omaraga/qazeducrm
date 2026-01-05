@@ -14,6 +14,8 @@ use yii\db\Expression;
  * @property int|null $organization_id
  * @property int|null $group_id
  * @property int|null $teacher_id
+ * @property int|null $room_id
+ * @property int|null $typical_schedule_id
  * @property int|null $week
  * @property string|null $start_time
  * @property string|null $end_time
@@ -25,6 +27,8 @@ use yii\db\Expression;
  *
  * @property Group $group
  * @property User $teacher
+ * @property Room $room
+ * @property TypicalSchedule $typicalSchedule
  * @property int $status [smallint(6)]
  *
  */
@@ -71,8 +75,9 @@ class Lesson extends ActiveRecord
     public function rules()
     {
         return [
-            [['group_id', 'teacher_id', 'week'], 'integer'],
+            [['group_id', 'teacher_id', 'room_id', 'typical_schedule_id', 'week'], 'integer'],
             [['group_id', 'teacher_id', 'date', 'start_time', 'end_time'], 'required'],
+            [['room_id', 'typical_schedule_id'], 'safe'],
             [['start_time', 'end_time', 'date', 'created_at'], 'safe'],
             [['start_time', 'end_time'], 'time','format' => 'php:H:i'],
         ];
@@ -99,6 +104,8 @@ class Lesson extends ActiveRecord
             'organization_id' => Yii::t('main', 'Organization ID'),
             'group_id' => Yii::t('main', 'Группа'),
             'teacher_id' => Yii::t('main', 'Преподаватель'),
+            'room_id' => Yii::t('main', 'Кабинет'),
+            'typical_schedule_id' => Yii::t('main', 'Из типового'),
             'week' => Yii::t('main', 'День недели'),
             'start_time' => Yii::t('main', ' Время начала'),
             'end_time' => Yii::t('main', ' Время окончания'),
@@ -121,6 +128,20 @@ class Lesson extends ActiveRecord
      */
     public function getTeacher(){
         return $this->hasOne(User::class, ['id' => 'teacher_id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getRoom(){
+        return $this->hasOne(Room::class, ['id' => 'room_id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getTypicalSchedule(){
+        return $this->hasOne(TypicalSchedule::class, ['id' => 'typical_schedule_id']);
     }
 
     public function getDateTime(){
