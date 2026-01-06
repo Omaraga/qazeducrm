@@ -5,18 +5,23 @@ namespace app\modules\crm\controllers;
 use app\helpers\OrganizationRoles;
 use app\helpers\SystemRoles;
 use app\models\PayMethod;
+use app\traits\FindModelTrait;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
-use yii\web\NotFoundHttpException;
 
 /**
  * PayMethodController - управление способами оплаты
  */
 class PayMethodController extends Controller
 {
+    use FindModelTrait;
+
+    protected string $modelClass = PayMethod::class;
+    protected string $notFoundMessage = 'Способ оплаты не найден';
+
     /**
      * @inheritDoc
      */
@@ -147,25 +152,4 @@ class PayMethodController extends Controller
         return $this->redirect(['index']);
     }
 
-    /**
-     * Finds the PayMethod model based on its primary key value.
-     * If the model is not found, a 404 HTTP exception will be thrown.
-     * @param int $id ID
-     * @return PayMethod the loaded model
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    protected function findModel($id)
-    {
-        $model = PayMethod::find()
-            ->byOrganization()
-            ->andWhere(['id' => $id])
-            ->notDeleted()
-            ->one();
-
-        if ($model === null) {
-            throw new NotFoundHttpException(Yii::t('main', 'Способ оплаты не найден.'));
-        }
-
-        return $model;
-    }
 }

@@ -7,8 +7,11 @@ use yii\grid\GridView;
 
 /** @var yii\web\View $this */
 /** @var yii\data\ActiveDataProvider $dataProvider */
+/** @var string $type */
 
-$this->title = 'SMS шаблоны';
+$type = Yii::$app->request->get('type', 'all');
+
+$this->title = $type === 'whatsapp' ? 'WhatsApp шаблоны' : ($type === 'sms' ? 'SMS шаблоны' : 'Все шаблоны');
 $this->params['breadcrumbs'][] = ['label' => 'SMS уведомления', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
@@ -29,6 +32,25 @@ $this->params['breadcrumbs'][] = $this->title;
         </div>
     </div>
 
+    <!-- Type Tabs -->
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link <?= $type === 'all' ? 'active' : '' ?>" href="<?= Url::to(['templates']) ?>">
+                Все
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?= $type === 'sms' ? 'active' : '' ?>" href="<?= Url::to(['templates', 'type' => 'sms']) ?>">
+                <i class="fas fa-sms"></i> SMS
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?= $type === 'whatsapp' ? 'active' : '' ?>" href="<?= Url::to(['templates', 'type' => 'whatsapp']) ?>">
+                <i class="fab fa-whatsapp text-success"></i> WhatsApp
+            </a>
+        </li>
+    </ul>
+
     <div class="card">
         <div class="card-body p-0">
             <?= GridView::widget([
@@ -37,8 +59,20 @@ $this->params['breadcrumbs'][] = $this->title;
                 'layout' => '{items}',
                 'columns' => [
                     [
-                        'attribute' => 'code',
+                        'attribute' => 'type',
                         'label' => 'Тип',
+                        'headerOptions' => ['style' => 'width: 100px'],
+                        'format' => 'raw',
+                        'value' => function ($model) {
+                            $icon = $model->type === 'whatsapp'
+                                ? '<i class="fab fa-whatsapp text-success"></i>'
+                                : '<i class="fas fa-sms text-primary"></i>';
+                            return $icon . ' ' . $model->getTypeLabel();
+                        },
+                    ],
+                    [
+                        'attribute' => 'code',
+                        'label' => 'Назначение',
                         'value' => function ($model) {
                             return $model->getCodeLabel();
                         },

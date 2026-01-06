@@ -2,6 +2,7 @@
 
 namespace app\modules\crm\controllers;
 
+use app\helpers\ActivityLogger;
 use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
 use app\helpers\SystemRoles;
@@ -101,6 +102,7 @@ class PupilController extends Controller
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
+                ActivityLogger::logPupilCreated($model);
                 return $this->redirect(['view', 'id' => $model->id]);
             }
         } else {
@@ -142,7 +144,9 @@ class PupilController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
+        $model = $this->findModel($id);
+        ActivityLogger::logPupilDeleted($model);
+        $model->delete();
 
         return $this->redirect(['index']);
     }

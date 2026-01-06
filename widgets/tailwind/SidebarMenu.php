@@ -272,19 +272,15 @@ class SidebarMenu extends Widget
      */
     protected function isItemActive(array $item): bool
     {
-        // По контроллеру
-        if (isset($item['controller'])) {
+        // По контроллеру (только если нет вложенных элементов)
+        if (isset($item['controller']) && empty($item['items'])) {
             return $this->currentController === $item['controller'];
         }
 
-        // По URL
+        // По URL - точное совпадение controller + action
         if (isset($item['url']) && is_array($item['url'])) {
             $route = $item['url'][0] ?? '';
-            // Извлекаем контроллер из роута
-            if (preg_match('/\/([^\/]+)\/[^\/]+$/', $route, $matches)) {
-                return $this->currentController === $matches[1];
-            }
-            // Или точное совпадение action
+            // Извлекаем контроллер и action из роута
             if (preg_match('/\/([^\/]+)\/([^\/]+)$/', $route, $matches)) {
                 return $this->currentController === $matches[1] && $this->currentAction === $matches[2];
             }

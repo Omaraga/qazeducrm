@@ -5,18 +5,23 @@ namespace app\modules\crm\controllers;
 use app\helpers\OrganizationRoles;
 use app\helpers\SystemRoles;
 use app\models\Subject;
+use app\traits\FindModelTrait;
 use richardfan\sortable\SortableAction;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
-use yii\web\NotFoundHttpException;
 
 /**
  * SubjectController - управление предметами
  */
 class SubjectController extends Controller
 {
+    use FindModelTrait;
+
+    protected string $modelClass = Subject::class;
+    protected string $notFoundMessage = 'Предмет не найден';
+
     /**
      * @inheritDoc
      */
@@ -160,25 +165,4 @@ class SubjectController extends Controller
         return $this->redirect(['index']);
     }
 
-    /**
-     * Finds the Subject model based on its primary key value.
-     * If the model is not found, a 404 HTTP exception will be thrown.
-     * @param int $id ID
-     * @return Subject the loaded model
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    protected function findModel($id)
-    {
-        $model = Subject::find()
-            ->byOrganization()
-            ->andWhere(['id' => $id])
-            ->notDeleted()
-            ->one();
-
-        if ($model === null) {
-            throw new NotFoundHttpException(\Yii::t('main', 'Предмет не найден.'));
-        }
-
-        return $model;
-    }
 }

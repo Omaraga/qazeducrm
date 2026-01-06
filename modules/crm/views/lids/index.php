@@ -6,6 +6,7 @@ use app\models\Lids;
 use app\widgets\tailwind\EmptyState;
 use app\widgets\tailwind\Icon;
 use app\widgets\tailwind\LinkPager;
+use app\widgets\tailwind\Modal;
 use app\widgets\tailwind\StatusBadge;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -13,26 +14,88 @@ use yii\helpers\Url;
 /** @var yii\web\View $this */
 /** @var app\models\search\LidsSearch $searchModel */
 /** @var yii\data\ActiveDataProvider $dataProvider */
+/** @var array $funnelStats */
 
 $this->title = 'Лиды';
 $this->params['breadcrumbs'][] = $this->title;
 
-// Статистика воронки
-$funnelStats = Lids::getFunnelStats();
+$getLidUrl = OrganizationUrl::to(['lids/get-lid']);
+$updateUrl = OrganizationUrl::to(['lids/update-ajax']);
 ?>
 
-<div class="space-y-6">
+<!-- Alpine Store для лидов -->
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.store('lids', {
+        viewingLid: null,
+        editingLid: null,
+        isLoading: false,
+
+        async loadLid(id) {
+            this.isLoading = true;
+            try {
+                const response = await fetch('<?= $getLidUrl ?>?id=' + id);
+                const data = await response.json();
+                if (data.success) {
+                    this.viewingLid = data.lid;
+                    return true;
+                }
+            } catch (e) {
+                console.error('Error loading lid:', e);
+            } finally {
+                this.isLoading = false;
+            }
+            return false;
+        },
+
+        openView(id) {
+            this.loadLid(id).then(success => {
+                if (success) {
+                    window.dispatchEvent(new CustomEvent('open-modal', { detail: 'lids-view-modal' }));
+                }
+            });
+        },
+
+        openEdit() {
+            this.editingLid = this.viewingLid;
+            window.dispatchEvent(new CustomEvent('close-modal', { detail: 'lids-view-modal' }));
+            window.dispatchEvent(new CustomEvent('open-modal', { detail: 'lids-edit-modal' }));
+        }
+    });
+});
+</script>
+
+<div class="space-y-6" x-data x-cloak>
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-900"><?= Html::encode($this->title) ?></h1>
             <p class="text-gray-500 mt-1">Воронка продаж и управление лидами</p>
         </div>
-        <div>
-            <a href="<?= OrganizationUrl::to(['lids/create']) ?>" class="btn btn-primary">
+        <div class="flex items-center gap-3">
+            <!-- View Switcher -->
+            <div class="inline-flex items-center rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
+                <a href="<?= OrganizationUrl::to(['lids/kanban']) ?>"
+                   class="inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+                   title="Kanban">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="5" height="18" rx="1" stroke-width="2"/>
+                        <rect x="10" y="3" width="5" height="12" rx="1" stroke-width="2"/>
+                        <rect x="17" y="3" width="5" height="15" rx="1" stroke-width="2"/>
+                    </svg>
+                </a>
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-primary-50 text-primary-600" title="Таблица">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" d="M3 6h18M3 12h18M3 18h18"/>
+                    </svg>
+                </span>
+            </div>
+            <button type="button"
+                    @click="$dispatch('open-modal', 'lids-form-modal')"
+                    class="btn btn-primary">
                 <?= Icon::show('plus', 'sm') ?>
                 Добавить лид
-            </a>
+            </button>
         </div>
     </div>
 
@@ -81,24 +144,28 @@ $funnelStats = Lids::getFunnelStats();
                 <thead>
                     <tr>
                         <th>Контакт</th>
+                        <th>Родитель</th>
                         <th>Источник</th>
                         <th>Статус</th>
                         <th>След. контакт</th>
                         <th>Менеджер</th>
-                        <th>Дата</th>
                         <th class="text-right">Действия</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($dataProvider->getModels() as $model): ?>
-                    <tr>
+                    <tr class="hover:bg-gray-50 <?= $model->isOverdue() ? 'bg-danger-50' : ($model->isContactToday() ? 'bg-warning-50' : '') ?>"
+                        @click="$store.lids.openView(<?= $model->id ?>)"
+                        style="cursor: pointer;">
                         <td>
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0 text-primary-600">
                                     <?= Icon::show('user') ?>
                                 </div>
                                 <div>
-                                    <div class="text-sm font-medium text-gray-900"><?= Html::encode($model->fio) ?></div>
+                                    <span class="text-sm font-medium text-gray-900 hover:text-primary-600">
+                                        <?= Html::encode($model->fio ?: '—') ?>
+                                    </span>
                                     <?php if ($model->phone): ?>
                                         <div class="text-sm text-gray-500"><?= Html::encode($model->phone) ?></div>
                                     <?php endif; ?>
@@ -106,19 +173,22 @@ $funnelStats = Lids::getFunnelStats();
                             </div>
                         </td>
                         <td>
-                            <?php if ($model->source): ?>
-                                <div class="flex items-center gap-2 text-gray-600">
-                                    <?php
-                                    $sourceIcons = [
-                                        'instagram' => '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073z"/></svg>',
-                                        'whatsapp' => '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>',
-                                        '2gis' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
-                                        'website' => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>',
-                                    ];
-                                    echo $sourceIcons[$model->source] ?? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
-                                    ?>
-                                    <span><?= Html::encode($model->getSourceLabel()) ?></span>
+                            <?php if ($model->parent_fio || $model->parent_phone): ?>
+                                <div class="text-sm">
+                                    <?php if ($model->parent_fio): ?>
+                                        <div class="text-gray-900"><?= Html::encode($model->parent_fio) ?></div>
+                                    <?php endif; ?>
+                                    <?php if ($model->parent_phone): ?>
+                                        <div class="text-gray-500"><?= Html::encode($model->parent_phone) ?></div>
+                                    <?php endif; ?>
                                 </div>
+                            <?php else: ?>
+                                <span class="text-gray-400">—</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if ($model->source): ?>
+                                <span class="text-sm text-gray-600"><?= Html::encode($model->getSourceLabel()) ?></span>
                             <?php else: ?>
                                 <span class="text-gray-400">—</span>
                             <?php endif; ?>
@@ -129,16 +199,14 @@ $funnelStats = Lids::getFunnelStats();
                         <td>
                             <?php if ($model->next_contact_date): ?>
                                 <?php
-                                $date = strtotime($model->next_contact_date);
-                                $today = strtotime(date('Y-m-d'));
                                 $colorClass = 'text-gray-500';
-                                if ($date < $today) {
+                                if ($model->isOverdue()) {
                                     $colorClass = 'text-danger-600 font-medium';
-                                } elseif ($date == $today) {
+                                } elseif ($model->isContactToday()) {
                                     $colorClass = 'text-warning-600 font-medium';
                                 }
                                 ?>
-                                <span class="<?= $colorClass ?>"><?= date('d.m.Y', $date) ?></span>
+                                <span class="<?= $colorClass ?>"><?= date('d.m.Y', strtotime($model->next_contact_date)) ?></span>
                             <?php else: ?>
                                 <span class="text-gray-400">—</span>
                             <?php endif; ?>
@@ -146,23 +214,27 @@ $funnelStats = Lids::getFunnelStats();
                         <td class="text-gray-500">
                             <?= Html::encode($model->manager ? $model->manager->fio : ($model->manager_name ?: '—')) ?>
                         </td>
-                        <td class="text-gray-500">
-                            <?= $model->date ? date('d.m.Y', strtotime($model->date)) : '—' ?>
-                        </td>
-                        <td class="text-right">
+                        <td class="text-right" @click.stop>
                             <div class="flex items-center justify-end gap-1">
+                                <?php if ($model->getContactPhone()): ?>
+                                <a href="tel:<?= Html::encode($model->getContactPhone()) ?>" class="table-action-btn text-green-600" title="Позвонить">
+                                    <?= Icon::show('phone', 'sm') ?>
+                                </a>
+                                <?php if ($model->getWhatsAppUrl()): ?>
+                                <a href="<?= $model->getWhatsAppUrl() ?>" target="_blank" class="table-action-btn text-green-500" title="WhatsApp">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg>
+                                </a>
+                                <?php endif; ?>
+                                <?php endif; ?>
                                 <a href="<?= OrganizationUrl::to(['lids/view', 'id' => $model->id]) ?>" class="table-action-btn" title="Просмотр">
                                     <?= Icon::show('eye', 'sm') ?>
-                                </a>
-                                <a href="<?= OrganizationUrl::to(['lids/update', 'id' => $model->id]) ?>" class="table-action-btn" title="Редактировать">
-                                    <?= Icon::show('edit', 'sm') ?>
                                 </a>
                             </div>
                         </td>
                     </tr>
                     <?php endforeach; ?>
                     <?php if (empty($dataProvider->getModels())): ?>
-                        <?= EmptyState::tableRow(7, 'funnel', 'Лиды не найдены', 'Добавьте первый лид в воронку продаж', ['lids/create'], 'Добавить лид') ?>
+                        <?= EmptyState::tableRow(7, 'funnel', 'Лиды не найдены', 'Добавьте первый лид в воронку продаж', null, null) ?>
                     <?php endif; ?>
                 </tbody>
             </table>
@@ -175,3 +247,18 @@ $funnelStats = Lids::getFunnelStats();
         <?php endif; ?>
     </div>
 </div>
+
+<!-- Create Modal -->
+<?php Modal::begin(['id' => 'lids-form-modal', 'title' => 'Новый лид', 'size' => 'lg']); ?>
+<?= $this->render('_form-modal', ['isEdit' => false]) ?>
+<?php Modal::end(); ?>
+
+<!-- View Modal -->
+<?php Modal::begin(['id' => 'lids-view-modal', 'title' => 'Карточка лида', 'size' => 'xl']); ?>
+<?= $this->render('_view-modal') ?>
+<?php Modal::end(); ?>
+
+<!-- Edit Modal -->
+<?php Modal::begin(['id' => 'lids-edit-modal', 'title' => 'Редактирование лида', 'size' => 'lg']); ?>
+<?= $this->render('_form-modal', ['isEdit' => true]) ?>
+<?php Modal::end(); ?>

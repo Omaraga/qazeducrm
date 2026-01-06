@@ -340,7 +340,7 @@
 
   /* Touch-friendly action buttons */
   .table-action-btn {
-    @apply min-w-[44px] min-h-[44px] inline-flex items-center justify-center p-2 rounded-lg transition-colors hover:bg-gray-100;
+    @apply min-w-[44px] min-h-[44px] inline-flex items-center justify-center p-2 rounded-lg transition-colors hover:bg-gray-100 cursor-pointer;
   }
 
   /* Responsive table wrapper with horizontal scroll hint */
@@ -907,4 +907,10 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+@utility writing-mode-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
 }

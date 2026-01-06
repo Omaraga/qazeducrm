@@ -34,6 +34,7 @@ class OrganizationActivityLog extends ActiveRecord
     const CATEGORY_PAYMENT = 'payment';
     const CATEGORY_STATUS = 'status';
     const CATEGORY_AUTH = 'auth';
+    const CATEGORY_CRM = 'crm';  // CRM операции (ученики, группы, лиды)
 
     // Типы пользователей
     const USER_TYPE_USER = 'user';
@@ -59,6 +60,19 @@ class OrganizationActivityLog extends ActiveRecord
     const ACTION_BRANCH_DELETED = 'branch_deleted';
     const ACTION_LOGIN = 'login';
     const ACTION_LOGOUT = 'logout';
+
+    // CRM действия
+    const ACTION_PUPIL_CREATED = 'pupil_created';
+    const ACTION_PUPIL_UPDATED = 'pupil_updated';
+    const ACTION_PUPIL_DELETED = 'pupil_deleted';
+    const ACTION_GROUP_CREATED = 'group_created';
+    const ACTION_GROUP_DELETED = 'group_deleted';
+    const ACTION_LID_CREATED = 'lid_created';
+    const ACTION_LID_CONVERTED = 'lid_converted';
+    const ACTION_LID_LOST = 'lid_lost';
+    const ACTION_LESSON_COMPLETED = 'lesson_completed';
+    const ACTION_PAYMENT_DELETED = 'payment_deleted';
+    const ACTION_SETTINGS_CHANGED = 'settings_changed';
 
     /**
      * {@inheritdoc}
@@ -134,6 +148,7 @@ class OrganizationActivityLog extends ActiveRecord
             self::CATEGORY_PAYMENT => Yii::t('main', 'Платёж'),
             self::CATEGORY_STATUS => Yii::t('main', 'Статус'),
             self::CATEGORY_AUTH => Yii::t('main', 'Авторизация'),
+            self::CATEGORY_CRM => Yii::t('main', 'CRM'),
         ];
     }
 
@@ -151,24 +166,41 @@ class OrganizationActivityLog extends ActiveRecord
     public static function getActionList(): array
     {
         return [
+            // Организация
             self::ACTION_ORGANIZATION_CREATED => Yii::t('main', 'Организация создана'),
             self::ACTION_REGISTERED => Yii::t('main', 'Регистрация'),
             self::ACTION_EMAIL_VERIFIED => Yii::t('main', 'Email подтверждён'),
             self::ACTION_STATUS_CHANGED => Yii::t('main', 'Изменён статус'),
             self::ACTION_PLAN_CHANGED => Yii::t('main', 'Изменён план'),
+            self::ACTION_SETTINGS_CHANGED => Yii::t('main', 'Настройки изменены'),
+            // Подписки
             self::ACTION_SUBSCRIPTION_CREATED => Yii::t('main', 'Создана подписка'),
             self::ACTION_SUBSCRIPTION_ACTIVATED => Yii::t('main', 'Подписка активирована'),
             self::ACTION_SUBSCRIPTION_EXPIRED => Yii::t('main', 'Подписка истекла'),
             self::ACTION_SUBSCRIPTION_CANCELLED => Yii::t('main', 'Подписка отменена'),
+            // Платежи
             self::ACTION_PAYMENT_CREATED => Yii::t('main', 'Создан платёж'),
             self::ACTION_PAYMENT_COMPLETED => Yii::t('main', 'Платёж завершён'),
             self::ACTION_PAYMENT_RECEIVED => Yii::t('main', 'Платёж получен'),
             self::ACTION_PAYMENT_FAILED => Yii::t('main', 'Платёж не прошёл'),
             self::ACTION_PAYMENT_REFUNDED => Yii::t('main', 'Платёж возвращён'),
+            self::ACTION_PAYMENT_DELETED => Yii::t('main', 'Платёж удалён'),
+            // Филиалы
             self::ACTION_BRANCH_CREATED => Yii::t('main', 'Создан филиал'),
             self::ACTION_BRANCH_DELETED => Yii::t('main', 'Удалён филиал'),
+            // Авторизация
             self::ACTION_LOGIN => Yii::t('main', 'Вход'),
             self::ACTION_LOGOUT => Yii::t('main', 'Выход'),
+            // CRM
+            self::ACTION_PUPIL_CREATED => Yii::t('main', 'Создан ученик'),
+            self::ACTION_PUPIL_UPDATED => Yii::t('main', 'Обновлён ученик'),
+            self::ACTION_PUPIL_DELETED => Yii::t('main', 'Удалён ученик'),
+            self::ACTION_GROUP_CREATED => Yii::t('main', 'Создана группа'),
+            self::ACTION_GROUP_DELETED => Yii::t('main', 'Удалена группа'),
+            self::ACTION_LID_CREATED => Yii::t('main', 'Создан лид'),
+            self::ACTION_LID_CONVERTED => Yii::t('main', 'Лид конвертирован'),
+            self::ACTION_LID_LOST => Yii::t('main', 'Лид потерян'),
+            self::ACTION_LESSON_COMPLETED => Yii::t('main', 'Занятие проведено'),
         ];
     }
 

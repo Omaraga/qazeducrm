@@ -5,18 +5,23 @@ namespace app\modules\crm\controllers;
 use app\helpers\OrganizationRoles;
 use app\helpers\SystemRoles;
 use app\models\Room;
+use app\traits\FindModelTrait;
 use richardfan\sortable\SortableAction;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
-use yii\web\NotFoundHttpException;
 
 /**
  * RoomController - управление кабинетами/аудиториями
  */
 class RoomController extends Controller
 {
+    use FindModelTrait;
+
+    protected string $modelClass = Room::class;
+    protected string $notFoundMessage = 'Кабинет не найден';
+
     /**
      * @inheritDoc
      */
@@ -165,25 +170,4 @@ class RoomController extends Controller
         return $this->redirect(['index']);
     }
 
-    /**
-     * Finds the Room model based on its primary key value.
-     * If the model is not found, a 404 HTTP exception will be thrown.
-     * @param int $id ID
-     * @return Room the loaded model
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    protected function findModel($id)
-    {
-        $model = Room::find()
-            ->byOrganization()
-            ->andWhere(['id' => $id])
-            ->notDeleted()
-            ->one();
-
-        if ($model === null) {
-            throw new NotFoundHttpException(\Yii::t('main', 'Кабинет не найден.'));
-        }
-
-        return $model;
-    }
 }

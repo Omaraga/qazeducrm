@@ -2,6 +2,7 @@
 
 namespace app\modules\crm\controllers;
 
+use app\helpers\ActivityLogger;
 use app\helpers\OrganizationRoles;
 use app\helpers\SystemRoles;
 use app\models\Payment;
@@ -93,6 +94,7 @@ class PaymentController extends Controller
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
+                ActivityLogger::logPaymentCreated($model);
                 return $this->redirect(['view', 'id' => $model->id]);
             }
         } else {
@@ -133,7 +135,9 @@ class PaymentController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
+        $model = $this->findModel($id);
+        ActivityLogger::logPaymentDeleted($model);
+        $model->delete();
 
         return $this->redirect(['index']);
     }

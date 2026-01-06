@@ -1,127 +1,249 @@
 <?php
 
 namespace app\helpers;
+
 use app\models\Organizations;
 use app\models\search\DateSearch;
-use app\models\Settings;
-use yii\base\Model;
 use yii\bootstrap4\Html;
-class MenuHelper extends Model
+
+/**
+ * MenuHelper - построение навигационного меню
+ *
+ * Используется в старом Bootstrap-based layout (views/layouts/header.php)
+ * Для нового Tailwind интерфейса используется виджет SidebarMenu
+ *
+ * @see \app\widgets\tailwind\SidebarMenu
+ * @see SettingsHelper для работы с настройками
+ */
+class MenuHelper
 {
     /**
-     * @return mixed|string|null
+     * Получить URL сайта
+     * @deprecated Используйте SettingsHelper::getBaseUrl()
      */
-    public static function getUrl(){
-        $settings = self::getSetting();
-        if ($settings && $settings->url){
-            return $settings->url;
-        }else{
-            return \Yii::$app->params['url'];
-        }
+    public static function getUrl(): string
+    {
+        return SettingsHelper::getBaseUrl();
     }
 
     /**
-     * @return array|Settings|\yii\db\ActiveRecord
+     * Получить настройки
+     * @deprecated Используйте SettingsHelper::getSettings()
      */
-    public static function getSetting(){
-       return Settings::find()->one() ? : new Settings();
+    public static function getSetting()
+    {
+        return SettingsHelper::getSettings();
     }
 
-    public static function getLogo($mini = false){
-        $settings = self::getSetting();
-        if ($mini){
-            $link = ($settings->logo) ? self::getUrl().$settings->logo :'/images/logo_star_mini.jpg';
-            return '<img src="'.$link.'" style = "max-width:50px"/>';
-        }else{
-            $link = ($settings->logo) ? self::getUrl().$settings->logo :'/images/logo_star_black.png';
-            return '<img src="'.$link.'" style = "max-width:100px;float: left;margin-left: 10px;"/>';
+    /**
+     * Получить логотип
+     * @deprecated Используйте SettingsHelper::getLogoHtml()
+     */
+    public static function getLogo(bool $mini = false): string
+    {
+        return SettingsHelper::getLogoHtml($mini);
+    }
+
+    /**
+     * Получить название сайта
+     * @deprecated Используйте SettingsHelper::getSiteName()
+     */
+    public static function getName(): string
+    {
+        return SettingsHelper::getSiteName();
+    }
+
+    /**
+     * Нормализовать URL
+     * @deprecated Используйте SettingsHelper::normalizeUrl()
+     */
+    public static function normalizeUrl(?string $url): string
+    {
+        return SettingsHelper::normalizeUrl($url);
+    }
+
+    /**
+     * Построить элементы меню для Bootstrap Nav
+     *
+     * @return array
+     */
+    public static function getMenuItems(): array
+    {
+        if (\Yii::$app->user->isGuest) {
+            return self::getGuestMenuItems();
         }
+
+        return self::getAuthenticatedMenuItems();
     }
 
-    public static function getMenuItems(){
+    /**
+     * Меню для гостей
+     */
+    private static function getGuestMenuItems(): array
+    {
+        return [
+            ['label' => 'Login', 'url' => OrganizationUrl::to(['/site/login'])]
+        ];
+    }
+
+    /**
+     * Меню для авторизованных пользователей
+     */
+    private static function getAuthenticatedMenuItems(): array
+    {
         $items = [];
-        if (\Yii::$app->user->isGuest){
-            $items[] = ['label' => 'Login', 'url' => \app\helpers\OrganizationUrl::to(['/site/login'])];
-        }else{
-            $user = \Yii::$app->user->identity;
-            $organization = Organizations::getCurrentOrganization();
-            $roles = $user->rolesMap;
-            $menuRoles = [];
-            foreach ($roles as $roleId => $name){
-                $menuRoles[] = ['label' => $name, 'url' => \app\helpers\OrganizationUrl::to(['site/change-role', 'id' => $roleId])];
-            }
-            if (\Yii::$app->user->can(OrganizationRoles::ADMIN) ||
-                \Yii::$app->user->can(OrganizationRoles::DIRECTOR) ||
-                \Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR)
-            ){
+        $user = \Yii::$app->user->identity;
+        $organization = Organizations::getCurrentOrganization();
+        $controllerId = \Yii::$app->controller->id;
 
-                $items[] = ['label' => 'Ученики', 'url' => \app\helpers\OrganizationUrl::to(['/pupil/index']), 'active' => in_array(\Yii::$app->controller->id, ['pupil'])];
-                $items[] = ['label' => 'Преподаватели', 'url' => \app\helpers\OrganizationUrl::to(['/user/index']), 'active' => in_array(\Yii::$app->controller->id, ['user'])];
-                $items[] = ['label' => 'Группы', 'url' => \app\helpers\OrganizationUrl::to(['/group/index']), 'active' => in_array(\Yii::$app->controller->id, ['group'])];
-
-                $items[] = ['label' => 'Пробное тестирование', 'url' => \app\helpers\OrganizationUrl::to(['/lids/index']), 'active' => in_array(\Yii::$app->controller->id, ['payment'])];
-                $items[] = ['label' => 'Расписание', 'items' => [
-                    ['label' => 'Расписание', 'url' => \app\helpers\OrganizationUrl::to(['schedule/index'])],
-                    ['label' => 'Типовое расписание', 'url' => \app\helpers\OrganizationUrl::to(['typical-schedule/index'])],
-                ], 'active' => in_array(\Yii::$app->controller->id, ['schedule', 'typical-schedule'])];
-                $items[] = ['label' => 'Отчеты', 'items' => [
-                    ['label' => 'Дневной отчет', 'url' => \app\helpers\OrganizationUrl::to(['reports/day'])],
-                    ['label' => 'Приход за месяц', 'url' => \app\helpers\OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_PAYMENT])],
-                    ['label' => 'Оплата и задолженность по ученикам', 'url' => \app\helpers\OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_PUPIL_PAYMENT])],
-                    ['label' => 'Статистика посещаемости занятий', 'url' => \app\helpers\OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_ATTENDANCE])],
-                    ['label' => 'Бухгалтерия', 'url' => \app\helpers\OrganizationUrl::to(['/payment/index'])]
-                ], 'active' => in_array(\Yii::$app->controller->id, ['reports'])];
-            }
-            if (\Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR)){
-                $items[] = ['label' => 'Заработная плата преподавателей', 'url' => \app\helpers\OrganizationUrl::to(['/reports/employer']), 'active' => in_array(\Yii::$app->controller->id, ['reports'])];
-                $items[] = ['label' => 'Справочники', 'items' => [
-                    ['label' => 'Предметы', 'url' => \app\helpers\OrganizationUrl::to(['subject/index'])],
-                    ['label' => 'Методы оплат', 'url' => \app\helpers\OrganizationUrl::to(['pay-method/index'])],
-                    ['label' => 'Тарифы', 'url' => \app\helpers\OrganizationUrl::to(['/tariff/index'])]
-                ], 'active' => in_array(\Yii::$app->controller->id, ['subject', 'pay-method'])];
-            }
-
-            $items[] = ['label' => Lists::getRoles()[$user->getCurrentOrganizationRole()].'('.$organization->name.')', 'items' => $menuRoles, 'options' => ['class' => 'ml-sm-4 role-label']];
-            $items[] = '<li>'
-                . Html::beginForm(['/site/logout'], 'post', ['class' => 'form-inline ml-sm-4'])
-                . Html::submitButton(
-                    '<i class="fa fa-sign-out" aria-hidden="true"></i> Выйти('.\Yii::$app->user->identity->fio.')',
-                    ['class' => 'btn btn-link logout']
-                )
-                . Html::endForm()
-                . '</li>';
+        // Основное меню для администраторов
+        if (self::canAccessAdminMenu()) {
+            $items = array_merge($items, self::getAdminMenuItems($controllerId));
         }
+
+        // Дополнительные пункты для директора
+        if (\Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR)) {
+            $items = array_merge($items, self::getDirectorMenuItems($controllerId));
+        }
+
+        // Переключение ролей и выход
+        $items[] = self::getRoleSwitcherItem($user, $organization);
+        $items[] = self::getLogoutItem($user);
 
         return $items;
     }
 
-    public static function isMenuActive($url){
-        $route =  \Yii::$app->controller->getRoute(); //TODO написать route
-        $routeArray = explode('/',$route);
+    /**
+     * Проверить доступ к админ-меню
+     */
+    private static function canAccessAdminMenu(): bool
+    {
+        return \Yii::$app->user->can(OrganizationRoles::ADMIN) ||
+               \Yii::$app->user->can(OrganizationRoles::DIRECTOR) ||
+               \Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR);
+    }
+
+    /**
+     * Пункты меню администратора
+     */
+    private static function getAdminMenuItems(string $controllerId): array
+    {
+        return [
+            [
+                'label' => 'Ученики',
+                'url' => OrganizationUrl::to(['/pupil/index']),
+                'active' => $controllerId === 'pupil'
+            ],
+            [
+                'label' => 'Преподаватели',
+                'url' => OrganizationUrl::to(['/user/index']),
+                'active' => $controllerId === 'user'
+            ],
+            [
+                'label' => 'Группы',
+                'url' => OrganizationUrl::to(['/group/index']),
+                'active' => $controllerId === 'group'
+            ],
+            [
+                'label' => 'Пробное тестирование',
+                'url' => OrganizationUrl::to(['/lids/index']),
+                'active' => $controllerId === 'lids'
+            ],
+            [
+                'label' => 'Расписание',
+                'items' => [
+                    ['label' => 'Расписание', 'url' => OrganizationUrl::to(['schedule/index'])],
+                    ['label' => 'Типовое расписание', 'url' => OrganizationUrl::to(['typical-schedule/index'])],
+                ],
+                'active' => in_array($controllerId, ['schedule', 'typical-schedule'])
+            ],
+            [
+                'label' => 'Отчеты',
+                'items' => [
+                    ['label' => 'Дневной отчет', 'url' => OrganizationUrl::to(['reports/day'])],
+                    ['label' => 'Приход за месяц', 'url' => OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_PAYMENT])],
+                    ['label' => 'Оплата и задолженность по ученикам', 'url' => OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_PUPIL_PAYMENT])],
+                    ['label' => 'Статистика посещаемости занятий', 'url' => OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_ATTENDANCE])],
+                    ['label' => 'Бухгалтерия', 'url' => OrganizationUrl::to(['/payment/index'])]
+                ],
+                'active' => $controllerId === 'reports'
+            ],
+        ];
+    }
+
+    /**
+     * Дополнительные пункты для директора
+     */
+    private static function getDirectorMenuItems(string $controllerId): array
+    {
+        return [
+            [
+                'label' => 'Заработная плата преподавателей',
+                'url' => OrganizationUrl::to(['/reports/employer']),
+                'active' => $controllerId === 'reports'
+            ],
+            [
+                'label' => 'Справочники',
+                'items' => [
+                    ['label' => 'Предметы', 'url' => OrganizationUrl::to(['subject/index'])],
+                    ['label' => 'Методы оплат', 'url' => OrganizationUrl::to(['pay-method/index'])],
+                    ['label' => 'Тарифы', 'url' => OrganizationUrl::to(['/tariff/index'])]
+                ],
+                'active' => in_array($controllerId, ['subject', 'pay-method', 'tariff'])
+            ],
+        ];
+    }
+
+    /**
+     * Переключатель ролей
+     */
+    private static function getRoleSwitcherItem($user, $organization): array
+    {
+        $menuRoles = [];
+        foreach ($user->rolesMap as $roleId => $name) {
+            $menuRoles[] = [
+                'label' => $name,
+                'url' => OrganizationUrl::to(['site/change-role', 'id' => $roleId])
+            ];
+        }
+
+        $currentRole = Lists::getRoles()[$user->getCurrentOrganizationRole()] ?? '';
+        $orgName = $organization->name ?? '';
+
+        return [
+            'label' => "{$currentRole} ({$orgName})",
+            'items' => $menuRoles,
+            'options' => ['class' => 'ml-sm-4 role-label']
+        ];
+    }
+
+    /**
+     * Кнопка выхода
+     */
+    private static function getLogoutItem($user): string
+    {
+        return '<li>'
+            . Html::beginForm(['/site/logout'], 'post', ['class' => 'form-inline ml-sm-4'])
+            . Html::submitButton(
+                '<i class="fa fa-sign-out" aria-hidden="true"></i> Выйти(' . $user->fio . ')',
+                ['class' => 'btn btn-link logout']
+            )
+            . Html::endForm()
+            . '</li>';
+    }
+
+    /**
+     * Проверить активность пункта меню
+     *
+     * @param string $url URL пункта меню
+     * @return bool
+     */
+    public static function isMenuActive(string $url): bool
+    {
+        $route = \Yii::$app->controller->getRoute();
+        $routeArray = explode('/', $route);
         $urlArray = explode('/', $url);
-        if ($routeArray[0] == $urlArray[0]){
-            return true;
-        }else{
-            return false;
-        }
+
+        return ($routeArray[0] ?? '') === ($urlArray[0] ?? '');
     }
-
-    public static function getName(){
-        $setting = self::getSetting();
-        if ($setting->name){
-            return $setting->name;
-        }else{
-            return 'Сайт';
-        }
-    }
-
-    public static function normalizeUrl($url){
-        if ($url && strlen($url) > 0){
-            return ($url[0] == '/' || str_contains($url, 'http')) ? $url : '/'.$url;
-        }else{
-            return '#';
-        }
-    }
-
-
 }

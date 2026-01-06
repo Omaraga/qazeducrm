@@ -88,10 +88,17 @@ class SmsController extends Controller
      */
     public function actionTemplates()
     {
+        $type = Yii::$app->request->get('type', 'all');
+
         $query = SmsTemplate::find()
             ->andWhere(['sms_template.organization_id' => Organizations::getCurrentOrganizationId()])
             ->andWhere(['!=', 'sms_template.is_deleted', 1])
-            ->orderBy(['code' => SORT_ASC]);
+            ->orderBy(['type' => SORT_ASC, 'code' => SORT_ASC]);
+
+        // Фильтр по типу
+        if ($type !== 'all' && in_array($type, [SmsTemplate::TYPE_SMS, SmsTemplate::TYPE_WHATSAPP])) {
+            $query->andWhere(['type' => $type]);
+        }
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
@@ -100,6 +107,7 @@ class SmsController extends Controller
 
         return $this->render('templates', [
             'dataProvider' => $dataProvider,
+            'type' => $type,
         ]);
     }
 

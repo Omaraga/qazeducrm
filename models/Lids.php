@@ -15,6 +15,12 @@ use yii\db\Expression;
  * @property string|null $phone
  * @property int|null $class_id
  * @property string|null $school
+ * @property string|null $parent_fio
+ * @property string|null $parent_phone
+ * @property string $contact_person
+ * @property int|null $pupil_id
+ * @property string|null $converted_at
+ * @property string|null $status_changed_at
  * @property string|null $date
  * @property string|null $manager_name
  * @property int|null $manager_id
@@ -33,6 +39,8 @@ use yii\db\Expression;
  * @property int $organization_id [int(11)]
  *
  * @property User $manager
+ * @property Pupil $pupil
+ * @property LidHistory[] $histories
  */
 class Lids extends ActiveRecord
 {
@@ -57,6 +65,10 @@ class Lids extends ActiveRecord
     const SOURCE_PHONE = 'phone';
     const SOURCE_OTHER = 'other';
 
+    // Контактное лицо
+    const CONTACT_PARENT = 'parent';
+    const CONTACT_PUPIL = 'pupil';
+
     /**
      * @return array[]
      */
@@ -71,6 +83,7 @@ class Lids extends ActiveRecord
             ],
         ];
     }
+
     /**
      * {@inheritdoc}
      */
@@ -86,12 +99,14 @@ class Lids extends ActiveRecord
     {
         return [
             [['fio', 'comment', 'info', 'lost_reason'], 'string'],
-            [['class_id', 'sale', 'total_sum', 'total_point', 'is_deleted', 'status', 'manager_id'], 'integer'],
-            [['date', 'created_at', 'updated_at', 'next_contact_date'], 'safe'],
-            [['phone', 'school', 'manager_name', 'source'], 'string', 'max' => 255],
+            [['class_id', 'sale', 'total_sum', 'total_point', 'is_deleted', 'status', 'manager_id', 'pupil_id'], 'integer'],
+            [['date', 'created_at', 'updated_at', 'next_contact_date', 'converted_at', 'status_changed_at'], 'safe'],
+            [['phone', 'school', 'manager_name', 'source', 'parent_fio', 'parent_phone'], 'string', 'max' => 255],
             ['status', 'default', 'value' => self::STATUS_NEW],
             ['status', 'in', 'range' => array_keys(self::getStatusList())],
             ['source', 'in', 'range' => array_keys(self::getSourceList())],
+            ['contact_person', 'default', 'value' => self::CONTACT_PARENT],
+            ['contact_person', 'in', 'range' => [self::CONTACT_PARENT, self::CONTACT_PUPIL]],
         ];
     }
 
@@ -102,14 +117,20 @@ class Lids extends ActiveRecord
     {
         return [
             'id' => Yii::t('main', 'ID'),
-            'fio' => Yii::t('main', 'ФИО'),
-            'phone' => Yii::t('main', 'Телефон'),
+            'fio' => Yii::t('main', 'ФИО ребёнка'),
+            'phone' => Yii::t('main', 'Телефон ребёнка'),
             'class_id' => Yii::t('main', 'Класс'),
             'school' => Yii::t('main', 'Школа'),
-            'date' => Yii::t('main', 'Дата'),
+            'parent_fio' => Yii::t('main', 'ФИО родителя'),
+            'parent_phone' => Yii::t('main', 'Телефон родителя'),
+            'contact_person' => Yii::t('main', 'Контактное лицо'),
+            'pupil_id' => Yii::t('main', 'Ученик'),
+            'converted_at' => Yii::t('main', 'Дата конверсии'),
+            'status_changed_at' => Yii::t('main', 'Статус изменён'),
+            'date' => Yii::t('main', 'Дата обращения'),
             'manager_name' => Yii::t('main', 'Менеджер'),
             'manager_id' => Yii::t('main', 'Ответственный'),
-            'comment' => Yii::t('main', 'Коментарии'),
+            'comment' => Yii::t('main', 'Комментарий'),
             'status' => Yii::t('main', 'Статус'),
             'source' => Yii::t('main', 'Источник'),
             'next_contact_date' => Yii::t('main', 'Следующий контакт'),
@@ -118,10 +139,28 @@ class Lids extends ActiveRecord
             'total_sum' => Yii::t('main', 'Итоговая цена'),
             'total_point' => Yii::t('main', 'Итоговые баллы'),
             'is_deleted' => Yii::t('main', 'Is Deleted'),
-            'created_at' => Yii::t('main', 'Created At'),
-            'updated_at' => Yii::t('main', 'Updated At'),
+            'created_at' => Yii::t('main', 'Создан'),
+            'updated_at' => Yii::t('main', 'Обновлён'),
             'info' => Yii::t('main', 'Info'),
         ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function beforeSave($insert)
+    {
+        // Автоматическое обновление status_changed_at при смене статуса
+        if (!$insert && $this->isAttributeChanged('status')) {
+            $this->status_changed_at = date('Y-m-d H:i:s');
+        }
+
+        // При создании устанавливаем status_changed_at
+        if ($insert) {
+            $this->status_changed_at = date('Y-m-d H:i:s');
+        }
+
+        return parent::beforeSave($insert);
     }
 
     /**
@@ -130,6 +169,133 @@ class Lids extends ActiveRecord
     public function getManager()
     {
         return $this->hasOne(User::class, ['id' => 'manager_id']);
+    }
+
+    /**
+     * Связь с учеником (после конверсии)
+     */
+    public function getPupil()
+    {
+        return $this->hasOne(Pupil::class, ['id' => 'pupil_id']);
+    }
+
+    /**
+     * История взаимодействий
+     */
+    public function getHistories()
+    {
+        return $this->hasMany(LidHistory::class, ['lid_id' => 'id'])
+            ->orderBy(['created_at' => SORT_DESC]);
+    }
+
+    // ===================== ТЕГИ (через LidTag) =====================
+
+    /**
+     * Связь с тегами через pivot таблицу
+     */
+    public function getLidTagRelations()
+    {
+        return $this->hasMany(LidTagRelation::class, ['lid_id' => 'id']);
+    }
+
+    /**
+     * Связь с тегами (LidTag модели)
+     */
+    public function getLidTags()
+    {
+        return $this->hasMany(LidTag::class, ['id' => 'tag_id'])
+            ->via('lidTagRelations');
+    }
+
+    /**
+     * Получить массив тегов для API/JSON
+     * @return array
+     */
+    public function getTags(): array
+    {
+        $relations = $this->lidTagRelations;
+        $tags = [];
+        foreach ($relations as $rel) {
+            if ($rel->tag) {
+                $tags[] = $rel->tag->toArray();
+            }
+        }
+        return $tags;
+    }
+
+    /**
+     * Получить массив ID тегов
+     * @return int[]
+     */
+    public function getTagIds(): array
+    {
+        return array_column($this->lidTagRelations, 'tag_id');
+    }
+
+    /**
+     * Добавить тег по ID
+     * @param int $tagId
+     * @return bool
+     */
+    public function addTag(int $tagId): bool
+    {
+        if (LidTagRelation::findOne(['lid_id' => $this->id, 'tag_id' => $tagId])) {
+            return true; // Уже есть
+        }
+
+        $rel = new LidTagRelation();
+        $rel->lid_id = $this->id;
+        $rel->tag_id = $tagId;
+        return $rel->save();
+    }
+
+    /**
+     * Удалить тег по ID
+     * @param int $tagId
+     * @return bool
+     */
+    public function removeTag(int $tagId): bool
+    {
+        return LidTagRelation::deleteAll(['lid_id' => $this->id, 'tag_id' => $tagId]) > 0;
+    }
+
+    /**
+     * Проверить наличие тега по ID
+     * @param int $tagId
+     * @return bool
+     */
+    public function hasTag(int $tagId): bool
+    {
+        return LidTagRelation::findOne(['lid_id' => $this->id, 'tag_id' => $tagId]) !== null;
+    }
+
+    /**
+     * Переключить тег (добавить/удалить)
+     * @param int $tagId
+     * @return bool
+     */
+    public function toggleTag(int $tagId): bool
+    {
+        if ($this->hasTag($tagId)) {
+            return $this->removeTag($tagId);
+        }
+        return $this->addTag($tagId);
+    }
+
+    /**
+     * Проверить наличие тега по имени
+     * @param string $tagName
+     * @return bool
+     */
+    public function hasTagByName(string $tagName): bool
+    {
+        $tag = LidTag::find()
+            ->byOrganization()
+            ->notDeleted()
+            ->andWhere(['name' => $tagName])
+            ->one();
+
+        return $tag && $this->hasTag($tag->id);
     }
 
     /**
@@ -145,6 +311,20 @@ class Lids extends ActiveRecord
             self::STATUS_ENROLLED => 'Записан',
             self::STATUS_PAID => 'Оплатил',
             self::STATUS_LOST => 'Потерян',
+        ];
+    }
+
+    /**
+     * Статусы для Kanban (без финальных)
+     */
+    public static function getKanbanStatusList()
+    {
+        return [
+            self::STATUS_NEW => 'Новый',
+            self::STATUS_CONTACTED => 'Связались',
+            self::STATUS_TRIAL => 'Пробное занятие',
+            self::STATUS_THINKING => 'Думает',
+            self::STATUS_ENROLLED => 'Записан',
         ];
     }
 
@@ -172,6 +352,23 @@ class Lids extends ActiveRecord
             self::STATUS_LOST => 'bg-danger',
         ];
         return $classes[$this->status] ?? 'bg-secondary';
+    }
+
+    /**
+     * Цвет статуса для Tailwind
+     */
+    public function getStatusColor()
+    {
+        $colors = [
+            self::STATUS_NEW => 'sky',
+            self::STATUS_CONTACTED => 'blue',
+            self::STATUS_TRIAL => 'amber',
+            self::STATUS_THINKING => 'gray',
+            self::STATUS_ENROLLED => 'indigo',
+            self::STATUS_PAID => 'green',
+            self::STATUS_LOST => 'red',
+        ];
+        return $colors[$this->status] ?? 'gray';
     }
 
     /**
@@ -219,7 +416,18 @@ class Lids extends ActiveRecord
     }
 
     /**
-     * Можно ли перевести в следующий статус
+     * Список контактных лиц
+     */
+    public static function getContactPersonList()
+    {
+        return [
+            self::CONTACT_PARENT => 'Родитель',
+            self::CONTACT_PUPIL => 'Ребёнок',
+        ];
+    }
+
+    /**
+     * Можно ли перевести в указанный статус
      */
     public function canMoveToStatus($newStatus)
     {
@@ -228,6 +436,79 @@ class Lids extends ActiveRecord
             return false;
         }
         return true;
+    }
+
+    /**
+     * Можно ли конвертировать в ученика
+     */
+    public function canConvertToPupil()
+    {
+        // Можно конвертировать если статус PAID и ещё не конвертирован
+        return $this->status === self::STATUS_PAID && $this->pupil_id === null;
+    }
+
+    /**
+     * Уже конвертирован в ученика
+     */
+    public function isConverted()
+    {
+        return $this->pupil_id !== null;
+    }
+
+    /**
+     * Получить основной контактный телефон
+     */
+    public function getContactPhone()
+    {
+        if ($this->contact_person === self::CONTACT_PARENT) {
+            return $this->parent_phone ?: $this->phone;
+        }
+        return $this->phone ?: $this->parent_phone;
+    }
+
+    /**
+     * Получить ФИО контактного лица
+     */
+    public function getContactName()
+    {
+        if ($this->contact_person === self::CONTACT_PARENT) {
+            return $this->parent_fio ?: $this->fio;
+        }
+        return $this->fio ?: $this->parent_fio;
+    }
+
+    /**
+     * Количество дней в текущем статусе
+     */
+    public function getDaysInStatus()
+    {
+        $date = $this->status_changed_at ?: $this->created_at;
+        if (!$date) {
+            return 0;
+        }
+        return (int)((time() - strtotime($date)) / 86400);
+    }
+
+    /**
+     * Просрочен ли контакт
+     */
+    public function isOverdue()
+    {
+        if (!$this->next_contact_date) {
+            return false;
+        }
+        return strtotime($this->next_contact_date) < strtotime('today');
+    }
+
+    /**
+     * Контакт сегодня
+     */
+    public function isContactToday()
+    {
+        if (!$this->next_contact_date) {
+            return false;
+        }
+        return $this->next_contact_date === date('Y-m-d');
     }
 
     /**
@@ -241,6 +522,18 @@ class Lids extends ActiveRecord
             ->andWhere(['not in', 'status', [self::STATUS_PAID, self::STATUS_LOST]])
             ->andWhere(['<=', 'next_contact_date', date('Y-m-d')])
             ->orderBy(['next_contact_date' => SORT_ASC]);
+    }
+
+    /**
+     * Активные лиды (не в финальных статусах)
+     */
+    public static function findActive()
+    {
+        return self::find()
+            ->byOrganization()
+            ->notDeleted()
+            ->andWhere(['not in', 'status', [self::STATUS_PAID, self::STATUS_LOST]])
+            ->orderBy(['next_contact_date' => SORT_ASC, 'created_at' => SORT_DESC]);
     }
 
     /**
@@ -260,5 +553,110 @@ class Lids extends ActiveRecord
             ];
         }
         return $stats;
+    }
+
+    /**
+     * Очистить телефон от форматирования
+     */
+    public static function cleanPhone($phone)
+    {
+        return preg_replace('/[^0-9+]/', '', $phone);
+    }
+
+    /**
+     * Получить WhatsApp ссылку
+     */
+    public function getWhatsAppUrl()
+    {
+        $phone = self::cleanPhone($this->getContactPhone());
+        if (!$phone) {
+            return null;
+        }
+        // Убираем + и заменяем 8 на 7 в начале
+        $phone = ltrim($phone, '+');
+        if (strpos($phone, '8') === 0) {
+            $phone = '7' . substr($phone, 1);
+        }
+        return 'https://wa.me/' . $phone;
+    }
+
+    /**
+     * Долго в статусе (> 7 дней)
+     */
+    public function isStaleInStatus(): bool
+    {
+        return $this->getDaysInStatus() > 7;
+    }
+
+    /**
+     * Является ли лид горячим (тег "Горячий")
+     */
+    public function isHot(): bool
+    {
+        return $this->hasTagByName('Горячий');
+    }
+
+    /**
+     * Является ли лид VIP (тег "VIP")
+     */
+    public function isVip(): bool
+    {
+        return $this->hasTagByName('VIP');
+    }
+
+    // ===================== ДУБЛИКАТЫ =====================
+
+    /**
+     * Найти возможные дубликаты по телефону
+     *
+     * @param string $phone Телефон для поиска
+     * @param int|null $excludeId ID лида для исключения (при редактировании)
+     * @return Lids[] Массив найденных дубликатов
+     */
+    public static function findDuplicates($phone, $excludeId = null): array
+    {
+        if (empty($phone)) {
+            return [];
+        }
+
+        // Очищаем телефон от форматирования
+        $cleanPhone = self::cleanPhone($phone);
+
+        // Если телефон слишком короткий - не ищем
+        if (strlen($cleanPhone) < 10) {
+            return [];
+        }
+
+        // Создаём паттерн для поиска (последние 10 цифр)
+        $phonePattern = '%' . substr($cleanPhone, -10);
+
+        $query = self::find()
+            ->byOrganization()
+            ->notDeleted()
+            ->andWhere([
+                'or',
+                ['like', 'phone', $phonePattern, false],
+                ['like', 'parent_phone', $phonePattern, false],
+            ]);
+
+        // Исключаем текущий лид при редактировании
+        if ($excludeId) {
+            $query->andWhere(['!=', 'id', $excludeId]);
+        }
+
+        return $query->orderBy(['created_at' => SORT_DESC])->limit(5)->all();
+    }
+
+    /**
+     * Проверить, есть ли дубликаты для этого лида
+     */
+    public function hasDuplicates(): bool
+    {
+        $phone = $this->getContactPhone();
+        if (!$phone) {
+            return false;
+        }
+
+        return count(self::findDuplicates($phone, $this->id)) > 0;
     }
 }

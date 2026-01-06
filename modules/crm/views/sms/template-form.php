@@ -30,10 +30,19 @@ $this->params['breadcrumbs'][] = $this->title;
                     <?php $form = ActiveForm::begin(); ?>
 
                     <div class="row">
-                        <div class="col-md-6">
-                            <?= $form->field($model, 'code')->dropDownList(SmsTemplate::getCodeList()) ?>
+                        <div class="col-md-4">
+                            <?= $form->field($model, 'type')->dropDownList(SmsTemplate::getTypeList(), [
+                                'id' => 'template-type',
+                                'prompt' => 'Выберите тип...'
+                            ]) ?>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <?= $form->field($model, 'code')->dropDownList([], [
+                                'id' => 'template-code',
+                                'prompt' => 'Сначала выберите тип...'
+                            ]) ?>
+                        </div>
+                        <div class="col-md-4">
                             <?= $form->field($model, 'name')->textInput(['maxlength' => true, 'placeholder' => 'Название для удобства']) ?>
                         </div>
                     </div>
@@ -94,6 +103,49 @@ $this->params['breadcrumbs'][] = $this->title;
 </div>
 
 <script>
+// Коды для каждого типа шаблона
+var templateCodes = {
+    'sms': <?= json_encode(SmsTemplate::getCodeList()) ?>,
+    'whatsapp': <?= json_encode(SmsTemplate::getWhatsAppCodeList()) ?>
+};
+
+// Текущие значения (для редактирования)
+var currentType = '<?= Html::encode($model->type) ?>';
+var currentCode = '<?= Html::encode($model->code) ?>';
+
+// Обновить список кодов при смене типа
+function updateCodeList() {
+    var typeSelect = document.getElementById('template-type');
+    var codeSelect = document.getElementById('template-code');
+    var selectedType = typeSelect.value;
+
+    // Очищаем список кодов
+    codeSelect.innerHTML = '<option value="">Выберите тип...</option>';
+
+    if (selectedType && templateCodes[selectedType]) {
+        var codes = templateCodes[selectedType];
+        for (var code in codes) {
+            var option = document.createElement('option');
+            option.value = code;
+            option.textContent = codes[code];
+            if (code === currentCode && selectedType === currentType) {
+                option.selected = true;
+            }
+            codeSelect.appendChild(option);
+        }
+    }
+}
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('template-type').addEventListener('change', updateCodeList);
+    // Инициализируем при загрузке если тип уже выбран
+    if (currentType) {
+        updateCodeList();
+    }
+});
+
+// Вставка плейсхолдеров
 document.querySelectorAll('.placeholder-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var textarea = document.querySelector('textarea[name="SmsTemplate[content]"]');

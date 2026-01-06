@@ -28,13 +28,24 @@ $menuConfig = [
         'section' => 'Меню',
         'items' => [
             ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => ['/crm/default/index'], 'controller' => 'default'],
+            ['label' => 'Расписание', 'icon' => 'calendar', 'url' => ['/crm/schedule/index'], 'controller' => 'schedule'],
+            [
+                'label' => 'Лиды',
+                'icon' => 'funnel',
+                'controller' => 'lids',
+                'items' => [
+                    ['label' => 'Kanban', 'url' => ['/crm/lids/kanban']],
+                    ['label' => 'Таблица', 'url' => ['/crm/lids/index']],
+                    ['label' => 'Аналитика', 'url' => ['/crm/lids/analytics']],
+                    ['label' => 'Скрипты продаж', 'url' => ['/crm/sales-script/index']],
+                ],
+            ],
             ['label' => 'Ученики', 'icon' => 'users', 'url' => ['/crm/pupil/index'], 'controller' => 'pupil'],
             ['label' => 'Группы', 'icon' => 'group', 'url' => ['/crm/group/index'], 'controller' => 'group'],
-            ['label' => 'Расписание', 'icon' => 'calendar', 'url' => ['/crm/schedule/index'], 'controller' => 'schedule'],
             ['label' => 'Шаблоны расписания', 'icon' => 'template', 'url' => ['/crm/schedule-template/index'], 'controller' => 'schedule-template'],
             ['label' => 'Платежи', 'icon' => 'payment', 'url' => ['/crm/payment/index'], 'controller' => 'payment'],
             ['label' => 'Зарплаты', 'icon' => 'wallet', 'url' => ['/crm/salary/index'], 'controller' => 'salary'],
-            ['label' => 'Лиды', 'icon' => 'funnel', 'url' => ['/crm/lids/index'], 'controller' => 'lids'],
+
             ['label' => 'SMS', 'icon' => 'sms', 'url' => ['/crm/sms/index'], 'controller' => 'sms'],
             ['label' => 'Отчёты', 'icon' => 'chart', 'url' => ['/crm/reports/index'], 'controller' => 'reports'],
         ]
@@ -298,6 +309,9 @@ endforeach;
                 </div>
             </div>
             <?php endif; ?>
+
+            <!-- Notifications Bell -->
+            <?= $this->render('_notifications-bell') ?>
 
             <?php if (Yii::$app->user->can('superadmin')): ?>
                 <a href="<?= Url::to(['/superadmin']) ?>" class="btn btn-outline btn-sm">

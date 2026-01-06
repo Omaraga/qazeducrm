@@ -40,7 +40,30 @@
       "Bash(php test_schedule_wizard.php:*)",
       "Bash(php test_knowledge.php:*)",
       "Bash(php test_knowledge_render.php:*)",
-      "Bash(php test_grid_setting.php:*)"
+      "Bash(php test_grid_setting.php:*)",
+      "Bash(CSRF=\"GXEgQY3unEI11rGWa2kQ7m8qcNRC5oOXeFjoRuNm1c9DFmwLydvqC02z5s4fBkOcOx42gw-U7_JPPZAD0CKsuQ==\")",
+      "Bash(CSRF=\"j6A3V7Z-pHpw-CiMCQy_vlaY48L0QpCSehOv4UeiaJvsznMW_03SEALBGN9YSvLQFP2ymr0Y9NU5RZuiBPMwrQ==\")",
+      "Bash(CSRF=\"zsWqafW-IRbob6w4xgtWI9SUxVdVkWu8kSk373AdiQCis_0qhNlPc4Rf7nCgexJZ5_iDMQ3WH-3Tdm2iO226Mw==\")",
+      "Bash(php yii:*)",
+      "Bash(for file in )",
+      "Bash(\"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\modules\\\\crm\\\\views\\\\lids\\\\kanban.php\" )",
+      "Bash(\"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\modules\\\\crm\\\\views\\\\lids\\\\index.php\" )",
+      "Bash(\"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\modules\\\\crm\\\\views\\\\lids\\\\_view-modal.php\" )",
+      "Bash(\"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\modules\\\\crm\\\\controllers\\\\LidsController.php\" )",
+      "Bash(\"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\modules\\\\crm\\\\controllers\\\\LidTagController.php\" )",
+      "Bash(\"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\models\\\\Lids.php\" )",
+      "Bash(\"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\models\\\\LidTag.php\" )",
+      "Bash(\"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\models\\\\LidTagRelation.php\" )",
+      "Bash(\"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\models\\\\services\\\\LidService.php\" )",
+      "Bash(\"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\models\\\\SmsTemplate.php\" )",
+      "Bash(\"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\modules\\\\crm\\\\views\\\\sms\\\\templates.php\" )",
+      "Bash(\"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\modules\\\\crm\\\\views\\\\sms\\\\template-form.php\")",
+      "Bash(do)",
+      "Bash(CSRF=\"w_vaz7wR-uI44J3xqCFvEKwldqgCI8d5XN2PN4qzVFWArZaQ40GO0GiQ_rLScVxTwHFDzmlAtD4Qhddw0IQ1NA==\")",
+      "Bash(php test_kanban.php:*)",
+      "Bash(php test_script.php:*)",
+      "Bash(del \"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\components\\\\SortableGridView.php\")",
+      "Bash(del \"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\components\\\\assets\\\\SortableGridViewAsset.php\")"
     ]
   }
 }
