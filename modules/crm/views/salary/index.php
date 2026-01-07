@@ -1,5 +1,6 @@
 <?php
 
+use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
 use app\models\TeacherSalary;
 use app\widgets\tailwind\CollapsibleFilter;
@@ -8,6 +9,12 @@ use app\widgets\tailwind\Icon;
 use app\widgets\tailwind\LinkPager;
 use app\widgets\tailwind\StatusBadge;
 use yii\helpers\Html;
+
+// Проверка: это только учитель (без админских прав)?
+$isOnlyTeacher = Yii::$app->user->can(OrganizationRoles::TEACHER)
+    && !Yii::$app->user->can(OrganizationRoles::ADMIN)
+    && !Yii::$app->user->can(OrganizationRoles::DIRECTOR)
+    && !Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR);
 
 /** @var yii\web\View $this */
 /** @var app\models\search\TeacherSalarySearch $searchModel */
@@ -29,6 +36,7 @@ if (!empty($searchModel->status)) $activeFilters++;
             <h1 class="text-2xl font-bold text-gray-900"><?= Html::encode($this->title) ?></h1>
             <p class="text-gray-500 mt-1">Расчёт и управление зарплатами преподавателей</p>
         </div>
+        <?php if (!$isOnlyTeacher): ?>
         <div class="flex gap-2">
             <a href="<?= OrganizationUrl::to(['salary/rates']) ?>" class="btn btn-secondary">
                 <?= Icon::show('settings', 'sm') ?>
@@ -38,6 +46,27 @@ if (!empty($searchModel->status)) $activeFilters++;
                 <?= Icon::show('calculator', 'sm') ?>
                 Рассчитать
             </a>
+        </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- Help Info Block -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-start gap-3">
+            <div class="flex-shrink-0">
+                <?= Icon::show('info', 'md', 'text-blue-500') ?>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="text-sm font-semibold text-blue-800 mb-2">Как работать с зарплатами</h4>
+                <div class="text-sm text-blue-700 space-y-1">
+                    <p>Для расчёта зарплаты выберите преподавателя и период, затем нажмите "Рассчитать". Система автоматически подсчитает оплату за проведённые уроки на основе настроенных ставок.</p>
+                    <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                        <span><strong>Черновик</strong> — можно редактировать бонусы и вычеты</span>
+                        <span><strong>Утверждена</strong> — готова к выплате</span>
+                        <span><strong>Выплачена</strong> — зарплата выдана</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -155,10 +155,40 @@ $this->params['breadcrumbs'][] = $this->title;
         <?php endif; ?>
     </div>
 
+    <!-- Priority Info -->
+    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <div class="flex items-start gap-3">
+            <div class="flex-shrink-0">
+                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div class="flex-1">
+                <h4 class="text-sm font-semibold text-amber-800 mb-2">Приоритет применения ставок</h4>
+                <div class="flex flex-wrap items-center gap-2 text-sm text-amber-700">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        1. Ставка для группы
+                    </span>
+                    <span class="text-amber-400">→</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        2. Ставка для предмета
+                    </span>
+                    <span class="text-amber-400">→</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        3. Общая ставка
+                    </span>
+                </div>
+                <p class="text-xs text-amber-600 mt-2">
+                    Если для урока найдена ставка для конкретной группы — она используется. Если нет — ищется ставка для предмета. Если и её нет — применяется общая ставка преподавателя.
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- Help Card -->
     <div class="card">
         <div class="card-header">
-            <h3 class="text-lg font-semibold text-gray-900">Справка по ставкам</h3>
+            <h3 class="text-lg font-semibold text-gray-900">Справка по типам ставок</h3>
         </div>
         <div class="card-body">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -39,6 +39,7 @@ class SalaryController extends Controller
             'access' => [
                 'class' => AccessControl::class,
                 'rules' => [
+                    // Директора: утверждение, выплата, удаление
                     [
                         'allow' => true,
                         'actions' => ['approve', 'pay', 'delete'],
@@ -48,6 +49,13 @@ class SalaryController extends Controller
                             OrganizationRoles::GENERAL_DIRECTOR,
                         ]
                     ],
+                    // Учителя: только просмотр своих зарплат
+                    [
+                        'allow' => true,
+                        'actions' => ['index', 'view'],
+                        'roles' => [OrganizationRoles::TEACHER],
+                    ],
+                    // Админы и директора: полный доступ (кроме approve/pay/delete для админов)
                     [
                         'allow' => true,
                         'roles' => [
@@ -57,6 +65,7 @@ class SalaryController extends Controller
                             OrganizationRoles::GENERAL_DIRECTOR,
                         ]
                     ],
+                    // Гости: запрет
                     [
                         'allow' => false,
                         'roles' => ['?']
@@ -72,7 +81,18 @@ class SalaryController extends Controller
     public function actionIndex()
     {
         $searchModel = new TeacherSalarySearch();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+
+        // Для учителей показываем только их зарплаты
+        $params = Yii::$app->request->queryParams;
+        if (Yii::$app->user->can(OrganizationRoles::TEACHER)
+            && !Yii::$app->user->can(OrganizationRoles::ADMIN)
+            && !Yii::$app->user->can(OrganizationRoles::DIRECTOR)
+            && !Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR)
+        ) {
+            $params['TeacherSalarySearch']['teacher_id'] = Yii::$app->user->id;
+        }
+
+        $dataProvider = $searchModel->search($params);
 
         return $this->render('index', [
             'searchModel' => $searchModel,
@@ -86,6 +106,18 @@ class SalaryController extends Controller
     public function actionView($id)
     {
         $model = $this->findModel($id);
+
+        // Учитель может просматривать только свои зарплаты
+        if (Yii::$app->user->can(OrganizationRoles::TEACHER)
+            && !Yii::$app->user->can(OrganizationRoles::ADMIN)
+            && !Yii::$app->user->can(OrganizationRoles::DIRECTOR)
+            && !Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR)
+        ) {
+            if ($model->teacher_id != Yii::$app->user->id) {
+                throw new \yii\web\ForbiddenHttpException('Вы можете просматривать только свои зарплаты');
+            }
+        }
+
         $details = $model->salaryDetails;
 
         return $this->render('view', [

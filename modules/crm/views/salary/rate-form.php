@@ -192,6 +192,27 @@ $groups = Group::find()
                     </div>
                 </div>
             </div>
+
+            <!-- Examples Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-lg font-semibold text-gray-900">Примеры расчёта</h3>
+                </div>
+                <div class="card-body space-y-4">
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <div class="text-sm font-medium text-gray-700">За ученика (500 ₸)</div>
+                        <div class="text-xs text-gray-500 mt-1">5 учеников × 500 ₸ = <strong>2 500 ₸</strong> за урок</div>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <div class="text-sm font-medium text-gray-700">За урок (3 000 ₸)</div>
+                        <div class="text-xs text-gray-500 mt-1">Фикс <strong>3 000 ₸</strong> независимо от учеников</div>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <div class="text-sm font-medium text-gray-700">Процент (30%)</div>
+                        <div class="text-xs text-gray-500 mt-1">30% от 10 000 ₸ = <strong>3 000 ₸</strong></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

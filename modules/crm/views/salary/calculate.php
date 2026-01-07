@@ -148,6 +148,24 @@ $periods = [
                     </ol>
                 </div>
             </div>
+
+            <!-- Example Card -->
+            <div class="card bg-green-50 border-green-200">
+                <div class="card-header border-green-200">
+                    <h3 class="text-lg font-semibold text-green-800">Пример расчёта</h3>
+                </div>
+                <div class="card-body">
+                    <div class="text-sm text-green-700 space-y-2">
+                        <p><strong>Дано:</strong> ставка 500 ₸/ученик, 10 уроков за месяц</p>
+                        <p><strong>Посещаемость:</strong> в среднем 5 учеников на уроке</p>
+                        <div class="bg-green-100 rounded p-2 mt-2">
+                            <p class="font-mono text-sm">
+                                10 уроков × 5 учеников × 500 ₸ = <strong>25 000 ₸</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

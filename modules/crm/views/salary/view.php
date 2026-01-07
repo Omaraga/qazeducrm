@@ -1,10 +1,16 @@
 <?php
 
+use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
 use app\models\TeacherSalary;
 use app\widgets\tailwind\Icon;
 use app\widgets\tailwind\StatusBadge;
 use yii\helpers\Html;
+
+// Проверка прав на утверждение/выплату/удаление (только директора)
+$canApprovePayDelete = Yii::$app->user->can(OrganizationRoles::DIRECTOR)
+    || Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR)
+    || Yii::$app->user->can('SUPER');
 
 /** @var yii\web\View $this */
 /** @var app\models\TeacherSalary $model */
@@ -74,7 +80,10 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div class="card-body">
                     <dl class="space-y-3">
                         <div class="flex justify-between">
-                            <dt class="text-sm text-gray-500">Базовая сумма</dt>
+                            <dt class="text-sm text-gray-500 flex items-center gap-1">
+                                Базовая сумма
+                                <span class="cursor-help" title="Сумма всех начислений за уроки (на основе ставок)"><?= Icon::show('info', 'xs', 'text-gray-400') ?></span>
+                            </dt>
                             <dd class="text-sm text-gray-900"><?= number_format($model->base_amount, 0, ',', ' ') ?> ₸</dd>
                         </div>
                         <?php if ($model->bonus_amount > 0): ?>
@@ -90,8 +99,11 @@ $this->params['breadcrumbs'][] = $this->title;
                         </div>
                         <?php endif; ?>
                         <div class="pt-3 border-t border-gray-200">
-                            <div class="flex justify-between">
-                                <dt class="text-base font-bold text-gray-900">ИТОГО</dt>
+                            <div class="flex justify-between items-center">
+                                <dt class="text-base font-bold text-gray-900 flex items-center gap-1">
+                                    ИТОГО
+                                    <span class="cursor-help" title="Базовая сумма + Бонусы - Вычеты"><?= Icon::show('info', 'xs', 'text-gray-400') ?></span>
+                                </dt>
                                 <dd class="text-xl font-bold text-primary-600"><?= $model->getFormattedTotal() ?></dd>
                             </div>
                         </div>
@@ -106,27 +118,29 @@ $this->params['breadcrumbs'][] = $this->title;
                 </div>
                 <div class="card-body space-y-2">
                     <?php if ($model->status == TeacherSalary::STATUS_DRAFT): ?>
-                    <a href="<?= OrganizationUrl::to(['salary/update', 'id' => $model->id]) ?>" class="btn btn-secondary w-full justify-center">
+                    <a href="<?= OrganizationUrl::to(['salary/update', 'id' => $model->id]) ?>" class="btn btn-secondary w-full justify-center" title="Добавить бонусы или вычеты">
                         <?= Icon::show('edit', 'sm') ?>
                         Редактировать
                     </a>
-                    <a href="<?= OrganizationUrl::to(['salary/recalculate', 'id' => $model->id]) ?>" class="btn btn-secondary w-full justify-center">
+                    <a href="<?= OrganizationUrl::to(['salary/recalculate', 'id' => $model->id]) ?>" class="btn btn-secondary w-full justify-center" title="Пересчитать базовую сумму по текущим урокам и ставкам">
                         <?= Icon::show('refresh', 'sm') ?>
                         Пересчитать
                     </a>
+                    <?php if ($canApprovePayDelete): ?>
                     <form action="<?= OrganizationUrl::to(['salary/approve', 'id' => $model->id]) ?>" method="post">
                         <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
-                        <button type="submit" class="btn btn-success w-full justify-center">
+                        <button type="submit" class="btn btn-success w-full justify-center" title="После утверждения редактирование невозможно">
                             <?= Icon::show('check', 'sm') ?>
                             Утвердить
                         </button>
                     </form>
                     <?php endif; ?>
+                    <?php endif; ?>
 
-                    <?php if ($model->status == TeacherSalary::STATUS_APPROVED): ?>
+                    <?php if ($model->status == TeacherSalary::STATUS_APPROVED && $canApprovePayDelete): ?>
                     <form action="<?= OrganizationUrl::to(['salary/pay', 'id' => $model->id]) ?>" method="post">
                         <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
-                        <button type="submit" class="btn btn-primary w-full justify-center">
+                        <button type="submit" class="btn btn-primary w-full justify-center" title="Зафиксировать факт выплаты зарплаты">
                             <?= Icon::show('wallet', 'sm') ?>
                             Отметить как выплаченную
                         </button>
@@ -144,7 +158,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     </div>
                     <?php endif; ?>
 
-                    <?php if ($model->status != TeacherSalary::STATUS_PAID): ?>
+                    <?php if ($model->status != TeacherSalary::STATUS_PAID && $canApprovePayDelete): ?>
                     <form action="<?= OrganizationUrl::to(['salary/delete', 'id' => $model->id]) ?>" method="post"
                           onsubmit="return confirm('Удалить эту зарплату?')">
                         <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
@@ -174,7 +188,17 @@ $this->params['breadcrumbs'][] = $this->title;
         <div class="lg:col-span-2">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="text-lg font-semibold text-gray-900">Детализация</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        Детализация
+                        <span class="text-sm font-normal text-gray-500">(<?= count($details) ?> уроков)</span>
+                    </h3>
+                </div>
+                <!-- Пояснение к таблице -->
+                <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
+                    <p class="text-xs text-gray-500">
+                        Для каждого урока показано: количество учеников с оплаченной посещаемостью, применённая ставка и итоговая сумма.
+                        Ставка выбирается автоматически по приоритету: сначала для группы, затем для предмета, затем общая.
+                    </p>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">

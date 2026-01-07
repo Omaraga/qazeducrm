@@ -87,7 +87,9 @@
       "Bash(CSRF=\"JdsP0GNUtGfr-5g34P8PnByhdYq-Y-XUlKw7RetAU81z6mykTiPmLqKvzl7Yr2L_fZMyxu4tku3y1U0R2y1jqw==\" curl -s -c \"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\cookies.txt\" -b \"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\cookies.txt\"  -X POST \"http://localhost/qazeducrm/web/login\"  -d \"_csrf=$CSRF&LoginForm%5Busername%5D=admin%40qazedu.kz&LoginForm%5Bpassword%5D=123456&LoginForm%5BrememberMe%5D=0\"  -w \"\\\\nHTTP Code: %{http_code}\\\\nRedirect: %{redirect_url}\\\\n\")",
       "Bash(true curl -s -c \"C:/xampp8/htdocs/qazeducrm/cookies.txt\" \"http://localhost/qazeducrm/web/login\")",
       "Bash(CSRF=\"6SZ9TCBDO3UKYJhhLXD1sv2R-OZl20YqMDce1I45DrmHRUsvdQJrEX0kyTJ6L43LjfTIgzKUd1hFaEjku2lC2g==\")",
-      "Bash(CSRF=\"Apv6bRbiHx0DHlzyCIHK1IaRlUhi9S4HjJcolQbfGUxTopI_Ra5renl4JqVK6LuesNzSGCWCG3PV5WnBSr1fYQ==\")"
+      "Bash(CSRF=\"Apv6bRbiHx0DHlzyCIHK1IaRlUhi9S4HjJcolQbfGUxTopI_Ra5renl4JqVK6LuesNzSGCWCG3PV5WnBSr1fYQ==\")",
+      "Bash(CSRF=\"fDm1Yq-O8plCEwGAmuvg15TW2zxlfkbR6NqZVD96omQIXeA67r-K6xEkb7DVh6-99o6MfTU6dpWRt_gdakvgCg==\")",
+      "Bash(CSRF=\"-Z1EnTTRzNhFUsUTG2xHrf_Cr_xwJ-VwtH3mxkB1SLKMq3GqWZS5iC9jjn91KyvPuaT-txtSky_bM7mgBhcO_w==\")"
     ]
   }
 }
