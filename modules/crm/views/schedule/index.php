@@ -8,11 +8,13 @@ use app\widgets\tailwind\CollapsibleFilter;
 use app\widgets\tailwind\Icon;
 
 /** @var yii\web\View $this */
+/** @var array $initialData */
 
 $this->title = 'Расписание';
 $this->params['breadcrumbs'][] = $this->title;
 
-// URLs для JavaScript компонента
+// URLs и начальные данные для JavaScript компонента
+// settings и filters передаются сразу, чтобы избежать отдельных AJAX запросов
 $config = [
     'urls' => [
         'events' => OrganizationUrl::to(['schedule/events']),
@@ -26,6 +28,7 @@ $config = [
         'settings' => OrganizationUrl::to(['schedule/settings']),
         'saveSettings' => OrganizationUrl::to(['schedule/save-settings']),
     ],
+    'initialData' => $initialData ?? null,
 ];
 ?>
 
@@ -37,11 +40,11 @@ $config = [
             <p class="text-gray-500 mt-1">Управление занятиями</p>
         </div>
         <div class="flex gap-3">
-            <a href="<?= OrganizationUrl::to(['schedule/typical-schedule']) ?>" class="btn btn-outline">
-                <?= Icon::show('refresh') ?>
-                Типовое расписание
+            <a href="<?= OrganizationUrl::to(['/crm/schedule-template']) ?>" class="btn btn-outline" title="Управление шаблонами расписания">
+                <?= Icon::show('template') ?>
+                Шаблоны
             </a>
-            <button type="button" @click="openCreateModal(formatDate(currentDate), 9)" class="btn btn-primary">
+            <button type="button" @click="openCreateModal(currentDateStr, 9)" class="btn btn-primary" title="Создать новое занятие">
                 <?= Icon::show('plus') ?>
                 Добавить занятие
             </button>
@@ -55,7 +58,7 @@ $config = [
         <div>
             <label class="form-label mb-2">Группы</label>
             <div class="flex flex-wrap gap-2">
-                <template x-for="group in filterOptions.groups" :key="group.id">
+                <template x-for="group in filteredGroups" :key="group.id">
                     <button type="button"
                             class="filter-chip"
                             :class="{ 'active': isGroupSelected(group.id) }"
@@ -64,7 +67,7 @@ $config = [
                         <span x-text="group.code"></span>
                     </button>
                 </template>
-                <template x-if="filterOptions.groups.length === 0">
+                <template x-if="filteredGroups.length === 0">
                     <span class="text-sm text-gray-500">Нет групп</span>
                 </template>
             </div>
@@ -74,7 +77,7 @@ $config = [
         <div>
             <label class="form-label mb-2">Преподаватели</label>
             <div class="flex flex-wrap gap-2">
-                <template x-for="teacher in filterOptions.teachers" :key="teacher.id">
+                <template x-for="teacher in filteredTeachers" :key="teacher.id">
                     <button type="button"
                             class="filter-chip"
                             :class="{ 'active': isTeacherSelected(teacher.id) }"
@@ -82,7 +85,7 @@ $config = [
                         <span x-text="teacher.fio"></span>
                     </button>
                 </template>
-                <template x-if="filterOptions.teachers.length === 0">
+                <template x-if="filteredTeachers.length === 0">
                     <span class="text-sm text-gray-500">Нет преподавателей</span>
                 </template>
             </div>
@@ -155,14 +158,14 @@ $config = [
                             :class="{ 'active': dayViewMode === 'timeline' }"
                             @click="setDayViewMode('timeline')"
                             title="По времени">
-                        <?= Icon::show('clock', 'w-4 h-4') ?>
+                        <?= Icon::show('clock', 'sm') ?>
                     </button>
                     <button type="button"
                             class="view-mode-btn"
                             :class="{ 'active': dayViewMode === 'rooms' }"
                             @click="setDayViewMode('rooms')"
                             title="По кабинетам">
-                        <?= Icon::show('building-office', 'w-4 h-4') ?>
+                        <?= Icon::show('building-office', 'sm') ?>
                     </button>
                 </div>
 
@@ -170,19 +173,22 @@ $config = [
                     <button type="button"
                             class="view-mode-btn"
                             :class="{ 'active': viewMode === 'day' }"
-                            @click="setViewMode('day')">
+                            @click="setViewMode('day')"
+                            title="Показать расписание на день">
                         День
                     </button>
                     <button type="button"
                             class="view-mode-btn"
                             :class="{ 'active': viewMode === 'week' }"
-                            @click="setViewMode('week')">
+                            @click="setViewMode('week')"
+                            title="Показать расписание на неделю">
                         Неделя
                     </button>
                     <button type="button"
                             class="view-mode-btn"
                             :class="{ 'active': viewMode === 'month' }"
-                            @click="setViewMode('month')">
+                            @click="setViewMode('month')"
+                            title="Показать расписание на месяц">
                         Месяц
                     </button>
                 </div>
@@ -196,44 +202,83 @@ $config = [
                 <div class="spinner spinner-lg"></div>
             </div>
 
+            <!-- Empty state -->
+            <div x-show="!loading && events.length === 0 && filterOptions.groups.length > 0" class="text-center py-16">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                    <?= Icon::show('calendar', 'xl', 'text-gray-400') ?>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Нет занятий на выбранный период</h3>
+                <p class="text-gray-500 mb-6 max-w-md mx-auto">
+                    На выбранную дату занятия не запланированы.
+                    <span x-show="activeFiltersCount > 0">Попробуйте сбросить фильтры или выбрать другой период.</span>
+                </p>
+                <div class="flex justify-center gap-3">
+                    <button type="button" @click="openCreateModal(currentDateStr, 9)" class="btn btn-primary">
+                        <?= Icon::show('plus') ?>
+                        Добавить занятие
+                    </button>
+                    <button type="button" x-show="activeFiltersCount > 0" @click="clearFilters()" class="btn btn-secondary">
+                        Сбросить фильтры
+                    </button>
+                </div>
+            </div>
+
+            <!-- No groups state -->
+            <div x-show="!loading && filterOptions.groups.length === 0" class="text-center py-16">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                    <?= Icon::show('users', 'xl', 'text-gray-400') ?>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Нет групп</h3>
+                <p class="text-gray-500 mb-6 max-w-md mx-auto">
+                    Для создания расписания сначала добавьте группы учеников.
+                </p>
+                <a href="<?= OrganizationUrl::to(['/crm/group/create']) ?>" class="btn btn-primary">
+                    <?= Icon::show('plus') ?>
+                    Создать группу
+                </a>
+            </div>
+
             <!-- Day View - Timeline mode -->
             <template x-if="viewMode === 'day' && dayViewMode === 'timeline'">
-                <div class="calendar-grid calendar-grid-day">
-                    <!-- Header -->
-                    <div class="calendar-time-col"></div>
-                    <div class="calendar-header-day" :class="{ 'today': formatDate(currentDate) === formatDate(new Date()) }">
-                        <div class="calendar-header-day-name" x-text="daysOfWeek[currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1]"></div>
-                        <div class="calendar-header-day-num" :class="{ 'today': formatDate(currentDate) === formatDate(new Date()) }" x-text="currentDate.getDate()"></div>
-                    </div>
+                <div>
+                    <!-- Scrollable container with sticky header -->
+                    <div class="overflow-y-auto relative" style="max-height: 650px;">
+                        <!-- Header (sticky) -->
+                        <div class="calendar-grid calendar-grid-day sticky top-0 z-10 bg-white">
+                            <div class="calendar-time-col"></div>
+                            <div class="calendar-header-day" :class="{ 'today': currentDateStr === todayDateStr }">
+                                <div class="calendar-header-day-name" x-text="daysOfWeek[currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1]"></div>
+                                <div class="calendar-header-day-num" :class="{ 'today': currentDateStr === todayDateStr }" x-text="currentDate.getDate()"></div>
+                            </div>
+                        </div>
 
-                    <!-- Time slots -->
-                    <template x-for="slot in timeSlots" :key="slot.key">
-                        <div class="contents">
-                            <div class="calendar-time-col" x-text="slot.label"></div>
-                            <div class="calendar-time-slot calendar-time-slot-clickable"
-                                 :style="{ position: 'relative', minHeight: slotHeight + 'px' }"
-                                 :class="{
-                                     'calendar-today': formatDate(currentDate) === formatDate(new Date()),
-                                     'calendar-drop-target': isDropTarget(formatDate(currentDate), slot.hour, slot.minute)
-                                 }"
-                                 @click="openCreateModal(formatDate(currentDate), slot.hour, slot.minute)"
-                                 @dragover.prevent="onDragOver($event, formatDate(currentDate), slot.hour, slot.minute)"
-                                 @dragleave="onDragLeave()"
-                                 @drop="onDrop($event, formatDate(currentDate), slot.hour, slot.minute)">
-                                <!-- События с абсолютным позиционированием для отображения длительности -->
-                                <template x-for="event in getEventsStartingInSlot(formatDate(currentDate), slot.hour, slot.minute)" :key="event.id">
-                                    <div class="calendar-day-event"
-                                         :style="{
-                                             backgroundColor: event.color,
-                                             position: 'absolute',
-                                             top: getEventTopOffsetPx(event, slot.hour, slot.minute) + 'px',
-                                             height: getEventHeightPx(event) + 'px',
-                                             left: getEventLeftPercent(event, formatDate(currentDate)) + '%',
-                                             width: getEventWidthPercent(event, formatDate(currentDate)) + '%',
-                                             minWidth: '100px',
-                                             zIndex: getEventZIndex(event),
-                                             overflow: 'hidden'
+                        <!-- Линия текущего времени -->
+                        <div x-show="isTodayInView && isTimeLineVisible"
+                             class="current-time-line"
+                             :style="{ top: timeLinePosition + 'px', left: '60px' }">
+                            <div class="current-time-label" x-text="currentTimeFormatted"></div>
+                        </div>
+
+                        <!-- Time slots grid -->
+                        <div class="calendar-grid calendar-grid-day">
+                            <template x-for="slot in timeSlots" :key="slot.key">
+                                <div class="contents">
+                                    <div class="calendar-time-col" x-text="slot.label"></div>
+                                    <div class="calendar-time-slot calendar-time-slot-clickable"
+                                         :style="{ position: 'relative', minHeight: slotHeight + 'px' }"
+                                         :class="{
+                                             'calendar-today': currentDateStr === todayDateStr,
+                                             'calendar-drop-target': isDropTarget(currentDateStr, slot.hour, slot.minute)
                                          }"
+                                         @click="openCreateModal(currentDateStr, slot.hour, slot.minute)"
+                                         @dragover.prevent="onDragOver($event, currentDateStr, slot.hour, slot.minute)"
+                                         @dragleave="onDragLeave()"
+                                         @drop="onDrop($event, currentDateStr, slot.hour, slot.minute)">
+                                <!-- События с абсолютным позиционированием для отображения длительности -->
+                                <!-- ОПТИМИЗИРОВАНО: используем предрасчитанные стили из event._style -->
+                                <template x-for="event in getEventsStartingInSlot(currentDateStr, slot.hour, slot.minute)" :key="event.id">
+                                    <div class="calendar-day-event"
+                                         :style="'background-color:' + event.color + ';position:absolute;top:' + getEventTopOffsetPx(event, slot.hour, slot.minute) + 'px;height:' + (event._style?.height || 60) + 'px;left:' + (event._style?.left || 0) + '%;width:' + (event._style?.width || 99) + '%;min-width:100px;z-index:' + (event._style?.zIndex || 50) + ';overflow:hidden'"
                                          :title="event.title + ' - ' + event.teacher + '\n' + event.start_time + ' - ' + event.end_time"
                                          draggable="true"
                                          :class="{ 'calendar-event-dragging': isDragging(event.id) }"
@@ -241,7 +286,7 @@ $config = [
                                          @dragstart="onDragStart($event, event.id)"
                                          @dragend="onDragEnd()"
                                          @mouseenter="$event.currentTarget.style.zIndex = 200"
-                                         @mouseleave="$event.currentTarget.style.zIndex = getEventZIndex(event)">
+                                         @mouseleave="$event.currentTarget.style.zIndex = event._style?.zIndex || 50">
                                         <div class="calendar-day-event-title" x-text="event.title"></div>
                                         <div class="calendar-day-event-time" x-text="event.start_time + ' - ' + event.end_time"></div>
                                         <div class="calendar-day-event-teacher" x-text="event.teacher"></div>
@@ -250,54 +295,64 @@ $config = [
                             </div>
                         </div>
                     </template>
+                    </div>
                 </div>
             </template>
 
             <!-- Day View - Rooms mode -->
             <template x-if="viewMode === 'day' && dayViewMode === 'rooms'">
                 <div>
-                    <!-- Header row with rooms -->
-                    <div class="calendar-grid" :style="'grid-template-columns: 60px repeat(' + (filterOptions.rooms.length + 1) + ', 1fr)'">
-                        <div class="calendar-time-col"></div>
-                        <template x-for="room in filterOptions.rooms" :key="room.id">
-                            <div class="calendar-header-day">
-                                <div class="flex items-center justify-center gap-2">
-                                    <span class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: room.color }"></span>
-                                    <span class="calendar-header-day-name text-xs" x-text="room.code || room.name"></span>
+                    <!-- Scrollable container with sticky header -->
+                    <div class="overflow-y-auto relative" style="max-height: 650px;">
+                        <!-- Header row with rooms (sticky) -->
+                        <div class="calendar-grid sticky top-0 z-10 bg-white" :style="'grid-template-columns: 60px repeat(' + (displayedRooms.length + (filters.rooms.length === 0 ? 1 : 0)) + ', 1fr)'">
+                            <div class="calendar-time-col"></div>
+                            <template x-for="room in displayedRooms" :key="room.id">
+                                <div class="calendar-header-day calendar-room-header"
+                                     :class="{ 'calendar-room-hover': hoveredRoomId === room.id }"
+                                     @mouseenter="hoveredRoomId = room.id"
+                                     @mouseleave="hoveredRoomId = null">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: room.color }"></span>
+                                        <span class="calendar-header-day-name text-xs" x-text="room.code || room.name"></span>
+                                    </div>
                                 </div>
+                            </template>
+                            <!-- Column for events without room -->
+                            <div class="calendar-header-day"
+                                 x-show="filters.rooms.length === 0"
+                                 :class="{ 'calendar-room-hover': hoveredRoomId === 'none' }"
+                                 @mouseenter="hoveredRoomId = 'none'"
+                                 @mouseleave="hoveredRoomId = null">
+                                <div class="calendar-header-day-name text-xs text-gray-400">Без кабинета</div>
                             </div>
-                        </template>
-                        <!-- Column for events without room -->
-                        <div class="calendar-header-day">
-                            <div class="calendar-header-day-name text-xs text-gray-400">Без кабинета</div>
                         </div>
-                    </div>
 
-                    <!-- Time slots with rooms -->
-                    <div class="overflow-y-auto" style="max-height: 600px;">
+                        <!-- Time slots with rooms -->
+                        <!-- Линия текущего времени -->
+                        <div x-show="isTodayInView && isTimeLineVisible"
+                             class="current-time-line"
+                             :style="{ top: timeLinePosition + 'px' }">
+                            <div class="current-time-label" x-text="currentTimeFormatted"></div>
+                        </div>
                         <template x-for="slot in timeSlots" :key="slot.key">
-                            <div class="calendar-grid" :style="'grid-template-columns: 60px repeat(' + (filterOptions.rooms.length + 1) + ', 1fr)'">
+                            <div class="calendar-grid" :style="'grid-template-columns: 60px repeat(' + (displayedRooms.length + (filters.rooms.length === 0 ? 1 : 0)) + ', 1fr)'">
                                 <div class="calendar-time-col" x-text="slot.label"></div>
-                                <template x-for="room in filterOptions.rooms" :key="room.id + '-' + slot.key">
-                                    <div class="calendar-time-slot calendar-time-slot-clickable"
+                                <template x-for="room in displayedRooms" :key="room.id + '-' + slot.key">
+                                    <div class="calendar-time-slot calendar-time-slot-clickable calendar-room-cell"
                                          :style="{ position: 'relative', minHeight: slotHeight + 'px' }"
                                          :class="{
-                                             'calendar-drop-target': isDropTarget(formatDate(currentDate) + '-' + room.id, slot.hour, slot.minute)
+                                             'calendar-drop-target': isDropTarget(currentDateStr + '-' + room.id, slot.hour, slot.minute),
+                                             'calendar-room-hover': hoveredRoomId === room.id
                                          }"
-                                         @click="openCreateModal(formatDate(currentDate), slot.hour, slot.minute)">
+                                         @mouseenter="hoveredRoomId = room.id"
+                                         @mouseleave="hoveredRoomId = null"
+                                         @click="openCreateModal(currentDateStr, slot.hour, slot.minute, room.id)">
                                         <!-- События с абсолютным позиционированием -->
-                                        <template x-for="(event, idx) in getEventsStartingInRoomSlot(formatDate(currentDate), room.id, slot.hour, slot.minute)" :key="event.id">
+                                        <!-- ОПТИМИЗИРОВАНО: используем предрасчитанные стили из event._style -->
+                                        <template x-for="(event, idx) in getEventsStartingInRoomSlot(currentDateStr, room.id, slot.hour, slot.minute)" :key="event.id">
                                             <div class="calendar-event"
-                                                 :style="{
-                                                     backgroundColor: event.color,
-                                                     position: 'absolute',
-                                                     top: getEventTopOffsetPx(event, slot.hour, slot.minute) + 'px',
-                                                     height: getEventHeightPx(event) + 'px',
-                                                     left: '2px',
-                                                     right: '2px',
-                                                     zIndex: getEventZIndex(event),
-                                                     overflow: 'hidden'
-                                                 }"
+                                                 :style="'background-color:' + event.color + ';position:absolute;top:' + getEventTopOffsetPx(event, slot.hour, slot.minute) + 'px;height:' + (event._style?.height || 60) + 'px;left:2px;right:2px;z-index:' + (event._style?.zIndex || 50) + ';overflow:hidden'"
                                                  :title="event.title + '\n' + event.teacher + '\n' + event.start_time + ' - ' + event.end_time"
                                                  draggable="true"
                                                  :class="{ 'calendar-event-dragging': isDragging(event.id) }"
@@ -305,7 +360,7 @@ $config = [
                                                  @dragstart="onDragStart($event, event.id)"
                                                  @dragend="onDragEnd()"
                                                  @mouseenter="$event.currentTarget.style.zIndex = 200"
-                                                 @mouseleave="$event.currentTarget.style.zIndex = getEventZIndex(event)">
+                                                 @mouseleave="$event.currentTarget.style.zIndex = event._style?.zIndex || 50">
                                                 <div class="calendar-event-title" x-text="event.title"></div>
                                                 <div class="calendar-event-time" x-text="event.start_time + ' - ' + event.end_time"></div>
                                                 <div class="calendar-event-teacher text-[10px] opacity-80" x-text="event.teacher"></div>
@@ -314,22 +369,18 @@ $config = [
                                     </div>
                                 </template>
                                 <!-- Column for events without room -->
-                                <div class="calendar-time-slot calendar-time-slot-clickable bg-gray-50/50"
+                                <div x-show="filters.rooms.length === 0"
+                                     class="calendar-time-slot calendar-time-slot-clickable calendar-room-cell bg-gray-50/50"
                                      :style="{ position: 'relative', minHeight: slotHeight + 'px' }"
-                                     @click="openCreateModal(formatDate(currentDate), slot.hour, slot.minute)">
+                                     :class="{ 'calendar-room-hover': hoveredRoomId === 'none' }"
+                                     @mouseenter="hoveredRoomId = 'none'"
+                                     @mouseleave="hoveredRoomId = null"
+                                     @click="openCreateModal(currentDateStr, slot.hour, slot.minute, null)">
                                     <!-- События без комнаты с абсолютным позиционированием -->
-                                    <template x-for="(event, idx) in getEventsStartingWithoutRoom(formatDate(currentDate), slot.hour, slot.minute)" :key="event.id">
+                                    <!-- ОПТИМИЗИРОВАНО: используем предрасчитанные стили из event._style -->
+                                    <template x-for="(event, idx) in getEventsStartingWithoutRoom(currentDateStr, slot.hour, slot.minute)" :key="event.id">
                                         <div class="calendar-event"
-                                             :style="{
-                                                 backgroundColor: event.color,
-                                                 position: 'absolute',
-                                                 top: getEventTopOffsetPx(event, slot.hour, slot.minute) + 'px',
-                                                 height: getEventHeightPx(event) + 'px',
-                                                 left: '2px',
-                                                 right: '2px',
-                                                 zIndex: getEventZIndex(event),
-                                                 overflow: 'hidden'
-                                             }"
+                                             :style="'background-color:' + event.color + ';position:absolute;top:' + getEventTopOffsetPx(event, slot.hour, slot.minute) + 'px;height:' + (event._style?.height || 60) + 'px;left:2px;right:2px;z-index:' + (event._style?.zIndex || 50) + ';overflow:hidden'"
                                              :title="event.title + '\n' + event.teacher + '\n' + event.start_time + ' - ' + event.end_time"
                                              draggable="true"
                                              :class="{ 'calendar-event-dragging': isDragging(event.id) }"
@@ -337,7 +388,7 @@ $config = [
                                              @dragstart="onDragStart($event, event.id)"
                                              @dragend="onDragEnd()"
                                              @mouseenter="$event.currentTarget.style.zIndex = 200"
-                                             @mouseleave="$event.currentTarget.style.zIndex = getEventZIndex(event)">
+                                             @mouseleave="$event.currentTarget.style.zIndex = event._style?.zIndex || 50">
                                             <div class="calendar-event-title" x-text="event.title"></div>
                                             <div class="calendar-event-time" x-text="event.start_time + ' - ' + event.end_time"></div>
                                             <div class="calendar-event-teacher text-[10px] opacity-80" x-text="event.teacher"></div>
@@ -353,22 +404,33 @@ $config = [
             <!-- Week View -->
             <template x-if="viewMode === 'week'">
                 <div class="overflow-x-auto">
-                    <!-- Header row -->
-                    <div class="calendar-grid calendar-grid-week">
-                        <div class="calendar-time-col"></div>
-                        <template x-for="day in weekDays" :key="day.dateStr">
-                            <div class="calendar-header-day cursor-pointer hover:bg-primary-50 transition-colors"
-                                 :class="{ 'today': day.isToday }"
-                                 @click="goToDay(day.date)"
-                                 title="Показать расписание за этот день">
-                                <div class="calendar-header-day-name" x-text="day.dayName"></div>
-                                <div class="calendar-header-day-num" :class="{ 'today': day.isToday }" x-text="day.dayNum"></div>
-                            </div>
-                        </template>
-                    </div>
+                    <!-- Scrollable container with sticky header -->
+                    <div class="overflow-y-auto relative" style="max-height: 650px;">
+                        <!-- Header row (sticky) -->
+                        <div class="calendar-grid calendar-grid-week sticky top-0 z-10 bg-white">
+                            <div class="calendar-time-col"></div>
+                            <template x-for="day in weekDays" :key="day.dateStr">
+                                <div class="calendar-header-day cursor-pointer hover:bg-primary-50 transition-colors"
+                                     :class="{ 'today': day.isToday }"
+                                     @click="goToDay(day.date)"
+                                     title="Показать расписание за этот день">
+                                    <div class="calendar-header-day-name" x-text="day.dayName"></div>
+                                    <div class="calendar-header-day-num" :class="{ 'today': day.isToday }" x-text="day.dayNum"></div>
+                                </div>
+                            </template>
+                        </div>
 
-                    <!-- Time slots -->
-                    <div class="overflow-y-auto" style="max-height: 600px;">
+                        <!-- Time slots -->
+                        <!-- Линия текущего времени для недели -->
+                        <div x-show="isTodayInView && isTimeLineVisible && todayIndexInWeek >= 0"
+                             class="current-time-line current-time-line-week"
+                             :style="{
+                                 top: timeLinePosition + 'px',
+                                 left: 'calc(60px + ' + todayIndexInWeek + ' * (100% - 60px) / 7)',
+                                 width: 'calc((100% - 60px) / 7)'
+                             }">
+                            <div class="current-time-label" x-text="currentTimeFormatted"></div>
+                        </div>
                         <template x-for="slot in timeSlots" :key="slot.key">
                             <div class="calendar-grid calendar-grid-week">
                                 <div class="calendar-time-col" x-text="slot.label"></div>
@@ -384,29 +446,21 @@ $config = [
                                          @dragleave="onDragLeave()"
                                          @drop="onDrop($event, day.dateStr, slot.hour, slot.minute)">
                                         <!-- События с абсолютным позиционированием для отображения длительности -->
+                                        <!-- ОПТИМИЗИРОВАНО: используем предрасчитанные стили из event._style -->
                                         <template x-for="event in getEventsStartingInSlot(day.dateStr, slot.hour, slot.minute)" :key="event.id">
                                             <div class="calendar-event"
-                                                 :style="{
-                                                     backgroundColor: event.color,
-                                                     position: 'absolute',
-                                                     top: getEventTopOffsetPx(event, slot.hour, slot.minute) + 'px',
-                                                     height: getEventHeightPx(event) + 'px',
-                                                     left: getEventLeftPercent(event, day.dateStr) + '%',
-                                                     width: getEventWidthPercent(event, day.dateStr) + '%',
-                                                     minWidth: '40px',
-                                                     zIndex: getEventZIndex(event),
-                                                     overflow: 'hidden'
-                                                 }"
-                                                 :title="event.title + '\n' + event.teacher + '\n' + event.start_time + ' - ' + event.end_time"
+                                                 :style="'background-color:' + event.color + ';position:absolute;top:' + getEventTopOffsetPx(event, slot.hour, slot.minute) + 'px;height:' + (event._style?.height || 60) + 'px;left:' + (event._style?.left || 0) + '%;width:' + (event._style?.width || 99) + '%;min-width:40px;z-index:' + (event._style?.zIndex || 50) + ';overflow:hidden'"
+                                                 :title="event.title + '\n' + event.teacher + '\n' + event.start_time + ' - ' + event.end_time + (event.room ? '\n📍 ' + event.room : '')"
                                                  draggable="true"
                                                  :class="{ 'calendar-event-dragging': isDragging(event.id) }"
                                                  @click.stop="openViewModal(event.id)"
                                                  @dragstart="onDragStart($event, event.id)"
                                                  @dragend="onDragEnd()"
                                                  @mouseenter="$event.currentTarget.style.zIndex = 200"
-                                                 @mouseleave="$event.currentTarget.style.zIndex = getEventZIndex(event)">
+                                                 @mouseleave="$event.currentTarget.style.zIndex = event._style?.zIndex || 50">
                                                 <div class="calendar-event-title" x-text="event.title"></div>
                                                 <div class="calendar-event-time" x-text="event.start_time + '-' + event.end_time"></div>
+                                                <div x-show="event.room" class="calendar-event-room text-[10px] opacity-80 truncate" x-text="event.room"></div>
                                             </div>
                                         </template>
                                     </div>
@@ -444,10 +498,11 @@ $config = [
                                          x-text="day.dayNum"
                                          title="Показать расписание за этот день"></div>
                                     <template x-for="(event, index) in getEventsForDate(day.dateStr).slice(0, 3)" :key="event.id">
-                                        <div class="calendar-month-event"
+                                        <div class="calendar-month-event truncate"
                                              :style="{ backgroundColor: event.color }"
-                                             x-text="event.title"
+                                             :title="event.title + ' (' + event.start_time + '-' + event.end_time + ')' + '\n' + event.teacher + (event.room ? '\n📍 ' + event.room : '')"
                                              @click.stop="openViewModal(event.id)">
+                                            <span x-text="event.room ? event.title + ' • ' + event.room : event.title"></span>
                                         </div>
                                     </template>
                                     <template x-if="getEventsForDate(day.dateStr).length > 3">
@@ -467,11 +522,11 @@ $config = [
         <div class="card-body py-3">
             <div class="flex flex-wrap items-center gap-6 text-sm">
                 <div class="flex items-center gap-2">
-                    <?= Icon::show('check-circle', 'w-5 h-5 text-success-500') ?>
+                    <?= Icon::show('check-circle', 'md', 'text-success-500') ?>
                     <span class="text-gray-600">Посещение проставлено</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <?= Icon::show('clock', 'w-5 h-5 text-warning-500') ?>
+                    <?= Icon::show('clock', 'md', 'text-warning-500') ?>
                     <span class="text-gray-600">Ожидает заполнения</span>
                 </div>
             </div>
@@ -497,7 +552,7 @@ $config = [
     <?php Modal::begin(['id' => 'delete-lesson-modal', 'title' => 'Удаление занятия']); ?>
     <div class="text-center py-4">
         <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-danger-100 flex items-center justify-center">
-            <?= Icon::show('trash', 'w-8 h-8 text-danger-600') ?>
+            <?= Icon::show('trash', 'xl', 'text-danger-600') ?>
         </div>
         <h3 class="text-lg font-medium text-gray-900 mb-2">Удалить занятие?</h3>
         <p class="text-gray-500 mb-6">Это действие нельзя отменить.</p>
@@ -511,4 +566,134 @@ $config = [
         </div>
     </div>
     <?php Modal::end(); ?>
+
+    <!-- Onboarding Modal -->
+    <div x-data="{
+        showOnboarding: !localStorage.getItem('schedule_onboarding_completed'),
+        currentStep: 1,
+        totalSteps: 4,
+        completeOnboarding() {
+            localStorage.setItem('schedule_onboarding_completed', 'true');
+            this.showOnboarding = false;
+        },
+        nextStep() {
+            if (this.currentStep < this.totalSteps) {
+                this.currentStep++;
+            } else {
+                this.completeOnboarding();
+            }
+        },
+        skipOnboarding() {
+            this.completeOnboarding();
+        }
+    }">
+        <!-- Onboarding Overlay -->
+        <div x-show="showOnboarding"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+             style="z-index: 9999;"
+             @click.self="skipOnboarding()">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 style="z-index: 10000;">
+
+                <!-- Progress bar -->
+                <div class="h-1.5 bg-gray-100 rounded-t-2xl overflow-hidden">
+                    <div class="h-full bg-primary-500 transition-all duration-300"
+                         :style="{ width: (currentStep / totalSteps * 100) + '%' }"></div>
+                </div>
+
+                <!-- Step 1: Welcome -->
+                <div x-show="currentStep === 1" class="text-center" style="padding: 40px 32px 24px 32px;">
+                    <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-primary-100 flex items-center justify-center">
+                        <svg class="w-10 h-10 text-primary-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Добро пожаловать в Расписание!</h2>
+                    <p class="text-gray-500 leading-relaxed">
+                        Здесь вы можете планировать занятия, отслеживать загруженность преподавателей и кабинетов.
+                        Давайте познакомимся с основными возможностями.
+                    </p>
+                </div>
+
+                <!-- Step 2: Creating lessons -->
+                <div x-show="currentStep === 2" class="text-center" style="padding: 40px 32px 24px 32px;">
+                    <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-success-100 flex items-center justify-center">
+                        <svg class="w-10 h-10 text-success-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Создание занятия</h2>
+                    <p class="text-gray-500 leading-relaxed">
+                        Кликните на <strong class="text-gray-700">пустое место в календаре</strong> или нажмите кнопку
+                        <strong class="text-gray-700">«Добавить занятие»</strong> для создания нового занятия.
+                        Вы также можете перетаскивать занятия для изменения времени.
+                    </p>
+                </div>
+
+                <!-- Step 3: Templates -->
+                <div x-show="currentStep === 3" class="text-center" style="padding: 40px 32px 24px 32px;">
+                    <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-warning-100 flex items-center justify-center">
+                        <svg class="w-10 h-10 text-warning-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Шаблоны расписания</h2>
+                    <p class="text-gray-500 leading-relaxed">
+                        Используйте <strong class="text-gray-700">Шаблоны</strong> для быстрого создания расписания на неделю или месяц.
+                        <strong class="text-gray-700">Типовое расписание</strong> позволяет генерировать занятия автоматически.
+                    </p>
+                </div>
+
+                <!-- Step 4: Complete -->
+                <div x-show="currentStep === 4" class="text-center" style="padding: 40px 32px 24px 32px;">
+                    <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-primary-100 flex items-center justify-center">
+                        <svg class="w-10 h-10 text-primary-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Готово!</h2>
+                    <p class="text-gray-500 leading-relaxed">
+                        Теперь вы готовы работать с расписанием.
+                        При необходимости используйте фильтры для поиска нужных занятий.
+                    </p>
+                </div>
+
+                <!-- Footer -->
+                <div class="flex items-center justify-between" style="padding: 24px 32px 32px 32px;">
+                    <button type="button"
+                            @click="skipOnboarding()"
+                            class="text-sm text-gray-500 hover:text-gray-700 transition-colors cursor-pointer">
+                        Пропустить
+                    </button>
+
+                    <!-- Step indicators -->
+                    <div class="flex gap-2">
+                        <template x-for="step in totalSteps" :key="step">
+                            <div class="w-2 h-2 rounded-full transition-colors cursor-pointer"
+                                 @click="currentStep = step"
+                                 :class="step <= currentStep ? 'bg-primary-500' : 'bg-gray-300'"></div>
+                        </template>
+                    </div>
+
+                    <button type="button"
+                            @click="nextStep()"
+                            class="btn btn-primary">
+                        <span x-text="currentStep === totalSteps ? 'Начать работу' : 'Далее'"></span>
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

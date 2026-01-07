@@ -31,11 +31,6 @@ class LandingController extends Controller
      */
     public function actionIndex()
     {
-        // Если пользователь авторизован, перенаправляем в CRM
-        if (!Yii::$app->user->isGuest) {
-            return $this->redirect(['/site/index']);
-        }
-
         $plans = SaasPlan::find()
             ->where(['is_active' => 1])
             ->orderBy(['sort_order' => SORT_ASC])

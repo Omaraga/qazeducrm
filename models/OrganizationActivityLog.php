@@ -60,6 +60,8 @@ class OrganizationActivityLog extends ActiveRecord
     const ACTION_BRANCH_DELETED = 'branch_deleted';
     const ACTION_LOGIN = 'login';
     const ACTION_LOGOUT = 'logout';
+    const ACTION_IMPERSONATE_START = 'impersonate_start';
+    const ACTION_IMPERSONATE_END = 'impersonate_end';
 
     // CRM действия
     const ACTION_PUPIL_CREATED = 'pupil_created';
@@ -191,6 +193,8 @@ class OrganizationActivityLog extends ActiveRecord
             // Авторизация
             self::ACTION_LOGIN => Yii::t('main', 'Вход'),
             self::ACTION_LOGOUT => Yii::t('main', 'Выход'),
+            self::ACTION_IMPERSONATE_START => Yii::t('main', 'Вход под пользователем'),
+            self::ACTION_IMPERSONATE_END => Yii::t('main', 'Выход из сессии пользователя'),
             // CRM
             self::ACTION_PUPIL_CREATED => Yii::t('main', 'Создан ученик'),
             self::ACTION_PUPIL_UPDATED => Yii::t('main', 'Обновлён ученик'),
@@ -214,6 +218,17 @@ class OrganizationActivityLog extends ActiveRecord
 
     /**
      * Записать лог
+     *
+     * @param int $organizationId ID организации
+     * @param string $action Действие
+     * @param string $category Категория
+     * @param string|null $description Описание
+     * @param mixed $oldValue Старое значение
+     * @param mixed $newValue Новое значение
+     * @param int|null $userId ID пользователя (если null - определяется автоматически)
+     * @param string|null $userType Тип пользователя (если null - определяется автоматически)
+     * @param array|null $metadata Дополнительные метаданные
+     * @return bool
      */
     public static function log(
         int $organizationId,
@@ -222,6 +237,8 @@ class OrganizationActivityLog extends ActiveRecord
         ?string $description = null,
         $oldValue = null,
         $newValue = null,
+        ?int $userId = null,
+        ?string $userType = null,
         ?array $metadata = null
     ): bool {
         $log = new self();
@@ -234,7 +251,10 @@ class OrganizationActivityLog extends ActiveRecord
         $log->metadata = $metadata ? json_encode($metadata) : null;
 
         // Определяем пользователя
-        if (!Yii::$app->request->isConsoleRequest && !Yii::$app->user->isGuest) {
+        if ($userId !== null) {
+            $log->user_id = $userId;
+            $log->user_type = $userType ?? self::USER_TYPE_USER;
+        } elseif (!Yii::$app->request->isConsoleRequest && !Yii::$app->user->isGuest) {
             $log->user_id = Yii::$app->user->id;
             $log->user_type = Yii::$app->user->can('SUPER') ? self::USER_TYPE_SUPER_ADMIN : self::USER_TYPE_USER;
         } else {

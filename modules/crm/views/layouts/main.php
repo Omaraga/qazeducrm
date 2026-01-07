@@ -114,6 +114,28 @@ $menuConfig = [
 }">
 <?php $this->beginBody() ?>
 
+<?php // Панель режима имитации пользователя (impersonate) ?>
+<?php if (Yii::$app->has('impersonate') && Yii::$app->impersonate->isImpersonating()): ?>
+    <?php $targetUser = Yii::$app->impersonate->getTargetUser(); ?>
+    <div class="impersonate-bar" style="position: fixed; left: 0; right: 0; top: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 8px 16px; color: white; font-weight: 500; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); background: linear-gradient(90deg, #dc3545, #fd7e14);">
+        <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        <span>Вы вошли как: <strong><?= Html::encode($targetUser->fio ?? $targetUser->username ?? 'Пользователь') ?></strong></span>
+        <form action="<?= Url::to(['/impersonate/stop']) ?>" method="post" style="display: inline; margin: 0;">
+            <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
+            <button type="submit" style="display: inline-flex; align-items: center; padding: 6px 12px; background: white; color: #374151; font-size: 14px; font-weight: 500; border-radius: 6px; border: none; cursor: pointer;">
+                <svg style="width: 16px; height: 16px; margin-right: 4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                Вернуться к своему аккаунту
+            </button>
+        </form>
+    </div>
+    <style>
+        body { padding-top: 44px !important; }
+        aside.fixed { top: 44px !important; height: calc(100% - 44px) !important; }
+    </style>
+<?php endif; ?>
+
 <!-- Flash Messages to Toast (hidden, picked up by JS) -->
 <?php
 $flashTypes = ['success', 'error', 'warning', 'info', 'danger'];
@@ -223,11 +245,11 @@ endforeach;
            'lg:-translate-x-full': sidebarCollapsed
        }">
     <!-- Brand -->
-    <div class="flex items-center justify-between px-6 py-5 border-b border-gray-200">
-        <div class="flex items-center gap-3">
-            <span class="text-gray-900 font-bold text-xl">QazEdu</span>
-            <span class="bg-primary-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">CRM</span>
-        </div>
+    <div class="flex items-center justify-between px-4 py-4 border-b border-gray-200">
+        <a href="<?= Url::to(['/crm']) ?>" class="flex items-center gap-2">
+            <img src="/images/logo-text-dark.svg" alt="Qazaq Education" class="h-8">
+            <span class="text-white text-[10px] font-bold px-1.5 py-0.5 rounded" style="background: #FE8D00;">CRM</span>
+        </a>
         <!-- Collapse button (desktop only) -->
         <button @click="toggleSidebar()" class="hidden lg:flex p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors" title="Свернуть меню">
             <?= Icon::show('chevron-left', 'w-4 h-4') ?>

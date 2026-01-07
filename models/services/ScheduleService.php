@@ -133,16 +133,6 @@ class ScheduleService
     }
 
     /**
-     * Получить события типового расписания
-     *
-     * @return array
-     */
-    public static function getTypicalScheduleEvents(): array
-    {
-        return self::getEvents(TypicalSchedule::class, 'typical-schedule', true);
-    }
-
-    /**
      * Получить события уроков с фильтрацией
      *
      * @param string $start Начальная дата (Y-m-d)
@@ -196,24 +186,30 @@ class ScheduleService
 
         $events = $query->all();
 
+        // ОПТИМИЗИРОВАНО: минимальный набор полей для календаря
+        // Детальная информация загружается отдельно через getLessonDetails()
         foreach ($events as $event) {
-            $result[] = [
+            $item = [
                 'id' => (int)$event['id'],
-                'start' => strtotime($event['date'] . ' ' . $event['start_time']),
-                'end' => strtotime($event['date'] . ' ' . $event['end_time']),
+                'group_id' => (int)$event['group_id'],      // нужен для фильтрации групп в UI
+                'teacher_id' => (int)$event['teacher_id'],  // нужен для фильтрации преподавателей в UI
                 'date' => $event['date'],
-                'date_raw' => $event['date'], // для формы редактирования (input type="date")
                 'start_time' => substr($event['start_time'], 0, 5),
                 'end_time' => substr($event['end_time'], 0, 5),
                 'title' => $event['group_code'] . ' - ' . $event['group_name'],
                 'color' => $event['color'] ?: '#3b82f6',
                 'teacher' => $event['teacher_fio'],
-                'group_id' => (int)$event['group_id'],
-                'teacher_id' => (int)$event['teacher_id'],
-                'room_id' => $event['room_id'] ? (int)$event['room_id'] : null,
-                'room' => $event['room_name'] ? ($event['room_code'] ? $event['room_code'] . ' - ' . $event['room_name'] : $event['room_name']) : null,
-                'status' => (int)$event['status'],
             ];
+
+            // Добавляем room_id и room только если есть значение (экономия трафика)
+            if ($event['room_id']) {
+                $item['room_id'] = (int)$event['room_id'];
+                $item['room'] = $event['room_code']
+                    ? $event['room_code'] . ' - ' . $event['room_name']
+                    : $event['room_name'];
+            }
+
+            $result[] = $item;
         }
 
         return $result;
@@ -221,29 +217,29 @@ class ScheduleService
 
     /**
      * Получить группы с занятиями для фильтра
+     * ОПТИМИЗИРОВАНО: один запрос с EXISTS вместо двух отдельных
      *
      * @return array [{id, code, name, color}]
      */
     public static function getGroupsForFilter(): array
     {
-        // Получаем только группы, у которых есть занятия
-        $groupIdsWithLessons = Lesson::find()
-            ->select(['group_id'])
-            ->byOrganization()
-            ->notDeleted()
-            ->distinct()
-            ->column();
+        $orgId = Organizations::getCurrentOrganizationId();
 
-        if (empty($groupIdsWithLessons)) {
-            return [];
-        }
-
+        // Один запрос с EXISTS subquery вместо двух отдельных запросов
         $groups = Group::find()
-            ->select(['id', 'code', 'name', 'color'])
-            ->where(['id' => $groupIdsWithLessons])
-            ->byOrganization()
-            ->notDeleted()
-            ->orderBy('code ASC')
+            ->select(['group.id', 'group.code', 'group.name', 'group.color'])
+            ->where(['group.organization_id' => $orgId])
+            ->andWhere(['!=', 'group.is_deleted', 1])
+            ->andWhere([
+                'exists',
+                Lesson::find()
+                    ->select([new \yii\db\Expression('1')])
+                    ->where('lesson.group_id = group.id')
+                    ->andWhere(['lesson.organization_id' => $orgId])
+                    ->andWhere(['!=', 'lesson.is_deleted', 1])
+                    ->limit(1)
+            ])
+            ->orderBy('group.code ASC')
             ->asArray()
             ->all();
 
@@ -259,19 +255,50 @@ class ScheduleService
 
     /**
      * Получить всех учителей для фильтра
+     * ОПТИМИЗИРОВАНО: используем asArray() вместо загрузки полных моделей
      *
      * @return array [{id, fio}]
      */
     public static function getTeachersForFilter(): array
     {
-        $teachers = Organizations::getOrganizationTeachers();
+        $teachers = User::find()
+            ->select(['user.id', 'user.fio'])
+            ->innerJoinWith(['currentUserOrganizations' => function ($q) {
+                $q->andWhere(['<>', 'user_organization.is_deleted', 1])
+                    ->andWhere(['user_organization.role' => \app\helpers\OrganizationRoles::TEACHER]);
+            }])
+            ->orderBy('user.fio ASC')
+            ->asArray()
+            ->all();
 
         return array_map(function ($teacher) {
             return [
-                'id' => (int)$teacher->id,
-                'fio' => $teacher->fio,
+                'id' => (int)$teacher['id'],
+                'fio' => $teacher['fio'],
             ];
         }, $teachers);
+    }
+
+    /**
+     * Получить связи преподаватель-группа для зависимых фильтров
+     *
+     * @return array [{teacher_id, group_id}]
+     */
+    public static function getTeacherGroupRelations(): array
+    {
+        $relations = TeacherGroup::find()
+            ->select(['related_id as teacher_id', 'target_id as group_id'])
+            ->byOrganization()
+            ->notDeleted()
+            ->asArray()
+            ->all();
+
+        return array_map(function ($rel) {
+            return [
+                'teacher_id' => (int)$rel['teacher_id'],
+                'group_id' => (int)$rel['group_id'],
+            ];
+        }, $relations);
     }
 
     /**
@@ -386,244 +413,6 @@ class ScheduleService
         $lesson->week = date('w', strtotime($newDate));
 
         return $lesson->save(false);
-    }
-
-    /**
-     * Получить типовое расписание для календаря
-     *
-     * @return array
-     */
-    public static function getTypicalScheduleEventsForCalendar(): array
-    {
-        $result = [];
-
-        $schedules = TypicalSchedule::find()
-            ->with(['group', 'teacher', 'room'])
-            ->byOrganization()
-            ->notDeleted()
-            ->orderBy('week ASC, start_time ASC')
-            ->all();
-
-        $daysOfWeek = [
-            1 => 'Понедельник',
-            2 => 'Вторник',
-            3 => 'Среда',
-            4 => 'Четверг',
-            5 => 'Пятница',
-            6 => 'Суббота',
-            7 => 'Воскресенье',
-        ];
-
-        foreach ($schedules as $schedule) {
-            $result[] = [
-                'id' => $schedule->id,
-                'week' => (int)$schedule->week,
-                'day_name' => $daysOfWeek[$schedule->week] ?? '',
-                'start_time' => substr($schedule->start_time, 0, 5),
-                'end_time' => substr($schedule->end_time, 0, 5),
-                'group_id' => $schedule->group_id,
-                'group_code' => $schedule->group->code ?? '',
-                'group_name' => $schedule->group->name ?? '',
-                'color' => $schedule->group->color ?? '#3b82f6',
-                'teacher_id' => $schedule->teacher_id,
-                'teacher_fio' => $schedule->teacher->fio ?? '',
-                'room_id' => $schedule->room_id,
-                'room_name' => $schedule->room ? ($schedule->room->code ? $schedule->room->code . ' - ' . $schedule->room->name : $schedule->room->name) : null,
-            ];
-        }
-
-        return $result;
-    }
-
-    /**
-     * Получить предпросмотр генерируемого расписания из типового
-     *
-     * @param string $dateStart Начальная дата (d.m.Y или Y-m-d)
-     * @param string $dateEnd Конечная дата (d.m.Y или Y-m-d)
-     * @return array
-     */
-    public static function getTypicalSchedulePreview(string $dateStart, string $dateEnd): array
-    {
-        // Преобразуем даты
-        if (strpos($dateStart, '.') !== false) {
-            $start = \DateTime::createFromFormat('d.m.Y', $dateStart);
-        } else {
-            $start = new \DateTime($dateStart);
-        }
-
-        if (strpos($dateEnd, '.') !== false) {
-            $end = \DateTime::createFromFormat('d.m.Y', $dateEnd);
-        } else {
-            $end = new \DateTime($dateEnd);
-        }
-
-        if (!$start || !$end) {
-            return ['success' => false, 'message' => 'Неверный формат дат'];
-        }
-
-        // Получаем типовое расписание
-        $schedules = TypicalSchedule::find()
-            ->with(['group', 'teacher', 'room'])
-            ->byOrganization()
-            ->notDeleted()
-            ->orderBy('week ASC, start_time ASC')
-            ->all();
-
-        // Группируем по дням недели
-        $byWeekDay = [];
-        foreach ($schedules as $schedule) {
-            $week = (int)$schedule->week;
-            if (!isset($byWeekDay[$week])) {
-                $byWeekDay[$week] = [];
-            }
-            $byWeekDay[$week][] = $schedule;
-        }
-
-        $lessons = [];
-        $conflicts = [];
-        $byDay = [];
-
-        // Итерируем по датам
-        $current = clone $start;
-        while ($current <= $end) {
-            $weekDay = (int)$current->format('N'); // 1-7
-            $dateStr = $current->format('Y-m-d');
-            $dateFormatted = $current->format('d.m.Y');
-
-            if (isset($byWeekDay[$weekDay])) {
-                foreach ($byWeekDay[$weekDay] as $schedule) {
-                    $lesson = [
-                        'date' => $dateStr,
-                        'date_formatted' => $dateFormatted,
-                        'day_name' => self::getDayName($weekDay),
-                        'start_time' => substr($schedule->start_time, 0, 5),
-                        'end_time' => substr($schedule->end_time, 0, 5),
-                        'group_id' => $schedule->group_id,
-                        'group_code' => $schedule->group->code ?? '',
-                        'group_name' => $schedule->group->name ?? '',
-                        'color' => $schedule->group->color ?? '#3b82f6',
-                        'teacher_id' => $schedule->teacher_id,
-                        'teacher_fio' => $schedule->teacher->fio ?? '',
-                        'room_id' => $schedule->room_id,
-                        'room_name' => $schedule->room ? ($schedule->room->code ? $schedule->room->code . ' - ' . $schedule->room->name : $schedule->room->name) : null,
-                        'typical_schedule_id' => $schedule->id,
-                    ];
-
-                    // Проверяем конфликты
-                    $lessonConflicts = ScheduleConflictService::checkAllConflicts(
-                        $schedule->teacher_id,
-                        $schedule->group_id,
-                        $schedule->room_id,
-                        $dateStr,
-                        $schedule->start_time,
-                        $schedule->end_time
-                    );
-
-                    if (!empty($lessonConflicts)) {
-                        $lesson['has_conflict'] = true;
-                        $lesson['conflicts'] = $lessonConflicts;
-                        $conflicts[] = [
-                            'lesson' => $lesson,
-                            'conflicts' => $lessonConflicts,
-                        ];
-                    } else {
-                        $lesson['has_conflict'] = false;
-                    }
-
-                    $lessons[] = $lesson;
-
-                    // Группируем по дням
-                    if (!isset($byDay[$dateStr])) {
-                        $byDay[$dateStr] = [
-                            'date' => $dateStr,
-                            'date_formatted' => $dateFormatted,
-                            'day_name' => self::getDayName($weekDay),
-                            'lessons' => [],
-                        ];
-                    }
-                    $byDay[$dateStr]['lessons'][] = $lesson;
-                }
-            }
-
-            $current->modify('+1 day');
-        }
-
-        return [
-            'success' => true,
-            'total' => count($lessons),
-            'total_conflicts' => count($conflicts),
-            'lessons' => $lessons,
-            'by_day' => array_values($byDay),
-            'conflicts' => $conflicts,
-        ];
-    }
-
-    /**
-     * Создать расписание из типового
-     *
-     * @param string $dateStart
-     * @param string $dateEnd
-     * @param bool $skipConflicts
-     * @return array
-     */
-    public static function generateFromTypicalSchedule(string $dateStart, string $dateEnd, bool $skipConflicts = false): array
-    {
-        $preview = self::getTypicalSchedulePreview($dateStart, $dateEnd);
-
-        if (!$preview['success']) {
-            return $preview;
-        }
-
-        $created = 0;
-        $skipped = 0;
-        $errors = [];
-
-        $transaction = \Yii::$app->db->beginTransaction();
-
-        try {
-            foreach ($preview['lessons'] as $lessonData) {
-                // Пропускаем занятия с конфликтами если нужно
-                if ($skipConflicts && !empty($lessonData['has_conflict'])) {
-                    $skipped++;
-                    continue;
-                }
-
-                $lesson = new Lesson();
-                $lesson->date = $lessonData['date'];
-                $lesson->group_id = $lessonData['group_id'];
-                $lesson->teacher_id = $lessonData['teacher_id'];
-                $lesson->room_id = $lessonData['room_id'] ?? null;
-                $lesson->start_time = $lessonData['start_time'];
-                $lesson->end_time = $lessonData['end_time'];
-                $lesson->typical_schedule_id = $lessonData['typical_schedule_id'];
-
-                if ($lesson->save(false)) {
-                    $created++;
-                } else {
-                    $errors[] = [
-                        'date' => $lessonData['date_formatted'],
-                        'group' => $lessonData['group_code'],
-                        'error' => implode(', ', $lesson->getFirstErrors()),
-                    ];
-                }
-            }
-
-            $transaction->commit();
-
-            return [
-                'success' => true,
-                'message' => "Создано {$created} занятий" . ($skipped > 0 ? ", пропущено {$skipped}" : ''),
-                'created' => $created,
-                'skipped' => $skipped,
-                'errors' => $errors,
-            ];
-        } catch (\Exception $e) {
-            $transaction->rollBack();
-            return [
-                'success' => false,
-                'message' => 'Ошибка при создании расписания: ' . $e->getMessage(),
-            ];
-        }
     }
 
     /**

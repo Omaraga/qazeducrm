@@ -4,12 +4,18 @@
 /** @var string $content */
 
 use app\assets\AppAsset;
+use app\helpers\SystemRoles;
+use app\models\Organizations;
 use yii\bootstrap4\Html;
 use yii\helpers\Url;
 
 AppAsset::register($this);
 
 $currentAction = Yii::$app->controller->action->id;
+$isGuest = Yii::$app->user->isGuest;
+$user = $isGuest ? null : Yii::$app->user->identity;
+$isSuperAdmin = $user && $user->system_role === SystemRoles::SUPER;
+$currentOrg = $isGuest ? null : Organizations::getCurrentOrganization();
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
@@ -125,6 +131,73 @@ $currentAction = Yii::$app->controller->action->id;
             color: var(--text-white);
             text-decoration: none;
             box-shadow: var(--shadow-md);
+        }
+        /* Authenticated user info */
+        .nav-user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .nav-user-info .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .nav-user-info .user-details {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+        .nav-user-info .user-name {
+            color: var(--dark-text);
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+        .nav-user-info .user-name:hover {
+            color: var(--primary);
+        }
+        .nav-user-info .user-org {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+        .btn-nav-logout {
+            color: var(--dark-text);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.85rem;
+            padding: 0.4rem 0.75rem;
+            border: 1px solid var(--dark-border);
+            border-radius: var(--radius);
+            transition: all var(--transition-fast);
+        }
+        .btn-nav-logout:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: white;
+            text-decoration: none;
+        }
+        .btn-nav-dashboard {
+            background: var(--primary);
+            color: var(--text-white);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: all var(--transition);
+        }
+        .btn-nav-dashboard:hover {
+            background: var(--primary-hover);
+            color: var(--text-white);
+            text-decoration: none;
         }
 
         /* ========================================
@@ -258,8 +331,30 @@ $currentAction = Yii::$app->controller->action->id;
             </div>
 
             <div class="nav-buttons">
-                <a href="<?= Url::to(['/login']) ?>" class="btn-nav-login">Войти</a>
-                <a href="<?= Url::to(['/register']) ?>" class="btn-nav-register">Попробовать бесплатно</a>
+                <?php if ($isGuest): ?>
+                    <a href="<?= Url::to(['/login']) ?>" class="btn-nav-login">Войти</a>
+                    <a href="<?= Url::to(['/register']) ?>" class="btn-nav-register">Попробовать бесплатно</a>
+                <?php else: ?>
+                    <div class="nav-user-info">
+                        <div class="user-avatar">
+                            <?= mb_substr($user->fio ?? $user->username ?? 'U', 0, 1) ?>
+                        </div>
+                        <div class="user-details">
+                            <a href="<?= Url::to($isSuperAdmin ? ['/superadmin'] : ['/crm']) ?>" class="user-name">
+                                <?= Html::encode($user->fio ?? $user->username ?? 'Пользователь') ?>
+                            </a>
+                            <?php if ($isSuperAdmin): ?>
+                                <span class="user-org">Супер-администратор</span>
+                            <?php elseif ($currentOrg): ?>
+                                <span class="user-org"><?= Html::encode($currentOrg->name) ?></span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <a href="<?= Url::to($isSuperAdmin ? ['/superadmin'] : ['/crm']) ?>" class="btn-nav-dashboard">
+                        <?= $isSuperAdmin ? 'Админка' : 'CRM' ?>
+                    </a>
+                    <a href="<?= Url::to(['/logout']) ?>" class="btn-nav-logout" data-method="post">Выйти</a>
+                <?php endif; ?>
             </div>
         </div>
     </div>

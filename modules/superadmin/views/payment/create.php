@@ -92,7 +92,19 @@ $this->title = 'Создание платежа';
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <?= $form->field($model, 'discount_percent', [
+                            'template' => '{label}<div class="input-group">{input}<div class="input-group-append"><span class="input-group-text">%</span></div></div>{error}{hint}',
+                        ])->textInput([
+                            'type' => 'number',
+                            'step' => '0.01',
+                            'min' => '0',
+                            'max' => '100',
+                            'class' => 'form-control',
+                            'id' => 'discount-percent-input',
+                        ])->label('Скидка (%)') ?>
+                    </div>
+                    <div class="col-md-4">
                         <?= $form->field($model, 'discount_type')->dropDownList(
                             OrganizationPayment::getDiscountTypeList(),
                             [
@@ -101,7 +113,7 @@ $this->title = 'Создание платежа';
                             ]
                         )->label('Тип скидки') ?>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <?= $form->field($model, 'payment_method')->dropDownList([
                             'kaspi' => 'Kaspi',
                             'bank_transfer' => 'Банковский перевод',
@@ -112,6 +124,15 @@ $this->title = 'Создание платежа';
                             'class' => 'form-control',
                             'prompt' => '-- Способ оплаты --',
                         ])->label('Способ оплаты') ?>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <?= $form->field($model, 'discount_reason')->textInput([
+                            'class' => 'form-control',
+                            'placeholder' => 'Причина скидки (например: скидка филиала, постоянный клиент и т.д.)',
+                        ])->label('Причина скидки') ?>
                     </div>
                 </div>
 
@@ -199,3 +220,30 @@ $this->title = 'Создание платежа';
         <?php endif; ?>
     </div>
 </div>
+
+<?php
+$js = <<<JS
+// Автоматический расчёт суммы со скидкой
+function calculateDiscountedAmount() {
+    var originalAmount = parseFloat($('#organizationpayment-original_amount').val()) || 0;
+    var discountPercent = parseFloat($('#discount-percent-input').val()) || 0;
+
+    if (originalAmount > 0 && discountPercent > 0) {
+        var discount = originalAmount * (discountPercent / 100);
+        var finalAmount = Math.round(originalAmount - discount);
+        $('#organizationpayment-amount').val(finalAmount);
+    }
+}
+
+// При изменении процента скидки - пересчитать итоговую сумму
+$('#discount-percent-input').on('input', function() {
+    calculateDiscountedAmount();
+});
+
+// При изменении суммы до скидки - пересчитать итоговую сумму
+$('#organizationpayment-original_amount').on('input', function() {
+    calculateDiscountedAmount();
+});
+JS;
+$this->registerJs($js);
+?>

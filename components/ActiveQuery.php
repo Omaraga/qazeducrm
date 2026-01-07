@@ -22,8 +22,11 @@ class ActiveQuery extends \yii\db\ActiveQuery
             return $this;
         }
 
+        // Определяем колонку с учётом alias (если alias не задан, используем просто имя колонки)
+        $column = $this->alias ? "{$this->alias}.organization_id" : 'organization_id';
+
         return $this->andWhere([
-            "$this->alias.organization_id" => $organization_id ?: $currentOrgId
+            $column => $organization_id ?: $currentOrgId
         ]);
     }
 
@@ -33,9 +36,11 @@ class ActiveQuery extends \yii\db\ActiveQuery
      */
     public function notDeleted($alias = null)
     {
-        if (in_array('is_deleted',(new $this->modelClass())->attributes())) {
+        if (in_array('is_deleted', (new $this->modelClass())->attributes())) {
+            // Определяем префикс таблицы (alias или пустая строка)
+            $prefix = $alias ? "{$alias}." : ($this->alias ? "{$this->alias}." : '');
             return $this->onCondition(
-                ($alias ? $alias.'.': $this->alias) . 'is_deleted != ' . ActiveRecord::DELETED
+                $prefix . 'is_deleted != ' . ActiveRecord::DELETED
             );
         }
         return $this;

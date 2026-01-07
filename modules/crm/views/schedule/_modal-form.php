@@ -28,7 +28,7 @@ $teachersUrl = OrganizationUrl::to(['schedule/teachers']);
       x-data="{
           groupId: <?= $isEdit ? "selectedEvent?.group_id || ''" : "''" ?>,
           teacherId: <?= $isEdit ? "selectedEvent?.teacher?.id || ''" : "''" ?>,
-          roomId: <?= $isEdit ? "selectedEvent?.room_id || ''" : "''" ?>,
+          roomId: <?= $isEdit ? "selectedEvent?.room_id || ''" : "selectedRoomId || ''" ?>,
           date: <?= $isEdit ? "selectedEvent?.date_raw || ''" : "selectedDate || ''" ?>,
           startTime: <?= $isEdit ? "selectedEvent?.start_time || ''" : "selectedHour ? (selectedHour.toString().padStart(2, '0') + ':' + (selectedMinute || 0).toString().padStart(2, '0')) : '09:00'" ?>,
           endTime: <?= $isEdit ? "selectedEvent?.end_time || ''" : "selectedHour ? ((selectedHour + 1).toString().padStart(2, '0') + ':' + (selectedMinute || 0).toString().padStart(2, '0')) : '10:00'" ?>,
@@ -72,6 +72,9 @@ $teachersUrl = OrganizationUrl::to(['schedule/teachers']);
                       this.endTime = (value + 1).toString().padStart(2, '0') + ':' + minute.toString().padStart(2, '0');
                       this.checkConflicts();
                   }
+              });
+              this.$watch('selectedRoomId', (value) => {
+                  this.roomId = value ? String(value) : '';
               });
               <?php endif; ?>
           },
@@ -125,7 +128,9 @@ $teachersUrl = OrganizationUrl::to(['schedule/teachers']);
               this._debounce = setTimeout(() => this.checkConflicts(), 300);
           }
       }"
-      @close-modal.window="if ($event.detail === '<?= $isEdit ? 'edit-lesson-modal' : 'create-lesson-modal' ?>') { initialized = false; }">
+      @close-modal.window="if ($event.detail === '<?= $isEdit ? 'edit-lesson-modal' : 'create-lesson-modal' ?>') { initialized = false; }"<?php if (!$isEdit): ?>
+
+      @open-modal.window="if ($event.detail === 'create-lesson-modal') { $nextTick(() => { roomId = selectedRoomId ? String(selectedRoomId) : ''; date = selectedDate || ''; if (selectedHour !== null) { const m = selectedMinute || 0; startTime = selectedHour.toString().padStart(2,'0') + ':' + m.toString().padStart(2,'0'); endTime = (selectedHour+1).toString().padStart(2,'0') + ':' + m.toString().padStart(2,'0'); } }); }"<?php endif; ?>>
 
     <!-- Предупреждения о конфликтах -->
     <div x-show="conflicts.length > 0" class="mb-4 p-3 bg-warning-50 border border-warning-200 rounded-lg">
@@ -158,6 +163,7 @@ $teachersUrl = OrganizationUrl::to(['schedule/teachers']);
                     </option>
                 <?php endforeach; ?>
             </select>
+            <p class="form-hint">Выберите группу, для которой планируется занятие</p>
         </div>
 
         <!-- Преподаватель -->
@@ -172,6 +178,7 @@ $teachersUrl = OrganizationUrl::to(['schedule/teachers']);
                     :disabled="!groupId">
                 <option value="">Выберите преподавателя</option>
             </select>
+            <p class="form-hint">Загружается автоматически при выборе группы</p>
         </div>
 
         <!-- Кабинет -->
@@ -188,6 +195,7 @@ $teachersUrl = OrganizationUrl::to(['schedule/teachers']);
                     </option>
                 <?php endforeach; ?>
             </select>
+            <p class="form-hint">Опционально. При выборе проверяется занятость кабинета</p>
         </div>
 
         <!-- Дата -->
@@ -199,6 +207,7 @@ $teachersUrl = OrganizationUrl::to(['schedule/teachers']);
                    required
                    x-model="date"
                    @change="onFieldChange()">
+            <p class="form-hint">Дата проведения занятия</p>
         </div>
 
         <!-- Время начала и окончания в одной строке -->
@@ -223,6 +232,7 @@ $teachersUrl = OrganizationUrl::to(['schedule/teachers']);
                            @change="onFieldChange()">
                 </div>
             </div>
+            <p class="form-hint">Время начала и окончания занятия (ЧЧ:ММ)</p>
         </div>
     </div>
 

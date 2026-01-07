@@ -49,6 +49,8 @@ class ActivityLogger
             $description,
             $oldValue,
             $newValue,
+            null,      // $userId - автоопределение
+            null,      // $userType - автоопределение
             $metadata
         );
     }

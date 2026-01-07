@@ -152,10 +152,10 @@ class MenuHelper
             [
                 'label' => 'Расписание',
                 'items' => [
-                    ['label' => 'Расписание', 'url' => OrganizationUrl::to(['schedule/index'])],
-                    ['label' => 'Типовое расписание', 'url' => OrganizationUrl::to(['typical-schedule/index'])],
+                    ['label' => 'Расписание', 'url' => OrganizationUrl::to(['/crm/schedule/index'])],
+                    ['label' => 'Шаблоны расписания', 'url' => OrganizationUrl::to(['/crm/schedule-template'])],
                 ],
-                'active' => in_array($controllerId, ['schedule', 'typical-schedule'])
+                'active' => in_array($controllerId, ['schedule', 'schedule-template'])
             ],
             [
                 'label' => 'Отчеты',

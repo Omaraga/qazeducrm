@@ -20,6 +20,11 @@ use app\models\ContactForm;
 class SiteController extends Controller
 {
     /**
+     * Layout для SiteController (landing, login, error pages)
+     */
+    public $layout = 'landing';
+
+    /**
      * {@inheritdoc}
      */
     public function behaviors()
@@ -53,6 +58,7 @@ class SiteController extends Controller
         return [
             'error' => [
                 'class' => 'yii\web\ErrorAction',
+                'layout' => 'error',
             ],
             'captcha' => [
                 'class' => 'yii\captcha\CaptchaAction',
@@ -84,8 +90,6 @@ class SiteController extends Controller
         if (!Yii::$app->user->isGuest) {
             return $this->redirect(['/crm']);
         }
-
-        $this->layout = 'guest';
 
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {

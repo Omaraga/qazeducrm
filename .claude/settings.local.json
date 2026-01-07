@@ -89,7 +89,12 @@
       "Bash(CSRF=\"6SZ9TCBDO3UKYJhhLXD1sv2R-OZl20YqMDce1I45DrmHRUsvdQJrEX0kyTJ6L43LjfTIgzKUd1hFaEjku2lC2g==\")",
       "Bash(CSRF=\"Apv6bRbiHx0DHlzyCIHK1IaRlUhi9S4HjJcolQbfGUxTopI_Ra5renl4JqVK6LuesNzSGCWCG3PV5WnBSr1fYQ==\")",
       "Bash(CSRF=\"fDm1Yq-O8plCEwGAmuvg15TW2zxlfkbR6NqZVD96omQIXeA67r-K6xEkb7DVh6-99o6MfTU6dpWRt_gdakvgCg==\")",
-      "Bash(CSRF=\"-Z1EnTTRzNhFUsUTG2xHrf_Cr_xwJ-VwtH3mxkB1SLKMq3GqWZS5iC9jjn91KyvPuaT-txtSky_bM7mgBhcO_w==\")"
+      "Bash(CSRF=\"-Z1EnTTRzNhFUsUTG2xHrf_Cr_xwJ-VwtH3mxkB1SLKMq3GqWZS5iC9jjn91KyvPuaT-txtSky_bM7mgBhcO_w==\")",
+      "Bash(CSRF=\"0S6ylAm0KHmPS0aElzNZL6tuW--LhXbZDxHO1Kb2DSW_dMunR-x6DskNIsvIUDZd-xQBvt70N5NJfYGLi5xYTg==\")",
+      "Bash(node -c:*)",
+      "Bash(CSRF=\"BhYpj-xeUi4CQOn52rHzu6JN1gQrflbKxBSTIB4knvFkJHq-jjBiSVYGnMud_Krx9wqsTGorZLOzYP8YZGDTmw==\")",
+      "Bash(CSRF=\"_ZEJSF_os4COy9bPRt0Jwl39dnoHLEI_ywDmNqc3yGbE2VZxDpjq8cmIpfYArlO6B8QOIzJHDHDyVLZQ126MBA==\")",
+      "Bash(/c/xampp8/mysql/bin/mysql:*)"
     ]
   }
 }

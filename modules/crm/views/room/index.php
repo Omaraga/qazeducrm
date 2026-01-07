@@ -45,14 +45,14 @@ $this->params['breadcrumbs'][] = $this->title;
                     <tr class="hover:bg-gray-50 cursor-move" data-id="<?= $model->id ?>">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center gap-2">
-                                <?= Icon::show('menu', 'w-4 h-4 text-gray-400 handle cursor-move') ?>
+                                <?= Icon::show('menu', 'sm', 'text-gray-400 handle cursor-move') ?>
                                 <span class="text-sm text-gray-500"><?= $index + 1 ?></span>
                             </div>
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color: <?= Html::encode($model->color) ?>20">
-                                    <?= Icon::show('building-office', 'w-4 h-4', ['style' => 'color: ' . Html::encode($model->color)]) ?>
+                                    <?= Icon::show('building-office', 'sm', '', ['style' => 'color: ' . Html::encode($model->color)]) ?>
                                 </div>
                                 <span class="text-sm font-medium text-gray-900"><?= Html::encode($model->name) ?></span>
                             </div>
@@ -67,7 +67,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <?php if ($model->capacity > 0): ?>
                                 <div class="flex items-center gap-1">
-                                    <?= Icon::show('users', 'w-4 h-4 text-gray-400') ?>
+                                    <?= Icon::show('users', 'sm', 'text-gray-400') ?>
                                     <?= $model->capacity ?> чел.
                                 </div>
                             <?php else: ?>
@@ -77,12 +77,12 @@ $this->params['breadcrumbs'][] = $this->title;
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                             <div class="flex items-center justify-end gap-2">
                                 <a href="<?= OrganizationUrl::to(['room/update', 'id' => $model->id]) ?>" class="btn btn-sm btn-secondary" title="Редактировать">
-                                    <?= Icon::show('pencil', 'w-4 h-4') ?>
+                                    <?= Icon::show('pencil', 'sm') ?>
                                 </a>
                                 <form action="<?= OrganizationUrl::to(['room/delete', 'id' => $model->id]) ?>" method="post" class="inline" onsubmit="return confirm('Удалить кабинет?')">
                                     <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
                                     <button type="submit" class="btn btn-sm btn-secondary text-danger-600 hover:text-danger-700" title="Удалить">
-                                        <?= Icon::show('trash', 'w-4 h-4') ?>
+                                        <?= Icon::show('trash', 'sm') ?>
                                     </button>
                                 </form>
                             </div>
@@ -92,7 +92,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     <?php if (empty($dataProvider->getModels())): ?>
                     <tr>
                         <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                            <?= Icon::show('building-office', 'mx-auto h-12 w-12 text-gray-400') ?>
+                            <?= Icon::show('building-office', 'xl', 'mx-auto text-gray-400') ?>
                             <p class="mt-2">Кабинеты не найдены</p>
                             <a href="<?= OrganizationUrl::to(['room/create']) ?>" class="btn btn-primary mt-4">
                                 Добавить первый кабинет

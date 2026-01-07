@@ -711,6 +711,71 @@
     @apply bg-primary-50/50;
   }
 
+  /* Scrollbar alignment fix */
+  .calendar-scroll-body {
+    scrollbar-gutter: stable;
+  }
+
+  /* Room column hover highlight */
+  .calendar-room-hover {
+    @apply bg-primary-50/70;
+  }
+
+  .calendar-room-header.calendar-room-hover {
+    @apply bg-primary-100;
+  }
+
+  .calendar-room-cell {
+    @apply transition-colors duration-150;
+  }
+
+  /* Current time line */
+  .current-time-line {
+    @apply absolute left-0 right-0 pointer-events-none;
+    z-index: 100;
+  }
+
+  .current-time-line::before {
+    content: '';
+    @apply absolute left-0 right-0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #ef4444 0%, #ef4444 100%);
+  }
+
+  .current-time-line::after {
+    content: '';
+    @apply absolute;
+    left: -4px;
+    top: -4px;
+    width: 10px;
+    height: 10px;
+    background-color: #ef4444;
+    border-radius: 50%;
+  }
+
+  .current-time-line-week::after {
+    left: -4px;
+  }
+
+  .current-time-line-day::after {
+    left: -4px;
+  }
+
+  .current-time-label {
+    @apply absolute text-xs font-medium text-red-500 bg-white px-1 rounded shadow-sm;
+    left: -48px;
+    top: -8px;
+    white-space: nowrap;
+  }
+
+  .current-time-line-week .current-time-label,
+  .current-time-line-day .current-time-label {
+    left: auto;
+    right: 100%;
+    margin-right: 4px;
+  }
+
   /* Calendar header (days) */
   .calendar-header-day {
     @apply p-2 text-center border-r border-b border-gray-200 bg-gray-50;

@@ -5,7 +5,6 @@ namespace app\modules\crm\controllers;
 use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
 use app\helpers\SystemRoles;
-use app\models\forms\TypicalLessonForm;
 use app\models\Lesson;
 use app\models\Organizations;
 use app\models\Room;
@@ -65,7 +64,25 @@ class ScheduleController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index', []);
+        $org = Organizations::getCurrentOrganization();
+
+        // Передаём settings и filters сразу в HTML, чтобы избежать отдельных AJAX запросов
+        $initialData = [
+            'settings' => [
+                'grid_interval' => $org ? (int)($org->schedule_grid_interval ?? 60) : 60,
+                'view_mode' => $org ? ($org->schedule_view_mode ?? 'week') : 'week',
+            ],
+            'filters' => [
+                'groups' => ScheduleService::getGroupsForFilter(),
+                'teachers' => ScheduleService::getTeachersForFilter(),
+                'rooms' => ScheduleService::getRoomsForFilter(),
+                'teacherGroups' => ScheduleService::getTeacherGroupRelations(),
+            ],
+        ];
+
+        return $this->render('index', [
+            'initialData' => $initialData,
+        ]);
     }
 
     /**
@@ -118,6 +135,7 @@ class ScheduleController extends Controller
             'groups' => ScheduleService::getGroupsForFilter(),
             'teachers' => ScheduleService::getTeachersForFilter(),
             'rooms' => ScheduleService::getRoomsForFilter(),
+            'teacherGroups' => ScheduleService::getTeacherGroupRelations(),
         ];
     }
 
@@ -320,79 +338,8 @@ class ScheduleController extends Controller
         ]);
     }
 
-    public function actionTypicalSchedule(){
-        $model = new TypicalLessonForm();
-        $model->loadDefault();
-        if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                \Yii::$app->session->setFlash('success', 'Расписание успешно создано');
-                return $this->redirect(OrganizationUrl::to(['schedule/index']));
-            }
-        }
-        return $this->render('typical-schedule', [
-            'model' => $model,
-        ]);
-    }
-
     /**
-     * AJAX: Получить события типового расписания для календаря
-     */
-    public function actionTypicalEvents()
-    {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-        return ScheduleService::getTypicalScheduleEventsForCalendar();
-    }
-
-    /**
-     * AJAX: Получить предпросмотр генерации из типового расписания
-     * POST: date_start, date_end
-     */
-    public function actionTypicalPreview()
-    {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-        if (!\Yii::$app->request->isAjax || !\Yii::$app->request->isPost) {
-            return ['success' => false, 'message' => 'Invalid request'];
-        }
-
-        $dateStart = \Yii::$app->request->post('date_start');
-        $dateEnd = \Yii::$app->request->post('date_end');
-
-        if (!$dateStart || !$dateEnd) {
-            return ['success' => false, 'message' => 'Укажите даты'];
-        }
-
-        return ScheduleService::getTypicalSchedulePreview($dateStart, $dateEnd);
-    }
-
-    /**
-     * AJAX: Создать расписание из типового
-     * POST: date_start, date_end, skip_conflicts
-     */
-    public function actionTypicalGenerate()
-    {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-        if (!\Yii::$app->request->isAjax || !\Yii::$app->request->isPost) {
-            return ['success' => false, 'message' => 'Invalid request'];
-        }
-
-        $dateStart = \Yii::$app->request->post('date_start');
-        $dateEnd = \Yii::$app->request->post('date_end');
-        $skipConflicts = \Yii::$app->request->post('skip_conflicts', false);
-
-        if (!$dateStart || !$dateEnd) {
-            return ['success' => false, 'message' => 'Укажите даты'];
-        }
-
-        $result = ScheduleService::generateFromTypicalSchedule($dateStart, $dateEnd, $skipConflicts);
-
-        return $result;
-    }
-
-    /**
-     * Creates a new TypicalSchedule model.
+     * Creates a new Lesson model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return string|\yii\web\Response
      */
@@ -419,7 +366,7 @@ class ScheduleController extends Controller
     }
 
     /**
-     * Updates an existing TypicalSchedule model.
+     * Updates an existing Lesson model.
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param int $id ID
      * @return string|\yii\web\Response
@@ -446,7 +393,7 @@ class ScheduleController extends Controller
     }
 
     /**
-     * Deletes an existing TypicalSchedule model.
+     * Deletes an existing Lesson model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param int $id ID
      * @return \yii\web\Response

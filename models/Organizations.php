@@ -32,6 +32,7 @@ use yii\helpers\ArrayHelper;
  * @property string           $info
  * @property string           $address
  * @property string           $phone
+ * @property string           $billing_mode pooled|isolated
  * @property string           $created_at
  * @property string           $updated_at
  *
@@ -55,6 +56,10 @@ class Organizations extends ActiveRecord
     const STATUS_ACTIVE = 'active';
     const STATUS_SUSPENDED = 'suspended';
     const STATUS_BLOCKED = 'blocked';
+
+    // Режимы биллинга
+    const BILLING_POOLED = 'pooled';     // Общая подписка с HEAD
+    const BILLING_ISOLATED = 'isolated'; // Отдельная подписка
 
     public function preload()
     {
@@ -92,6 +97,9 @@ class Organizations extends ActiveRecord
             [['email_verified_at'], 'safe'],
             [['parent_id', 'is_deleted'], 'integer'],
             [['parent_id'], 'exist', 'targetClass' => self::class, 'targetAttribute' => 'id', 'skipOnEmpty' => true],
+            [['billing_mode'], 'string', 'max' => 20],
+            [['billing_mode'], 'in', 'range' => [self::BILLING_POOLED, self::BILLING_ISOLATED]],
+            [['billing_mode'], 'default', 'value' => self::BILLING_POOLED],
         ];
     }
 
@@ -321,12 +329,63 @@ class Organizations extends ActiveRecord
     }
 
     /**
-     * Активная подписка (для филиала берём подписку головной)
+     * Активная подписка
+     * - Если billing_mode = isolated или есть собственная подписка, возвращаем её
+     * - Иначе берём подписку головной организации (pooled режим)
      */
     public function getActiveSubscription(): ?OrganizationSubscription
     {
+        // Для isolated режима или если есть собственная подписка у филиала
+        if ($this->billing_mode === self::BILLING_ISOLATED) {
+            $ownSubscription = OrganizationSubscription::findActiveByOrganization($this->id);
+            if ($ownSubscription) {
+                return $ownSubscription;
+            }
+        }
+
+        // Для HEAD организации всегда своя подписка
+        if ($this->isHead()) {
+            return OrganizationSubscription::findActiveByOrganization($this->id);
+        }
+
+        // Для филиала в pooled режиме - подписка HEAD
         $headOrg = $this->getHeadOrganization();
         return OrganizationSubscription::findActiveByOrganization($headOrg->id);
+    }
+
+    /**
+     * Имеет ли организация собственную подписку
+     */
+    public function hasOwnSubscription(): bool
+    {
+        return OrganizationSubscription::findActiveByOrganization($this->id) !== null;
+    }
+
+    /**
+     * Использует ли организация изолированный режим биллинга
+     */
+    public function isIsolatedBilling(): bool
+    {
+        return $this->billing_mode === self::BILLING_ISOLATED;
+    }
+
+    /**
+     * Список режимов биллинга
+     */
+    public static function getBillingModeList(): array
+    {
+        return [
+            self::BILLING_POOLED => Yii::t('main', 'Общая подписка (лимиты суммируются)'),
+            self::BILLING_ISOLATED => Yii::t('main', 'Отдельная подписка (индивидуальные лимиты)'),
+        ];
+    }
+
+    /**
+     * Название режима биллинга
+     */
+    public function getBillingModeLabel(): string
+    {
+        return self::getBillingModeList()[$this->billing_mode] ?? $this->billing_mode;
     }
 
     /**

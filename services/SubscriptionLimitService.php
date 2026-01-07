@@ -21,12 +21,23 @@ use Yii;
 class SubscriptionLimitService
 {
     private Organizations $organization;
+    private Organizations $originalOrganization;
     private ?OrganizationSubscription $subscription;
     private ?array $activeAddons = null;
 
     public function __construct(Organizations $organization)
     {
-        $this->organization = $organization->getHeadOrganization();
+        // Сохраняем исходную организацию
+        $this->originalOrganization = $organization;
+
+        // Для isolated режима работаем с текущей организацией
+        // Для pooled режима - с головной
+        if ($organization->billing_mode === Organizations::BILLING_ISOLATED) {
+            $this->organization = $organization;
+        } else {
+            $this->organization = $organization->getHeadOrganization();
+        }
+
         $this->subscription = $this->organization->getActiveSubscription();
     }
 
@@ -421,17 +432,43 @@ class SubscriptionLimitService
     // ==================== HELPERS ====================
 
     /**
-     * Получить все ID организаций (головная + филиалы)
+     * Получить все ID организаций для подсчёта лимитов
+     *
+     * - isolated режим: только текущая организация
+     * - pooled режим: головная + все филиалы в pooled режиме
      */
     private function getAllOrganizationIds(): array
     {
+        // Для isolated режима - только текущая организация
+        if ($this->originalOrganization->billing_mode === Organizations::BILLING_ISOLATED) {
+            return [$this->organization->id];
+        }
+
+        // Для pooled режима - HEAD + все филиалы в pooled режиме
         $ids = [$this->organization->id];
         $branches = Organizations::find()
             ->select('id')
             ->andWhere(['parent_id' => $this->organization->id])
             ->andWhere(['is_deleted' => 0])
+            ->andWhere(['billing_mode' => Organizations::BILLING_POOLED]) // Только pooled филиалы
             ->column();
         return array_merge($ids, $branches);
+    }
+
+    /**
+     * Использует ли организация изолированный режим
+     */
+    public function isIsolatedMode(): bool
+    {
+        return $this->originalOrganization->billing_mode === Organizations::BILLING_ISOLATED;
+    }
+
+    /**
+     * Получить исходную организацию (до перехода к HEAD)
+     */
+    public function getOriginalOrganization(): Organizations
+    {
+        return $this->originalOrganization;
     }
 
     /**

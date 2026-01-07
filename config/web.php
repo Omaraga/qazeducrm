@@ -57,6 +57,9 @@ $config = [
         'authManager' => [
             'class' => 'app\components\PhpManager',
         ],
+        'impersonate' => [
+            'class' => 'app\components\ImpersonateManager',
+        ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,
             'targets' => [

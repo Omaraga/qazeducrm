@@ -24,10 +24,14 @@ use yii\db\ActiveRecord;
  * @property string $created_at
  * @property string $updated_at
  *
+ * @property int|null $parent_subscription_id
+ *
  * @property Organizations $organization
  * @property SaasPlan $plan
  * @property SaasPlan $saasPlan
  * @property OrganizationPayment[] $payments
+ * @property OrganizationSubscription|null $parentSubscription
+ * @property OrganizationSubscription[] $childSubscriptions
  */
 class OrganizationSubscription extends ActiveRecord
 {
@@ -67,7 +71,8 @@ class OrganizationSubscription extends ActiveRecord
     {
         return [
             [['organization_id', 'saas_plan_id'], 'required'],
-            [['organization_id', 'saas_plan_id'], 'integer'],
+            [['organization_id', 'saas_plan_id', 'parent_subscription_id'], 'integer'],
+            [['parent_subscription_id'], 'exist', 'targetClass' => self::class, 'targetAttribute' => 'id', 'skipOnEmpty' => true],
             [['status'], 'string', 'max' => 20],
             [['status'], 'in', 'range' => [self::STATUS_TRIAL, self::STATUS_ACTIVE, self::STATUS_EXPIRED, self::STATUS_SUSPENDED, self::STATUS_CANCELLED]],
             [['billing_period'], 'string', 'max' => 20],
@@ -127,6 +132,81 @@ class OrganizationSubscription extends ActiveRecord
     public function getPayments()
     {
         return $this->hasMany(OrganizationPayment::class, ['subscription_id' => 'id']);
+    }
+
+    /**
+     * Связь с родительской подпиской (для филиалов)
+     */
+    public function getParentSubscription()
+    {
+        return $this->hasOne(self::class, ['id' => 'parent_subscription_id']);
+    }
+
+    /**
+     * Связь с дочерними подписками (подписки филиалов)
+     */
+    public function getChildSubscriptions()
+    {
+        return $this->hasMany(self::class, ['parent_subscription_id' => 'id']);
+    }
+
+    /**
+     * Является ли подписка родительской (есть дочерние)
+     */
+    public function isParentSubscription(): bool
+    {
+        return $this->getChildSubscriptions()->exists();
+    }
+
+    /**
+     * Является ли подписка дочерней (филиала)
+     */
+    public function isBranchSubscription(): bool
+    {
+        return $this->parent_subscription_id !== null;
+    }
+
+    /**
+     * Создать подписку для филиала
+     * Полная цена плана, скидка применяется при оплате
+     */
+    public static function createForBranch(
+        int $branchId,
+        int $planId,
+        ?int $parentSubscriptionId = null
+    ): self {
+        $plan = SaasPlan::findOne($planId);
+
+        $subscription = new self();
+        $subscription->organization_id = $branchId;
+        $subscription->saas_plan_id = $planId;
+        $subscription->parent_subscription_id = $parentSubscriptionId;
+        $subscription->status = self::STATUS_TRIAL;
+        $subscription->billing_period = self::PERIOD_MONTHLY;
+        $subscription->started_at = date('Y-m-d H:i:s');
+
+        // Если есть триальный период, устанавливаем его
+        if ($plan && $plan->trial_days > 0) {
+            $subscription->trial_ends_at = date('Y-m-d H:i:s', strtotime("+{$plan->trial_days} days"));
+            $subscription->expires_at = $subscription->trial_ends_at;
+        } else {
+            // Без триала - активируем сразу, но срок истекает через месяц
+            $subscription->status = self::STATUS_ACTIVE;
+            $subscription->expires_at = date('Y-m-d H:i:s', strtotime('+1 month'));
+        }
+
+        return $subscription;
+    }
+
+    /**
+     * Найти все активные подписки филиалов для HEAD организации
+     */
+    public static function findBranchSubscriptions(int $headSubscriptionId): array
+    {
+        return static::find()
+            ->andWhere(['parent_subscription_id' => $headSubscriptionId])
+            ->andWhere(['in', 'status', [self::STATUS_TRIAL, self::STATUS_ACTIVE]])
+            ->all();
     }
 
     /**

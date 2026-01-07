@@ -5,7 +5,10 @@
 /** @var app\models\Organizations[] $branches */
 /** @var app\models\OrganizationSubscription|null $subscription */
 /** @var app\models\OrganizationActivityLog[] $activityLogs */
+/** @var array $staffByRole Сотрудники по ролям */
 
+use app\helpers\Lists;
+use app\models\relations\UserOrganization;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use app\models\Organizations;
@@ -62,6 +65,20 @@ $this->title = $model->name;
                                     <?php endif; ?>
                                 </td>
                             </tr>
+                            <?php if ($model->isBranch()): ?>
+                            <tr>
+                                <td class="text-muted">Биллинг</td>
+                                <td>
+                                    <?php if ($model->billing_mode === Organizations::BILLING_ISOLATED): ?>
+                                        <span class="badge badge-info">Отдельная подписка</span>
+                                        <br><small class="text-muted">Индивидуальные лимиты</small>
+                                    <?php else: ?>
+                                        <span class="badge badge-secondary">Общая с HEAD</span>
+                                        <br><small class="text-muted">Лимиты суммируются</small>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php endif; ?>
                             <tr>
                                 <td class="text-muted">Название</td>
                                 <td><strong><?= Html::encode($model->name) ?></strong></td>
@@ -132,24 +149,58 @@ $this->title = $model->name;
                                 <tr>
                                     <th>Название</th>
                                     <th>Статус</th>
-                                    <th>Адрес</th>
+                                    <th>Биллинг</th>
+                                    <th>План / Подписка</th>
                                     <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($branches as $branch): ?>
+                                    <?php $branchSub = $branch->getActiveSubscription(); ?>
                                     <tr>
                                         <td>
                                             <?= Html::a(Html::encode($branch->name), ['view', 'id' => $branch->id], ['class' => 'font-weight-bold']) ?>
+                                            <?php if ($branch->address): ?>
+                                                <br><small class="text-muted"><?= Html::encode($branch->address) ?></small>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
-                                            <?php
-                                            $class = $badges[$branch->status] ?? 'badge-secondary';
-                                            ?>
+                                            <?php $class = $badges[$branch->status] ?? 'badge-secondary'; ?>
                                             <span class="badge <?= $class ?>"><?= $branch->getStatusLabel() ?></span>
                                         </td>
-                                        <td><?= Html::encode($branch->address) ?: '—' ?></td>
                                         <td>
+                                            <?php if ($branch->billing_mode === Organizations::BILLING_ISOLATED): ?>
+                                                <span class="badge badge-info" title="Отдельная подписка">Отдельная</span>
+                                            <?php else: ?>
+                                                <span class="badge badge-secondary" title="Общая подписка с HEAD">Общая</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($branchSub): ?>
+                                                <strong><?= Html::encode($branchSub->saasPlan->name ?? 'N/A') ?></strong>
+                                                <?php
+                                                $subBadge = match($branchSub->status) {
+                                                    'trial' => 'badge-trial',
+                                                    'active' => 'badge-active',
+                                                    'expired' => 'badge-expired',
+                                                    default => 'badge-secondary',
+                                                };
+                                                ?>
+                                                <span class="badge <?= $subBadge ?>"><?= $branchSub->getStatusLabel() ?></span>
+                                                <?php if ($branchSub->expires_at): ?>
+                                                    <br><small class="text-muted">до <?= Yii::$app->formatter->asDate($branchSub->expires_at, 'php:d.m.Y') ?></small>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                <span class="text-muted">—</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-right">
+                                            <?php if ($branch->billing_mode === Organizations::BILLING_ISOLATED && $branchSub): ?>
+                                                <?= Html::a('<i class="fas fa-credit-card"></i>', ['/superadmin/payment/create', 'organization_id' => $branch->id], [
+                                                    'class' => 'btn btn-sm btn-outline-success',
+                                                    'title' => 'Принять оплату',
+                                                ]) ?>
+                                            <?php endif; ?>
                                             <?= Html::a('<i class="fas fa-eye"></i>', ['view', 'id' => $branch->id], ['class' => 'btn btn-sm btn-outline-secondary']) ?>
                                         </td>
                                     </tr>
@@ -160,6 +211,90 @@ $this->title = $model->name;
                 </div>
             </div>
         <?php endif; ?>
+
+        <!-- Сотрудники организации -->
+        <div class="card card-custom mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>
+                    Сотрудники организации
+                    <?php
+                    $totalStaff = 0;
+                    foreach ($staffByRole as $users) {
+                        $totalStaff += count($users);
+                    }
+                    ?>
+                    <span class="badge badge-secondary ml-1"><?= $totalStaff ?></span>
+                </span>
+            </div>
+            <div class="card-body p-0">
+                <?php if (empty($staffByRole)): ?>
+                    <div class="p-4 text-center text-muted">
+                        <i class="fas fa-users fa-2x mb-2"></i>
+                        <p class="mb-0">Сотрудников нет</p>
+                    </div>
+                <?php else: ?>
+                    <?php
+                    $roleLabels = Lists::getRoles();
+                    $stateLabels = [
+                        UserOrganization::STATE_ACTIVE => ['label' => 'Активен', 'class' => 'badge-success'],
+                        UserOrganization::STATE_RESERVE => ['label' => 'Резерв', 'class' => 'badge-warning'],
+                        UserOrganization::STATE_FIRED => ['label' => 'Уволен', 'class' => 'badge-secondary'],
+                    ];
+                    ?>
+
+                    <?php foreach ($staffByRole as $role => $users): ?>
+                        <div class="p-3 border-bottom bg-light">
+                            <strong><?= $roleLabels[$role] ?? $role ?></strong>
+                            <span class="badge badge-secondary"><?= count($users) ?></span>
+                        </div>
+                        <table class="table table-hover mb-0">
+                            <tbody>
+                                <?php foreach ($users as $userOrg): ?>
+                                    <?php $user = $userOrg->user; ?>
+                                    <?php if ($user): ?>
+                                    <tr>
+                                        <td style="width: 35%;">
+                                            <strong><?= Html::encode($user->fio ?? '-') ?></strong>
+                                        </td>
+                                        <td>
+                                            <?php if ($user->email): ?>
+                                                <i class="fas fa-envelope text-muted mr-1"></i>
+                                                <small><?= Html::encode($user->email) ?></small>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($user->phone): ?>
+                                                <i class="fas fa-phone text-muted mr-1"></i>
+                                                <small><?= Html::encode($user->phone) ?></small>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td style="width: 80px;">
+                                            <?php
+                                            $stateInfo = $stateLabels[$userOrg->state] ?? ['label' => 'N/A', 'class' => 'badge-secondary'];
+                                            ?>
+                                            <span class="badge <?= $stateInfo['class'] ?>"><?= $stateInfo['label'] ?></span>
+                                        </td>
+                                        <td style="width: 120px;" class="text-right">
+                                            <?= Html::a(
+                                                '<i class="fas fa-sign-in-alt"></i> Войти',
+                                                ['impersonate', 'user_id' => $user->id, 'organization_id' => $model->id],
+                                                [
+                                                    'class' => 'btn btn-sm btn-outline-primary',
+                                                    'data-method' => 'post',
+                                                    'data-confirm' => 'Войти под пользователем ' . Html::encode($user->fio) . '?',
+                                                    'title' => 'Войти под этим пользователем',
+                                                ]
+                                            ) ?>
+                                        </td>
+                                    </tr>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
 
         <!-- Логи активности -->
         <div class="card card-custom">

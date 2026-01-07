@@ -70,7 +70,7 @@ class UserOrganization extends ActiveRecord
 
     public function getUser()
     {
-        return $this->hasOne(Users::class, ['id' => 'related_id']);
+        return $this->hasOne(User::class, ['id' => 'related_id']);
     }
 
     public function getOrganization()

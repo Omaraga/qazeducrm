@@ -23,6 +23,7 @@ use yii\caching\TagDependency;
 class FeatureService
 {
     private Organizations $organization;
+    private Organizations $originalOrganization;
     private ?OrganizationSubscription $subscription;
     private ?SaasPlan $plan;
     private array $featureCache = [];
@@ -40,9 +41,35 @@ class FeatureService
 
     public function __construct(Organizations $organization)
     {
-        $this->organization = $organization->getHeadOrganization();
+        // Сохраняем исходную организацию
+        $this->originalOrganization = $organization;
+
+        // Для isolated режима работаем с текущей организацией
+        // Для pooled режима - с головной
+        if ($organization->billing_mode === Organizations::BILLING_ISOLATED) {
+            $this->organization = $organization;
+        } else {
+            $this->organization = $organization->getHeadOrganization();
+        }
+
         $this->subscription = $this->organization->getActiveSubscription();
         $this->plan = $this->subscription?->saasPlan;
+    }
+
+    /**
+     * Использует ли организация изолированный режим
+     */
+    public function isIsolatedMode(): bool
+    {
+        return $this->originalOrganization->billing_mode === Organizations::BILLING_ISOLATED;
+    }
+
+    /**
+     * Получить исходную организацию
+     */
+    public function getOriginalOrganization(): Organizations
+    {
+        return $this->originalOrganization;
     }
 
     /**

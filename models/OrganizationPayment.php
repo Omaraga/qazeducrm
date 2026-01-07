@@ -27,6 +27,8 @@ use yii\db\ActiveRecord;
  * @property string|null $invoice_file
  * @property string|null $receipt_file
  * @property string|null $notes
+ * @property float|null $discount_percent Процент скидки (для ручного ввода)
+ * @property string|null $discount_reason Причина скидки
  * @property int|null $manager_id
  * @property float $manager_bonus_percent
  * @property float $manager_bonus_amount
@@ -66,6 +68,8 @@ class OrganizationPayment extends ActiveRecord
     const DISCOUNT_VOLUME = 'volume';
     const DISCOUNT_INDIVIDUAL = 'individual';
     const DISCOUNT_YEARLY = 'yearly';
+    const DISCOUNT_BRANCH = 'branch';  // Скидка для филиала
+    const DISCOUNT_MANUAL = 'manual';  // Ручная скидка админа
 
     /**
      * {@inheritdoc}
@@ -93,7 +97,9 @@ class OrganizationPayment extends ActiveRecord
             [['payment_reference', 'invoice_file', 'receipt_file'], 'string', 'max' => 255],
             [['invoice_number'], 'string', 'max' => 50],
             [['discount_type'], 'string', 'max' => 50],
-            [['discount_type'], 'in', 'range' => [self::DISCOUNT_PROMO, self::DISCOUNT_VOLUME, self::DISCOUNT_INDIVIDUAL, self::DISCOUNT_YEARLY]],
+            [['discount_type'], 'in', 'range' => [self::DISCOUNT_PROMO, self::DISCOUNT_VOLUME, self::DISCOUNT_INDIVIDUAL, self::DISCOUNT_YEARLY, self::DISCOUNT_BRANCH, self::DISCOUNT_MANUAL]],
+            [['discount_percent'], 'number', 'min' => 0, 'max' => 100],
+            [['discount_reason'], 'string', 'max' => 255],
             [['manager_bonus_status'], 'string', 'max' => 20],
             [['manager_bonus_status'], 'in', 'range' => [self::BONUS_PENDING, self::BONUS_PAID, self::BONUS_CANCELLED]],
             [['discount_details'], 'safe'],
@@ -117,6 +123,8 @@ class OrganizationPayment extends ActiveRecord
             'discount_amount' => Yii::t('main', 'Скидка'),
             'discount_type' => Yii::t('main', 'Тип скидки'),
             'discount_details' => Yii::t('main', 'Детали скидки'),
+            'discount_percent' => Yii::t('main', 'Скидка (%)'),
+            'discount_reason' => Yii::t('main', 'Причина скидки'),
             'currency' => Yii::t('main', 'Валюта'),
             'period_start' => Yii::t('main', 'Начало периода'),
             'period_end' => Yii::t('main', 'Конец периода'),
@@ -397,6 +405,8 @@ class OrganizationPayment extends ActiveRecord
             self::DISCOUNT_VOLUME => Yii::t('main', 'Накопительная'),
             self::DISCOUNT_INDIVIDUAL => Yii::t('main', 'Индивидуальная'),
             self::DISCOUNT_YEARLY => Yii::t('main', 'Годовая'),
+            self::DISCOUNT_BRANCH => Yii::t('main', 'Скидка филиала'),
+            self::DISCOUNT_MANUAL => Yii::t('main', 'Ручная'),
         ];
     }
 
@@ -461,6 +471,71 @@ class OrganizationPayment extends ActiveRecord
         $this->discount_type = $type;
         $this->discount_details = $details;
         $this->amount = max(0, $this->original_amount - $discountAmount);
+    }
+
+    /**
+     * Применить процентную скидку (для ручного ввода админом)
+     */
+    public function applyPercentDiscount(float $percent, ?string $reason = null): void
+    {
+        if ($percent <= 0 || $percent > 100) {
+            return;
+        }
+
+        $this->original_amount = $this->original_amount ?: $this->amount;
+        $this->discount_percent = $percent;
+        $this->discount_reason = $reason;
+        $this->discount_amount = round($this->original_amount * ($percent / 100), 2);
+        $this->discount_type = self::DISCOUNT_MANUAL;
+        $this->amount = max(0, $this->original_amount - $this->discount_amount);
+    }
+
+    /**
+     * Рассчитать итоговую сумму с учётом скидки
+     */
+    public function calculateFinalAmount(float $baseAmount): float
+    {
+        $discountAmt = 0;
+
+        // Сначала применяем процентную скидку
+        if ($this->discount_percent > 0) {
+            $discountAmt = round($baseAmount * ($this->discount_percent / 100), 2);
+        }
+
+        // Если указана фиксированная сумма скидки - берём большую
+        if ($this->discount_amount > $discountAmt) {
+            $discountAmt = $this->discount_amount;
+        }
+
+        return max(0, $baseAmount - $discountAmt);
+    }
+
+    /**
+     * Подготовить платёж для филиала с ручной скидкой
+     */
+    public static function createForBranch(
+        int $organizationId,
+        int $subscriptionId,
+        float $planPrice,
+        float $discountPercent = 0,
+        ?string $discountReason = null
+    ): self {
+        $payment = new self();
+        $payment->organization_id = $organizationId;
+        $payment->subscription_id = $subscriptionId;
+        $payment->original_amount = $planPrice;
+        $payment->currency = 'KZT';
+        $payment->status = self::STATUS_PENDING;
+
+        if ($discountPercent > 0) {
+            $payment->applyPercentDiscount($discountPercent, $discountReason ?: 'Скидка филиала');
+            $payment->discount_type = self::DISCOUNT_BRANCH;
+        } else {
+            $payment->amount = $planPrice;
+            $payment->discount_amount = 0;
+        }
+
+        return $payment;
     }
 
     // ==================== STATIC QUERIES ====================
