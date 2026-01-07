@@ -17,55 +17,72 @@ class PupilService
      */
     public static function updateBalance(int $pupilId): bool
     {
-        $pupil = Pupil::findOne($pupilId);
+        // Транзакция для защиты от race condition
+        $transaction = Yii::$app->db->beginTransaction();
 
-        if ($pupil === null) {
-            Yii::error("PupilService::updateBalance - Pupil not found: {$pupilId}", 'application');
-            return false;
-        }
+        try {
+            $pupil = Pupil::findOne($pupilId);
 
-        // Считаем сумму платежей
-        $payments = Payment::find()
-            ->andWhere(['pupil_id' => $pupil->id])
-            ->byOrganization()
-            ->notDeleted()
-            ->orderBy(['date' => SORT_ASC])
-            ->asArray()
-            ->all();
-
-        $balance = 0;
-        foreach ($payments as $payment) {
-            if ($payment['type'] == Payment::TYPE_PAY) {
-                $balance += $payment['amount'];
-            } else {
-                $balance -= $payment['amount'];
+            if ($pupil === null) {
+                $transaction->rollBack();
+                Yii::error("PupilService::updateBalance - Pupil not found: {$pupilId}", 'application');
+                return false;
             }
-        }
 
-        // Вычитаем стоимость обучений
-        $pupilEducations = PupilEducation::find()
-            ->where(['pupil_id' => $pupil->id])
-            ->byOrganization()
-            ->notDeleted()
-            ->asArray()
-            ->all();
+            // Считаем сумму платежей
+            $payments = Payment::find()
+                ->andWhere(['pupil_id' => $pupil->id])
+                ->byOrganization()
+                ->notDeleted()
+                ->orderBy(['date' => SORT_ASC])
+                ->asArray()
+                ->all();
 
-        foreach ($pupilEducations as $education) {
-            $balance -= $education['total_price'];
-        }
+            $balance = 0;
+            foreach ($payments as $payment) {
+                // Строгое сравнение типов
+                if ((int)$payment['type'] === Payment::TYPE_PAY) {
+                    $balance += (float)$payment['amount'];
+                } else {
+                    $balance -= (float)$payment['amount'];
+                }
+            }
 
-        $pupil->balance = $balance;
+            // Вычитаем стоимость обучений
+            $pupilEducations = PupilEducation::find()
+                ->where(['pupil_id' => $pupil->id])
+                ->byOrganization()
+                ->notDeleted()
+                ->asArray()
+                ->all();
 
-        if (!$pupil->save()) {
+            foreach ($pupilEducations as $education) {
+                $balance -= (float)$education['total_price'];
+            }
+
+            $pupil->balance = $balance;
+
+            if (!$pupil->save(false, ['balance', 'updated_at'])) {
+                $transaction->rollBack();
+                Yii::error([
+                    'message' => 'PupilService::updateBalance - Failed to save pupil balance',
+                    'pupil_id' => $pupilId,
+                    'balance' => $balance,
+                    'errors' => $pupil->errors,
+                ], 'application');
+                return false;
+            }
+
+            $transaction->commit();
+            return true;
+        } catch (\Exception $e) {
+            $transaction->rollBack();
             Yii::error([
-                'message' => 'PupilService::updateBalance - Failed to save pupil balance',
+                'message' => 'PupilService::updateBalance - Exception',
                 'pupil_id' => $pupilId,
-                'balance' => $balance,
-                'errors' => $pupil->errors,
+                'error' => $e->getMessage(),
             ], 'application');
             return false;
         }
-
-        return true;
     }
 }

@@ -71,13 +71,20 @@ class Payment extends ActiveRecord
     {
         return [
             [['organization_id', 'pupil_id', 'purpose_id', 'method_id', 'type', 'is_deleted'], 'integer'],
-            [['pupil_id', 'type', 'date'], 'required'],
+            [['type', 'date'], 'required'],
+            // pupil_id обязателен только для платежей и возвратов, но не для расходов
+            [['pupil_id'], 'required', 'when' => function($model) {
+                return (int)$model->type != self::TYPE_SPENDING;
+            }, 'whenClient' => "function(attribute, value) {
+                return $('#payment-type').val() != '" . self::TYPE_SPENDING . "';
+            }"],
             [['amount'], 'number', 'min' => 0.01],
+            [['amount'], 'required'],
             [['date', 'created_at', 'updated_at'], 'safe'],
             [['comment'], 'string'],
             [['number'], 'string', 'max' => 255],
             [['method_id'], 'exist', 'skipOnError' => true, 'targetClass' => PayMethod::class, 'targetAttribute' => ['method_id' => 'id']],
-            [['pupil_id'], 'exist', 'skipOnError' => true, 'targetClass' => Pupil::class, 'targetAttribute' => ['pupil_id' => 'id']],
+            [['pupil_id'], 'exist', 'skipOnError' => true, 'skipOnEmpty' => true, 'targetClass' => Pupil::class, 'targetAttribute' => ['pupil_id' => 'id']],
         ];
     }
 
@@ -143,17 +150,25 @@ class Payment extends ActiveRecord
     }
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getPurposeLabel(){
-        return self::getPurposeList()[$this->purpose_id];
+    public function getPurposeLabel(): string
+    {
+        if ($this->purpose_id === null) {
+            return '—';
+        }
+        return self::getPurposeList()[$this->purpose_id] ?? '—';
     }
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getTypeLabel(){
-        return self::getTypeList()[$this->type];
+    public function getTypeLabel(): string
+    {
+        if ($this->type === null) {
+            return '—';
+        }
+        return self::getTypeList()[$this->type] ?? '—';
     }
 
     /**

@@ -35,7 +35,7 @@ $statusLabels = Lids::getStatusLabels();
         </div>
 
         <?php if ($stats['overdue_contacts'] > 0): ?>
-            <a href="<?= OrganizationUrl::to(['lids/kanban', 'overdue_only' => 1]) ?>"
+            <a href="<?= OrganizationUrl::to(['lids-funnel/kanban', 'overdue_only' => 1]) ?>"
                class="mt-3 block text-center text-xs text-danger-600 hover:underline">
                 Обработать просроченных →
             </a>
@@ -120,7 +120,7 @@ $statusLabels = Lids::getStatusLabels();
                     </h4>
                     <div class="space-y-2">
                         <?php foreach ($attentionLeads as $lead): ?>
-                            <a href="<?= OrganizationUrl::to(['lids/kanban']) ?>#lid-<?= $lead['id'] ?>"
+                            <a href="<?= OrganizationUrl::to(['lids-funnel/kanban']) ?>#lid-<?= $lead['id'] ?>"
                                class="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
                                 <div class="flex items-center gap-3">
                                     <div class="w-8 h-8 rounded-full bg-<?= $lead['priority_color'] ?>-100 flex items-center justify-center">

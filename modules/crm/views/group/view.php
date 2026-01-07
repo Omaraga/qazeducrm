@@ -1,6 +1,8 @@
 <?php
 
 use app\helpers\OrganizationUrl;
+use app\widgets\tailwind\GroupTabs;
+use app\widgets\tailwind\Icon;
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
@@ -16,9 +18,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-4">
             <div class="w-12 h-12 rounded-lg flex items-center justify-center" style="background-color: <?= Html::encode($model->color ?: '#3b82f6') ?>20">
-                <svg class="w-6 h-6" style="color: <?= Html::encode($model->color ?: '#3b82f6') ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
+                <?= Icon::show('users', 'lg', '', ['style' => 'color: ' . Html::encode($model->color ?: '#3b82f6')]) ?>
             </div>
             <div>
                 <h1 class="text-2xl font-bold text-gray-900"><?= Html::encode($this->title) ?></h1>
@@ -27,12 +27,10 @@ $this->params['breadcrumbs'][] = $this->title;
         </div>
         <div class="flex gap-3">
             <a href="<?= OrganizationUrl::to(['group/update', 'id' => $model->id]) ?>" class="btn btn-primary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                </svg>
+                <?= Icon::show('edit', 'sm') ?>
                 Редактировать
             </a>
-            <?= Html::a('<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg> Удалить',
+            <?= Html::a(Icon::show('trash', 'sm') . ' Удалить',
                 OrganizationUrl::to(['group/delete', 'id' => $model->id]), [
                 'class' => 'btn btn-danger',
                 'data' => [
@@ -44,22 +42,7 @@ $this->params['breadcrumbs'][] = $this->title;
     </div>
 
     <!-- Tabs -->
-    <div class="border-b border-gray-200">
-        <nav class="flex gap-4" aria-label="Tabs">
-            <a href="<?= OrganizationUrl::to(['group/view', 'id' => $model->id]) ?>"
-               class="px-4 py-2 text-sm font-medium border-b-2 border-primary-500 text-primary-600">
-                Основные данные
-            </a>
-            <a href="<?= OrganizationUrl::to(['group/teachers', 'id' => $model->id]) ?>"
-               class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent">
-                Преподаватели
-            </a>
-            <a href="<?= OrganizationUrl::to(['group/pupils', 'id' => $model->id]) ?>"
-               class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent">
-                Ученики
-            </a>
-        </nav>
-    </div>
+    <?= GroupTabs::widget(['model' => $model, 'activeTab' => 'view']) ?>
 
     <!-- Content -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

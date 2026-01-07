@@ -38,7 +38,7 @@ $contactName = $model->getContactName();
         </div>
         <div class="flex flex-wrap gap-2">
             <?php if ($model->canConvertToPupil()): ?>
-                <a href="<?= OrganizationUrl::to(['lids/convert-to-pupil', 'id' => $model->id]) ?>" class="btn btn-success">
+                <a href="<?= OrganizationUrl::to(['lids-interaction/convert-to-pupil', 'id' => $model->id]) ?>" class="btn btn-success">
                     <?= Icon::show('user-plus', 'sm') ?>
                     Создать ученика
                 </a>
@@ -494,7 +494,7 @@ function lidView() {
             this.loading = true;
 
             try {
-                const response = await fetch('<?= OrganizationUrl::to(['lids/add-interaction']) ?>', {
+                const response = await fetch('<?= OrganizationUrl::to(['lids-interaction/add-interaction']) ?>', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',

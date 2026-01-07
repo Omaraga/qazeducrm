@@ -22,7 +22,7 @@ $managers = User::find()
 
 $createUrl = OrganizationUrl::to(['lids/create-ajax']);
 $updateUrl = OrganizationUrl::to(['lids/update-ajax']);
-$checkDuplicatesUrl = OrganizationUrl::to(['lids/check-duplicates']);
+$checkDuplicatesUrl = OrganizationUrl::to(['lids-interaction/check-duplicates']);
 ?>
 
 <form @submit.prevent="<?= $isEdit ? 'updateLid($event.target)' : 'createLid($event.target)' ?>"

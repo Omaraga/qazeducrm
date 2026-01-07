@@ -6,6 +6,7 @@ use app\models\Organizations;
 use app\models\OrganizationPayment;
 use app\models\OrganizationSubscription;
 use app\models\OrganizationActivityLog;
+use app\services\ManagerSalesService;
 use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -27,6 +28,9 @@ class PaymentController extends Controller
                     'fail' => ['POST'],
                     'refund' => ['POST'],
                     'delete' => ['POST'],
+                    'pay-bonus' => ['POST'],
+                    'cancel-bonus' => ['POST'],
+                    'pay-all-bonuses' => ['POST'],
                 ],
             ],
         ];
@@ -38,7 +42,7 @@ class PaymentController extends Controller
     public function actionIndex()
     {
         $query = OrganizationPayment::find()
-            ->with(['organization', 'subscription'])
+            ->with(['organization', 'subscription', 'manager'])
             ->orderBy(['created_at' => SORT_DESC]);
 
         // Фильтры
@@ -50,6 +54,16 @@ class PaymentController extends Controller
         $organizationId = Yii::$app->request->get('organization_id');
         if ($organizationId) {
             $query->andWhere(['organization_id' => $organizationId]);
+        }
+
+        $managerId = Yii::$app->request->get('manager_id');
+        if ($managerId) {
+            $query->andWhere(['manager_id' => $managerId]);
+        }
+
+        $bonusStatus = Yii::$app->request->get('bonus_status');
+        if ($bonusStatus) {
+            $query->andWhere(['manager_bonus_status' => $bonusStatus]);
         }
 
         $dataProvider = new ActiveDataProvider([
@@ -82,6 +96,7 @@ class PaymentController extends Controller
         $model = new OrganizationPayment();
         $model->status = OrganizationPayment::STATUS_PENDING;
         $model->currency = 'KZT';
+        $model->manager_bonus_percent = 10; // Default 10%
 
         if ($organization_id) {
             $model->organization_id = $organization_id;
@@ -96,6 +111,7 @@ class PaymentController extends Controller
                     $model->amount = $subscription->billing_period === 'yearly'
                         ? $subscription->saasPlan->price_yearly
                         : $subscription->saasPlan->price_monthly;
+                    $model->original_amount = $model->amount;
                 }
             }
         }
@@ -109,12 +125,23 @@ class PaymentController extends Controller
                 $model->period_end = date('Y-m-d H:i:s', strtotime($periodAdd, strtotime($model->period_start)));
             }
 
+            // Сохраняем original_amount если не указана
+            if (empty($model->original_amount)) {
+                $model->original_amount = $model->amount;
+            }
+
+            // Рассчитываем скидку
+            if ($model->original_amount > $model->amount) {
+                $model->discount_amount = $model->original_amount - $model->amount;
+            }
+
             if ($model->save()) {
                 OrganizationActivityLog::log(
                     $model->organization_id,
                     OrganizationActivityLog::ACTION_PAYMENT_RECEIVED,
                     OrganizationActivityLog::CATEGORY_PAYMENT,
-                    "Создан платёж на сумму {$model->amount} {$model->currency}"
+                    "Создан платёж на сумму {$model->amount} {$model->currency}" .
+                    ($model->manager_id ? " (менеджер: {$model->manager->name})" : '')
                 );
 
                 Yii::$app->session->setFlash('success', 'Платёж создан.');
@@ -134,10 +161,13 @@ class PaymentController extends Controller
             ->orderBy(['created_at' => SORT_DESC])
             ->all();
 
+        $managers = ManagerSalesService::getManagersList();
+
         return $this->render('create', [
             'model' => $model,
             'organizations' => $organizations,
             'subscriptions' => $subscriptions,
+            'managers' => $managers,
         ]);
     }
 
@@ -147,27 +177,27 @@ class PaymentController extends Controller
     public function actionComplete($id)
     {
         $model = $this->findModel($id);
-        $model->status = OrganizationPayment::STATUS_COMPLETED;
-        $model->processed_at = date('Y-m-d H:i:s');
-        $model->processed_by = Yii::$app->user->id;
-        $model->save();
 
-        // Продлеваем подписку
-        if ($model->subscription) {
-            $subscription = $model->subscription;
-            $subscription->status = OrganizationSubscription::STATUS_ACTIVE;
-            $subscription->expires_at = $model->period_end;
-            $subscription->save();
+        // Используем метод confirm() который рассчитает бонус менеджера
+        if ($model->confirm(Yii::$app->user->id)) {
+            // Продлеваем подписку
+            if ($model->subscription) {
+                $subscription = $model->subscription;
+                $subscription->status = OrganizationSubscription::STATUS_ACTIVE;
+                $subscription->expires_at = $model->period_end;
+                $subscription->save();
+            }
+
+            $message = 'Платёж подтверждён, подписка продлена.';
+            if ($model->manager_bonus_amount > 0) {
+                $message .= ' Бонус менеджера: ' . number_format($model->manager_bonus_amount, 0, '.', ' ') . ' KZT';
+            }
+
+            Yii::$app->session->setFlash('success', $message);
+        } else {
+            Yii::$app->session->setFlash('error', 'Ошибка подтверждения платежа.');
         }
 
-        OrganizationActivityLog::log(
-            $model->organization_id,
-            OrganizationActivityLog::ACTION_PAYMENT_RECEIVED,
-            OrganizationActivityLog::CATEGORY_PAYMENT,
-            "Платёж #{$model->id} подтверждён"
-        );
-
-        Yii::$app->session->setFlash('success', 'Платёж подтверждён, подписка продлена.');
         return $this->redirect(['view', 'id' => $id]);
     }
 
@@ -221,6 +251,122 @@ class PaymentController extends Controller
 
         Yii::$app->session->setFlash('success', 'Платёж удалён.');
         return $this->redirect(['index']);
+    }
+
+    /**
+     * Выплатить бонус менеджеру
+     */
+    public function actionPayBonus($id)
+    {
+        $model = $this->findModel($id);
+
+        if ($model->payBonus()) {
+            OrganizationActivityLog::log(
+                $model->organization_id,
+                OrganizationActivityLog::ACTION_PAYMENT_RECEIVED,
+                OrganizationActivityLog::CATEGORY_PAYMENT,
+                "Выплачен бонус {$model->manager_bonus_amount} KZT менеджеру {$model->manager->name}"
+            );
+            Yii::$app->session->setFlash('success', 'Бонус выплачен.');
+        } else {
+            Yii::$app->session->setFlash('error', 'Ошибка выплаты бонуса.');
+        }
+
+        return $this->redirect(['view', 'id' => $id]);
+    }
+
+    /**
+     * Отменить бонус
+     */
+    public function actionCancelBonus($id)
+    {
+        $model = $this->findModel($id);
+
+        if ($model->cancelBonus()) {
+            Yii::$app->session->setFlash('warning', 'Бонус отменён.');
+        } else {
+            Yii::$app->session->setFlash('error', 'Ошибка отмены бонуса.');
+        }
+
+        return $this->redirect(['view', 'id' => $id]);
+    }
+
+    /**
+     * Выплатить все ожидающие бонусы менеджера
+     */
+    public function actionPayAllBonuses($manager_id)
+    {
+        $service = new ManagerSalesService();
+        $result = $service->payAllPendingBonuses($manager_id);
+
+        if ($result['success'] > 0) {
+            Yii::$app->session->setFlash('success',
+                "Выплачено {$result['success']} бонусов на сумму " .
+                number_format($result['total_amount'], 0, '.', ' ') . ' KZT'
+            );
+        }
+
+        if ($result['failed'] > 0) {
+            Yii::$app->session->setFlash('warning', "Не удалось выплатить {$result['failed']} бонусов");
+        }
+
+        return $this->redirect(['manager-sales']);
+    }
+
+    /**
+     * Отчёт по продажам менеджеров
+     */
+    public function actionManagerSales()
+    {
+        $service = new ManagerSalesService();
+
+        // Период фильтра
+        $year = Yii::$app->request->get('year', date('Y'));
+        $month = Yii::$app->request->get('month', date('m'));
+        $dateFrom = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+        $dateTo = date('Y-m-t 23:59:59', strtotime($dateFrom));
+
+        // Выбранный менеджер
+        $managerId = Yii::$app->request->get('manager_id');
+
+        $topManagers = $service->getTopManagers($dateFrom, $dateTo, 20);
+        $pendingBonuses = $service->getPendingBonusesByManager();
+        $totalPending = $service->getTotalPendingBonuses();
+        $monthlyStats = $service->getMonthlyBonusStats($year, $month);
+
+        $managerStats = null;
+        $managerPayments = [];
+        if ($managerId) {
+            $managerStats = $service->getManagerStats($managerId, $dateFrom, $dateTo);
+            $managerPayments = $service->getManagerPayments($managerId, $dateFrom, $dateTo);
+        }
+
+        return $this->render('manager-sales', [
+            'topManagers' => $topManagers,
+            'pendingBonuses' => $pendingBonuses,
+            'totalPending' => $totalPending,
+            'monthlyStats' => $monthlyStats,
+            'managerStats' => $managerStats,
+            'managerPayments' => $managerPayments,
+            'managers' => ManagerSalesService::getManagersList(),
+            'year' => $year,
+            'month' => $month,
+            'managerId' => $managerId,
+        ]);
+    }
+
+    /**
+     * Ожидающие бонусы (для быстрого доступа)
+     */
+    public function actionPendingBonuses()
+    {
+        $service = new ManagerSalesService();
+        $pendingBonuses = $service->getPendingBonuses();
+
+        return $this->render('pending-bonuses', [
+            'pendingBonuses' => $pendingBonuses,
+            'totalPending' => $service->getTotalPendingBonuses(),
+        ]);
     }
 
     protected function findModel($id)

@@ -7,8 +7,11 @@ use app\helpers\OrganizationUrl;
 use app\helpers\SystemRoles;
 use app\models\Group;
 use app\models\Pupil;
+use app\models\relations\EducationGroup;
 use app\models\relations\TeacherGroup;
 use app\models\search\GroupSearch;
+use app\services\SubscriptionLimitService;
+use Yii;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -81,10 +84,18 @@ class GroupController extends Controller
                 },
                 'getModel' => function () {
                     $id = \Yii::$app->request->get('id');
-                    return Group::findOne($id);
+                    // Security: проверка organization_id
+                    return Group::find()
+                        ->where(['id' => $id])
+                        ->byOrganization()
+                        ->notDeleted()
+                        ->one();
                 },
                 'submitForm' => function ($action) {
                     $model = $action->getModel();
+                    if ($model === null) {
+                        return false;
+                    }
                     $model->load(\Yii::$app->request->post());
                     return $model->save();
                 }
@@ -166,6 +177,13 @@ class GroupController extends Controller
      */
     public function actionCreate()
     {
+        // Проверка лимита тарифного плана
+        $limitService = SubscriptionLimitService::forCurrentOrganization();
+        if ($limitService && !$limitService->canAddGroup()) {
+            Yii::$app->session->setFlash('error', SubscriptionLimitService::getLimitErrorMessage('group'));
+            return $this->redirect(['index']);
+        }
+
         $model = new Group();
 
         if ($this->request->isPost) {
@@ -210,55 +228,105 @@ class GroupController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
+        $model = $this->findModel($id);
+
+        // Проверка зависимостей - есть ли ученики в группе
+        $pupilsCount = EducationGroup::find()
+            ->where(['group_id' => $model->id])
+            ->andWhere(['is_deleted' => 0])
+            ->count();
+
+        if ($pupilsCount > 0) {
+            Yii::$app->session->setFlash('error',
+                "Невозможно удалить группу с учениками ({$pupilsCount} учеников). Сначала переведите учеников в другую группу.");
+            return $this->redirect(['view', 'id' => $id]);
+        }
+
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            // Удаление связей с преподавателями
+            TeacherGroup::deleteAll(['target_id' => $model->id]);
+
+            $model->delete();
+            $transaction->commit();
+
+            Yii::$app->session->setFlash('success', 'Группа успешно удалена');
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::$app->session->setFlash('error', 'Ошибка при удалении группы: ' . $e->getMessage());
+            return $this->redirect(['view', 'id' => $id]);
+        }
 
         return $this->redirect(['index']);
     }
 
     /**
-     * Deletes an existing Group model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param int $id ID
+     * Deletes teacher from group.
+     * If deletion is successful, the browser will be redirected to the 'teachers' page.
+     * @param int $id TeacherGroup ID
      * @return \yii\web\Response
      * @throws NotFoundHttpException if the model cannot be found
      */
     public function actionDeleteTeacher($id)
     {
-        $model = TeacherGroup::findOne($id);
+        // Security: проверка organization_id
+        $model = TeacherGroup::find()
+            ->where(['id' => $id])
+            ->byOrganization()
+            ->one();
+
+        if ($model === null) {
+            throw new NotFoundHttpException('Связь преподавателя с группой не найдена');
+        }
+
+        $targetId = $model->target_id;
         $model->delete();
 
-        return $this->redirect(OrganizationUrl::to(['group/teachers', 'id' => $model->target_id]));
+        return $this->redirect(OrganizationUrl::to(['group/teachers', 'id' => $targetId]));
     }
 
     /**
+     * Adds teacher to group.
      * @throws ForbiddenHttpException
+     * @throws NotFoundHttpException
      */
-    public function actionCreateTeacher(){
-        $model = new TeacherGroup();
-        if ($groupId =\Yii::$app->request->get('group_id')){
-            $model->target_id = $groupId;
-            if ($this->request->isPost) {
-                if ($model->load($this->request->post()) && $model->save()) {
-                    return $this->redirect(OrganizationUrl::to(['group/teachers', 'id' => $model->target_id]));
-                }
-            }
+    public function actionCreateTeacher()
+    {
+        $groupId = Yii::$app->request->get('group_id');
 
-            if (\Yii::$app->request->isAjax){
-                return $this->renderAjax('teacher/form', [
-                    'model' => $model,
-                ]);
-            }
-
-
-            return $this->render('teacher/form', [
-                'model' => $model,
-            ]);
-        }else{
-            throw new ForbiddenHttpException;
+        if (empty($groupId)) {
+            throw new ForbiddenHttpException('Не указана группа');
         }
 
+        // Security: проверка что группа существует и принадлежит организации
+        $group = Group::find()
+            ->where(['id' => $groupId])
+            ->byOrganization()
+            ->notDeleted()
+            ->one();
 
+        if ($group === null) {
+            throw new NotFoundHttpException('Группа не найдена');
+        }
 
+        $model = new TeacherGroup();
+        $model->target_id = $groupId;
+
+        if ($this->request->isPost) {
+            if ($model->load($this->request->post()) && $model->save()) {
+                return $this->redirect(OrganizationUrl::to(['group/teachers', 'id' => $model->target_id]));
+            }
+        }
+
+        if (Yii::$app->request->isAjax) {
+            return $this->renderAjax('teacher/form', [
+                'model' => $model,
+            ]);
+        }
+
+        return $this->render('teacher/form', [
+            'model' => $model,
+        ]);
     }
 
     /**
@@ -270,10 +338,17 @@ class GroupController extends Controller
      */
     protected function findModel($id)
     {
-        if (($model = Group::findOne(['id' => $id])) !== null) {
+        // Security: проверка organization_id и is_deleted
+        $model = Group::find()
+            ->where(['id' => $id])
+            ->byOrganization()
+            ->notDeleted()
+            ->one();
+
+        if ($model !== null) {
             return $model;
         }
 
-        throw new NotFoundHttpException('The requested page does not exist.');
+        throw new NotFoundHttpException('Группа не найдена');
     }
 }

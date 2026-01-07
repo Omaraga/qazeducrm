@@ -1,12 +1,24 @@
 <?php
 
 use app\helpers\OrganizationUrl;
+use app\models\Payment;
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
 /** @var app\models\Payment $model */
 
-$this->title = Yii::t('main', 'Добавить платеж');
+// Динамический заголовок в зависимости от типа
+if ($model->type == Payment::TYPE_SPENDING) {
+    $this->title = Yii::t('main', 'Добавить расход');
+    $subtitle = 'Введите данные расхода';
+} elseif ($model->type == Payment::TYPE_REFUND) {
+    $this->title = Yii::t('main', 'Добавить возврат');
+    $subtitle = 'Введите данные возврата';
+} else {
+    $this->title = Yii::t('main', 'Добавить приход');
+    $subtitle = 'Введите данные платежа';
+}
+
 $this->params['breadcrumbs'][] = ['label' => Yii::t('main', 'Бухгалтерия'), 'url' => OrganizationUrl::to(['payment/index'])];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
@@ -16,7 +28,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-900"><?= Html::encode($this->title) ?></h1>
-            <p class="text-gray-500 mt-1">Заполните данные нового платежа</p>
+            <p class="text-gray-500 mt-1"><?= $subtitle ?></p>
         </div>
         <div>
             <a href="<?= OrganizationUrl::to(['payment/index']) ?>" class="btn btn-secondary">

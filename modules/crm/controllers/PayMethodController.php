@@ -64,7 +64,8 @@ class PayMethodController extends Controller
     public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
-            'query' => PayMethod::find(),
+            // Security: ограничиваем по organization_id
+            'query' => PayMethod::find()->byOrganization()->notDeleted(),
 
             'pagination' => [
                 'pageSize' => 50

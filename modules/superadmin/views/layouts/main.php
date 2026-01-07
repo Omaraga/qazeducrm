@@ -19,6 +19,9 @@ $menuItems = [
     ['label' => 'Тарифы', 'icon' => 'fa-tags', 'url' => ['/superadmin/plan/index'], 'controller' => 'plan'],
     ['label' => 'Подписки', 'icon' => 'fa-credit-card', 'url' => ['/superadmin/subscription/index'], 'controller' => 'subscription'],
     ['label' => 'Платежи', 'icon' => 'fa-money-bill-wave', 'url' => ['/superadmin/payment/index'], 'controller' => 'payment'],
+    ['label' => 'Аналитика', 'icon' => 'fa-chart-line', 'url' => ['/superadmin/revenue/index'], 'controller' => 'revenue'],
+    ['label' => 'Дополнения', 'icon' => 'fa-puzzle-piece', 'url' => ['/superadmin/addon/index'], 'controller' => 'addon'],
+    ['label' => 'Промокоды', 'icon' => 'fa-ticket-alt', 'url' => ['/superadmin/promo-code/index'], 'controller' => 'promo-code'],
     ['label' => 'База знаний', 'icon' => 'fa-book', 'url' => ['/superadmin/knowledge/index'], 'controller' => 'knowledge'],
 ];
 ?>

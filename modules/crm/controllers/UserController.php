@@ -7,6 +7,8 @@ use app\helpers\SystemRoles;
 use app\models\forms\TeacherForm;
 use app\models\search\UserSearch;
 use app\models\User;
+use app\services\SubscriptionLimitService;
+use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
@@ -89,6 +91,13 @@ class UserController extends Controller
      */
     public function actionCreate()
     {
+        // Проверка лимита учителей тарифного плана
+        $limitService = SubscriptionLimitService::forCurrentOrganization();
+        if ($limitService && !$limitService->canAddTeacher()) {
+            Yii::$app->session->setFlash('error', SubscriptionLimitService::getLimitErrorMessage('teacher'));
+            return $this->redirect(['index']);
+        }
+
         $model = new TeacherForm();
 
         if ($this->request->isPost) {

@@ -3,6 +3,7 @@
 namespace app\models\services;
 
 use app\helpers\ActivityLogger;
+use app\helpers\DateHelper;
 use app\models\Lids;
 use app\models\LidHistory;
 use app\models\Pupil;
@@ -60,7 +61,7 @@ class LidService
 
             // Обновляем лид
             $lid->pupil_id = $pupil->id;
-            $lid->converted_at = date('Y-m-d H:i:s');
+            $lid->converted_at = DateHelper::now();
             $lid->save(false);
 
             // Запись в историю
@@ -83,18 +84,19 @@ class LidService
      * @param Lids $lid
      * @param int $newStatus
      * @param string|null $comment
-     * @return bool
+     * @param bool $autoConvert Автоматически конвертировать при PAID (для обратной совместимости)
+     * @return array Результат: ['success' => bool, 'needs_conversion' => bool, 'message' => string]
      */
-    public static function changeStatus(Lids $lid, int $newStatus, ?string $comment = null): bool
+    public static function changeStatus(Lids $lid, int $newStatus, ?string $comment = null, bool $autoConvert = false): array
     {
         $oldStatus = $lid->status;
 
         if ($oldStatus === $newStatus) {
-            return true;
+            return ['success' => true, 'needs_conversion' => false, 'message' => 'Статус не изменился'];
         }
 
         if (!$lid->canMoveToStatus($newStatus)) {
-            return false;
+            return ['success' => false, 'needs_conversion' => false, 'message' => 'Невозможно перейти в этот статус'];
         }
 
         $transaction = Yii::$app->db->beginTransaction();
@@ -110,17 +112,28 @@ class LidService
 
             $transaction->commit();
 
-            // Если статус стал PAID - автоматически конвертируем в ученика
-            if ($newStatus === Lids::STATUS_PAID) {
+            // Определяем, нужна ли конверсия
+            $needsConversion = in_array($newStatus, [Lids::STATUS_ENROLLED, Lids::STATUS_PAID])
+                               && $lid->pupil_id === null;
+
+            // Для обратной совместимости: автоконверсия при PAID если включена
+            if ($autoConvert && $newStatus === Lids::STATUS_PAID && $lid->pupil_id === null) {
                 self::convertToPupil($lid);
+                $needsConversion = false;
             }
 
-            return true;
+            return [
+                'success' => true,
+                'needs_conversion' => $needsConversion,
+                'message' => 'Статус обновлён',
+                'status' => $newStatus,
+                'status_label' => $lid->getStatusLabel(),
+            ];
 
         } catch (\Exception $e) {
             $transaction->rollBack();
             Yii::error('LidService::changeStatus error: ' . $e->getMessage());
-            return false;
+            return ['success' => false, 'needs_conversion' => false, 'message' => 'Ошибка: ' . $e->getMessage()];
         }
     }
 
@@ -409,7 +422,7 @@ class LidService
 
         // Только просроченные
         if (!empty($filters['overdue_only'])) {
-            $query->andWhere(['<', 'next_contact_date', date('Y-m-d')]);
+            $query->andWhere(['<', 'next_contact_date', DateHelper::today()]);
         }
 
         // Фильтр по дате создания (от)
@@ -431,12 +444,12 @@ class LidService
 
         // Контакт сегодня
         if (!empty($filters['contact_today'])) {
-            $query->andWhere(['next_contact_date' => date('Y-m-d')]);
+            $query->andWhere(['next_contact_date' => DateHelper::today()]);
         }
 
         // Долго в статусе (более 7 дней)
         if (!empty($filters['stale_only'])) {
-            $query->andWhere(['<=', 'status_changed_at', date('Y-m-d H:i:s', strtotime('-7 days'))]);
+            $query->andWhere(['<=', 'status_changed_at', DateHelper::relative('-7 days', true)]);
             // Исключаем финальные статусы
             $query->andWhere(['not in', 'status', [Lids::STATUS_PAID, Lids::STATUS_LOST]]);
         }
@@ -514,11 +527,11 @@ class LidService
      */
     public static function getManagerPersonalStats(int $managerId): array
     {
-        $today = date('Y-m-d');
-        $weekStart = date('Y-m-d', strtotime('monday this week'));
-        $monthStart = date('Y-m-01');
-        $prevMonthStart = date('Y-m-01', strtotime('-1 month'));
-        $prevMonthEnd = date('Y-m-t', strtotime('-1 month'));
+        $today = DateHelper::today();
+        $weekStart = DateHelper::startOfWeek();
+        $monthStart = DateHelper::startOfMonth();
+        $prevMonthStart = DateHelper::relativeFrom(DateHelper::startOfMonth(), '-1 month');
+        $prevMonthEnd = DateHelper::endOfMonth(DateHelper::relative('-1 month'));
 
         // Контакты на сегодня
         $todayContacts = Lids::find()
@@ -626,7 +639,7 @@ class LidService
             ->andWhere(['not in', 'status', [Lids::STATUS_PAID, Lids::STATUS_LOST]])
             ->andWhere([
                 'or',
-                ['<=', 'next_contact_date', date('Y-m-d')],
+                ['<=', 'next_contact_date', DateHelper::today()],
                 ['next_contact_date' => null],
             ])
             ->orderBy([
@@ -706,21 +719,24 @@ class LidService
     {
         $newStatus = (int)$value;
 
-        if (self::changeStatus($lid, $newStatus)) {
+        $result = self::changeStatus($lid, $newStatus);
+
+        if ($result['success']) {
             $lid->refresh();
             return [
                 'success' => true,
-                'message' => 'Статус обновлён',
+                'message' => $result['message'],
                 'value' => $lid->getStatusLabel(),
                 'status_label' => $lid->getStatusLabel(),
                 'status_color' => $lid->getStatusColor(),
                 'pupil_id' => $lid->pupil_id,
+                'needs_conversion' => $result['needs_conversion'] ?? false,
             ];
         }
 
         return [
             'success' => false,
-            'message' => 'Невозможно изменить статус',
+            'message' => $result['message'] ?? 'Невозможно изменить статус',
         ];
     }
 
@@ -741,7 +757,7 @@ class LidService
             return [
                 'success' => true,
                 'message' => 'Дата обновлена',
-                'value' => $value ? date('d.m.Y', strtotime($value)) : '',
+                'value' => $value ? DateHelper::format($value, 'd.m.Y') : '',
             ];
         }
 

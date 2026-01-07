@@ -7,6 +7,7 @@ use app\helpers\OrganizationRoles;
 use app\helpers\SystemRoles;
 use app\models\Payment;
 use app\models\search\PaymentSearch;
+use app\models\services\PupilService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
@@ -78,8 +79,20 @@ class PaymentController extends Controller
      */
     public function actionView($id)
     {
+        // Eager loading для оптимизации
+        $model = Payment::find()
+            ->with(['method', 'pupil'])
+            ->byOrganization()
+            ->andWhere(['id' => $id])
+            ->notDeleted()
+            ->one();
+
+        if ($model === null) {
+            throw new NotFoundHttpException(Yii::t('main', 'Платёж не найден.'));
+        }
+
         return $this->render('view', [
-            'model' => $this->findModel($id),
+            'model' => $model,
         ]);
     }
 
@@ -92,10 +105,46 @@ class PaymentController extends Controller
     {
         $model = new Payment();
 
+        // Установить тип из GET параметра
+        $type = (int)Yii::$app->request->get('type', Payment::TYPE_PAY);
+        if (in_array($type, [Payment::TYPE_PAY, Payment::TYPE_REFUND, Payment::TYPE_SPENDING])) {
+            $model->type = $type;
+        }
+
+        // Установить дату по умолчанию
+        $model->date = date('Y-m-d H:i:s');
+
         if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                ActivityLogger::logPaymentCreated($model);
-                return $this->redirect(['view', 'id' => $model->id]);
+            $transaction = Yii::$app->db->beginTransaction();
+            try {
+                if ($model->load($this->request->post())) {
+                    // Конвертируем дату из datetime-local формата
+                    if ($model->date && strpos($model->date, 'T') !== false) {
+                        $model->date = str_replace('T', ' ', $model->date) . ':00';
+                    }
+
+                    if ($model->save()) {
+                        // Обновляем баланс ученика если есть
+                        if ($model->pupil_id) {
+                            PupilService::updateBalance($model->pupil_id);
+                        }
+                        ActivityLogger::logPaymentCreated($model);
+                        $transaction->commit();
+                        return $this->redirect(['view', 'id' => $model->id]);
+                    }
+                }
+                $transaction->rollBack();
+                // Показываем ошибки валидации
+                if ($model->hasErrors()) {
+                    $errors = [];
+                    foreach ($model->getErrors() as $attribute => $messages) {
+                        $errors[] = $model->getAttributeLabel($attribute) . ': ' . implode(', ', $messages);
+                    }
+                    Yii::$app->session->setFlash('error', implode('<br>', $errors));
+                }
+            } catch (\Exception $e) {
+                $transaction->rollBack();
+                Yii::$app->session->setFlash('error', 'Ошибка при создании платежа: ' . $e->getMessage());
             }
         } else {
             $model->loadDefaultValues();
@@ -116,9 +165,28 @@ class PaymentController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
+        $oldPupilId = $model->pupil_id;
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($this->request->isPost) {
+            $transaction = Yii::$app->db->beginTransaction();
+            try {
+                if ($model->load($this->request->post()) && $model->save()) {
+                    // Обновляем баланс старого ученика если он изменился
+                    if ($oldPupilId && $oldPupilId !== $model->pupil_id) {
+                        PupilService::updateBalance($oldPupilId);
+                    }
+                    // Обновляем баланс текущего ученика
+                    if ($model->pupil_id) {
+                        PupilService::updateBalance($model->pupil_id);
+                    }
+                    $transaction->commit();
+                    return $this->redirect(['view', 'id' => $model->id]);
+                }
+                $transaction->rollBack();
+            } catch (\Exception $e) {
+                $transaction->rollBack();
+                Yii::$app->session->setFlash('error', 'Ошибка при обновлении платежа: ' . $e->getMessage());
+            }
         }
 
         return $this->render('update', [
@@ -136,8 +204,25 @@ class PaymentController extends Controller
     public function actionDelete($id)
     {
         $model = $this->findModel($id);
-        ActivityLogger::logPaymentDeleted($model);
-        $model->delete();
+        $pupilId = $model->pupil_id;
+
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            $model->delete();
+            ActivityLogger::logPaymentDeleted($model);
+
+            // Обновляем баланс ученика после удаления платежа
+            if ($pupilId) {
+                PupilService::updateBalance($pupilId);
+            }
+
+            $transaction->commit();
+            Yii::$app->session->setFlash('success', 'Платёж успешно удалён');
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::$app->session->setFlash('error', 'Ошибка при удалении платежа: ' . $e->getMessage());
+            return $this->redirect(['view', 'id' => $id]);
+        }
 
         return $this->redirect(['index']);
     }

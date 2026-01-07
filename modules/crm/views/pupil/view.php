@@ -1,6 +1,8 @@
 <?php
 
 use app\helpers\OrganizationUrl;
+use app\widgets\tailwind\Icon;
+use app\widgets\tailwind\PupilTabs;
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
@@ -19,13 +21,16 @@ $this->params['breadcrumbs'][] = $this->title;
             <p class="text-gray-500 mt-1">Карточка ученика</p>
         </div>
         <div class="flex gap-3">
-            <a href="<?= OrganizationUrl::to(['pupil/update', 'id' => $model->id]) ?>" class="btn btn-primary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                </svg>
-                Редактировать
-            </a>
-            <?= Html::a('<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg> Удалить',
+            <?= Html::a(Icon::show('book', 'sm') . ' Добавить обучение',
+                OrganizationUrl::to(['pupil/create-edu', 'pupil_id' => $model->id]), [
+                'class' => 'btn btn-success',
+                'title' => 'Быстрое добавление нового обучения',
+            ]) ?>
+            <?= Html::a(Icon::show('edit', 'sm') . ' Редактировать',
+                OrganizationUrl::to(['pupil/update', 'id' => $model->id]), [
+                'class' => 'btn btn-primary',
+            ]) ?>
+            <?= Html::a(Icon::show('trash', 'sm') . ' Удалить',
                 OrganizationUrl::to(['pupil/delete', 'id' => $model->id]), [
                 'class' => 'btn btn-danger',
                 'data' => [
@@ -40,22 +45,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= $this->render('balance', ['model' => $model]) ?>
 
     <!-- Tabs -->
-    <div class="border-b border-gray-200">
-        <nav class="flex gap-4" aria-label="Tabs">
-            <a href="<?= OrganizationUrl::to(['pupil/view', 'id' => $model->id]) ?>"
-               class="px-4 py-2 text-sm font-medium border-b-2 border-primary-500 text-primary-600">
-                Основные данные
-            </a>
-            <a href="<?= OrganizationUrl::to(['pupil/edu', 'id' => $model->id]) ?>"
-               class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent">
-                Обучение
-            </a>
-            <a href="<?= OrganizationUrl::to(['pupil/payment', 'id' => $model->id]) ?>"
-               class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 border-b-2 border-transparent">
-                Оплата
-            </a>
-        </nav>
-    </div>
+    <?= PupilTabs::widget(['model' => $model, 'activeTab' => 'view']) ?>
 
     <!-- Content -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

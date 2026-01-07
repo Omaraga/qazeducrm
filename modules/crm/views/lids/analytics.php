@@ -40,7 +40,7 @@ $statusColors = [
             <p class="text-gray-500 mt-1">Статистика воронки продаж и эффективность менеджеров</p>
         </div>
         <div class="flex gap-2">
-            <a href="<?= OrganizationUrl::to(['lids/kanban']) ?>" class="btn btn-outline">
+            <a href="<?= OrganizationUrl::to(['lids-funnel/kanban']) ?>" class="btn btn-outline">
                 <?= Icon::show('view-columns', 'sm') ?>
                 Kanban
             </a>
@@ -81,7 +81,7 @@ $statusColors = [
                         <?= Icon::show('funnel', 'sm') ?>
                         Применить
                     </button>
-                    <a href="<?= OrganizationUrl::to(['lids/analytics']) ?>" class="btn btn-secondary">
+                    <a href="<?= OrganizationUrl::to(['lids-funnel/analytics']) ?>" class="btn btn-secondary">
                         Сбросить
                     </a>
                 </div>

@@ -1,11 +1,18 @@
 <?php
+
 namespace app\components;
-use app\models\relations\UserOrganization;
-use yii\web\Controller;
+
 use Yii;
+use yii\web\Controller;
+use app\models\relations\UserOrganization;
+use app\behaviors\SubscriptionWarningBehavior;
 
 class BaseController extends Controller
 {
+    /**
+     * @var bool Включить проверку подписки и показ предупреждений
+     */
+    public bool $enableSubscriptionWarnings = true;
 
     public $aliases = [
         'ru' => 'ru-RU',
@@ -38,6 +45,28 @@ class BaseController extends Controller
         }
         parent::init();
 
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function behaviors()
+    {
+        $behaviors = parent::behaviors();
+
+        // Добавляем проверку подписки и предупреждения
+        if ($this->enableSubscriptionWarnings) {
+            $behaviors['subscriptionWarning'] = [
+                'class' => SubscriptionWarningBehavior::class,
+                'checkLimits' => true,
+                'checkSubscription' => true,
+                'limitWarningThreshold' => 80,
+                'limitCriticalThreshold' => 95,
+                'subscriptionWarningDays' => 7,
+            ];
+        }
+
+        return $behaviors;
     }
 
     public function setLanguage($language)

@@ -5,6 +5,7 @@ namespace app\models;
 use app\helpers\Lists;
 use app\models\enum\StatusEnum;
 use app\models\relations\TeacherGroup;
+use app\services\SubscriptionLimitService;
 use Yii;
 use yii\db\Expression;
 use app\components\ActiveRecord;
@@ -66,8 +67,28 @@ class Group extends ActiveRecord
             [['code'], 'required'],
             [['info'], 'string'],
             [['code', 'name', 'color'], 'string', 'max' => 255],
-            ['editor_id', 'default', 'value' => Yii::$app->user->identity->id]
+            ['editor_id', 'default', 'value' => function() {
+                return Yii::$app->user && !Yii::$app->user->isGuest
+                    ? Yii::$app->user->identity->id
+                    : null;
+            }]
         ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function beforeSave($insert)
+    {
+        // Проверка лимита только при создании новой группы
+        if ($insert) {
+            $limitService = SubscriptionLimitService::forCurrentOrganization();
+            if ($limitService && !$limitService->canAddGroup()) {
+                $this->addError('id', SubscriptionLimitService::getLimitErrorMessage('group'));
+                return false;
+            }
+        }
+        return parent::beforeSave($insert);
     }
 
 
@@ -109,17 +130,20 @@ class Group extends ActiveRecord
     }
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getStatusLabel(){
-        return StatusEnum::getStatusList()[$this->status];
+    public function getStatusLabel(): string
+    {
+        $statuses = StatusEnum::getStatusList();
+        return $statuses[$this->status] ?? 'Не указан';
     }
 
     /**
-     * @return string|null
+     * @return string
      */
-    public function getSubjectLabel(){
-        return $this->subject->name;
+    public function getSubjectLabel(): string
+    {
+        return $this->subject?->name ?? 'Не указан';
     }
 
     /**
@@ -131,10 +155,15 @@ class Group extends ActiveRecord
 
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getCategoryLabel(){
-        return Lists::getGroupCategories()[$this->category_id];
+    public function getCategoryLabel(): string
+    {
+        if ($this->category_id === null) {
+            return 'Не указана';
+        }
+        $categories = Lists::getGroupCategories();
+        return $categories[$this->category_id] ?? 'Не указана';
     }
 
     /**

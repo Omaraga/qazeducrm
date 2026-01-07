@@ -4,6 +4,7 @@ namespace app\services;
 
 use app\models\Organizations;
 use app\models\OrganizationSubscription;
+use app\models\OrganizationAddon;
 use app\models\Pupil;
 use app\models\User;
 use app\models\Group;
@@ -21,6 +22,7 @@ class SubscriptionLimitService
 {
     private Organizations $organization;
     private ?OrganizationSubscription $subscription;
+    private ?array $activeAddons = null;
 
     public function __construct(Organizations $organization)
     {
@@ -38,6 +40,14 @@ class SubscriptionLimitService
     }
 
     /**
+     * Создать сервис для указанной организации
+     */
+    public static function forOrganization(Organizations $organization): self
+    {
+        return new self($organization);
+    }
+
+    /**
      * Есть ли активная подписка
      */
     public function hasActiveSubscription(): bool
@@ -46,14 +56,64 @@ class SubscriptionLimitService
     }
 
     /**
-     * Получить лимит
+     * Получить лимит (базовый + бонусы от аддонов)
      */
     public function getLimit(string $field): int
     {
         if (!$this->subscription) {
             return 0;
         }
+
+        // Базовый лимит из плана
+        $baseLimit = $this->subscription->getLimit($field);
+
+        // Если безлимит - возвращаем сразу
+        if ($baseLimit === 0) {
+            return 0;
+        }
+
+        // Добавляем бонусы от аддонов
+        $addonBonus = $this->getAddonLimitBonus($field);
+
+        return $baseLimit + $addonBonus;
+    }
+
+    /**
+     * Получить базовый лимит (без аддонов)
+     */
+    public function getBaseLimit(string $field): int
+    {
+        if (!$this->subscription) {
+            return 0;
+        }
         return $this->subscription->getLimit($field);
+    }
+
+    /**
+     * Получить бонус лимита от аддонов
+     */
+    public function getAddonLimitBonus(string $field): int
+    {
+        return OrganizationAddon::getTotalLimitBonus($this->organization->id, $field);
+    }
+
+    /**
+     * Получить все активные аддоны организации
+     */
+    public function getActiveAddons(): array
+    {
+        if ($this->activeAddons === null) {
+            $this->activeAddons = OrganizationAddon::findActiveByOrganization($this->organization->id);
+        }
+        return $this->activeAddons;
+    }
+
+    /**
+     * Проверить, есть ли у организации активный аддон
+     */
+    public function hasAddon(string $featureCode): bool
+    {
+        return OrganizationAddon::hasActiveAddon($this->organization->id, $featureCode);
     }
 
     /**
@@ -247,9 +307,29 @@ class SubscriptionLimitService
     // ==================== FEATURES ====================
 
     /**
-     * Проверить наличие функции в плане
+     * Проверить наличие функции (в плане или аддонах)
      */
     public function hasFeature(string $feature): bool
+    {
+        // 1. Проверяем в плане
+        if ($this->subscription && $this->subscription->saasPlan) {
+            if ($this->subscription->saasPlan->hasFeature($feature)) {
+                return true;
+            }
+        }
+
+        // 2. Проверяем в активных аддонах
+        if ($this->hasAddon($feature)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Проверить наличие функции только в базовом плане (без аддонов)
+     */
+    public function hasFeatureInPlan(string $feature): bool
     {
         if (!$this->subscription || !$this->subscription->saasPlan) {
             return false;
@@ -268,33 +348,59 @@ class SubscriptionLimitService
             'pupils' => [
                 'current' => $this->getPupilCount(),
                 'limit' => $this->getLimit('max_pupils'),
+                'base_limit' => $this->getBaseLimit('max_pupils'),
+                'addon_bonus' => $this->getAddonLimitBonus('max_pupils'),
                 'remaining' => $this->getRemainingPupils(),
                 'can_add' => $this->canAddPupil(),
             ],
             'teachers' => [
                 'current' => $this->getTeacherCount(),
                 'limit' => $this->getLimit('max_teachers'),
+                'base_limit' => $this->getBaseLimit('max_teachers'),
+                'addon_bonus' => $this->getAddonLimitBonus('max_teachers'),
                 'remaining' => $this->getRemainingTeachers(),
                 'can_add' => $this->canAddTeacher(),
             ],
             'groups' => [
                 'current' => $this->getGroupCount(),
                 'limit' => $this->getLimit('max_groups'),
+                'base_limit' => $this->getBaseLimit('max_groups'),
+                'addon_bonus' => $this->getAddonLimitBonus('max_groups'),
                 'remaining' => $this->getRemainingGroups(),
                 'can_add' => $this->canAddGroup(),
             ],
             'admins' => [
                 'current' => $this->getAdminCount(),
                 'limit' => $this->getLimit('max_admins'),
+                'base_limit' => $this->getBaseLimit('max_admins'),
+                'addon_bonus' => $this->getAddonLimitBonus('max_admins'),
                 'can_add' => $this->canAddAdmin(),
             ],
             'branches' => [
                 'current' => $this->getBranchCount(),
                 'limit' => $this->getLimit('max_branches'),
+                'base_limit' => $this->getBaseLimit('max_branches'),
+                'addon_bonus' => $this->getAddonLimitBonus('max_branches'),
                 'remaining' => $this->getRemainingBranches(),
                 'can_add' => $this->canAddBranch(),
             ],
+            'active_addons' => count($this->getActiveAddons()),
         ];
+    }
+
+    /**
+     * Получить текущее количество для поля лимита
+     */
+    public function getCurrentCount(string $field): int
+    {
+        return match ($field) {
+            'max_pupils' => $this->getPupilCount(),
+            'max_teachers' => $this->getTeacherCount(),
+            'max_groups' => $this->getGroupCount(),
+            'max_admins' => $this->getAdminCount(),
+            'max_branches' => $this->getBranchCount(),
+            default => 0,
+        };
     }
 
     /**
@@ -307,14 +413,7 @@ class SubscriptionLimitService
             return 0; // Безлимит
         }
 
-        $current = match ($field) {
-            'max_pupils' => $this->getPupilCount(),
-            'max_teachers' => $this->getTeacherCount(),
-            'max_groups' => $this->getGroupCount(),
-            'max_admins' => $this->getAdminCount(),
-            'max_branches' => $this->getBranchCount(),
-            default => 0,
-        };
+        $current = $this->getCurrentCount($field);
 
         return min(100, (int)round(($current / $limit) * 100));
     }
@@ -341,13 +440,43 @@ class SubscriptionLimitService
     public static function getLimitErrorMessage(string $entity): string
     {
         $messages = [
-            'pupil' => Yii::t('main', 'Достигнут лимит учеников. Обновите тарифный план для добавления новых учеников.'),
-            'teacher' => Yii::t('main', 'Достигнут лимит учителей. Обновите тарифный план для добавления новых учителей.'),
-            'group' => Yii::t('main', 'Достигнут лимит групп. Обновите тарифный план для добавления новых групп.'),
+            'pupil' => Yii::t('main', 'Достигнут лимит учеников. Обновите тарифный план или докупите пакет учеников.'),
+            'teacher' => Yii::t('main', 'Достигнут лимит учителей. Обновите тарифный план или докупите пакет.'),
+            'group' => Yii::t('main', 'Достигнут лимит групп. Обновите тарифный план или докупите пакет групп.'),
             'admin' => Yii::t('main', 'Достигнут лимит администраторов. Обновите тарифный план.'),
-            'branch' => Yii::t('main', 'Достигнут лимит филиалов. Обновите тарифный план для добавления новых филиалов.'),
+            'branch' => Yii::t('main', 'Достигнут лимит филиалов. Обновите тарифный план или докупите филиал.'),
         ];
 
         return $messages[$entity] ?? Yii::t('main', 'Достигнут лимит. Обновите тарифный план.');
+    }
+
+    /**
+     * Получить информацию о доступных аддонах для увеличения лимита
+     */
+    public function getAvailableAddonInfo(string $limitField): ?array
+    {
+        $feature = \app\models\SaasFeature::find()
+            ->where(['is_addon' => 1, 'is_active' => 1])
+            ->andWhere(['type' => \app\models\SaasFeature::TYPE_LIMIT])
+            ->one();
+
+        // TODO: Реализовать поиск подходящего аддона по полю лимита
+        return null;
+    }
+
+    /**
+     * Получить головную организацию
+     */
+    public function getOrganization(): Organizations
+    {
+        return $this->organization;
+    }
+
+    /**
+     * Получить подписку
+     */
+    public function getSubscription(): ?OrganizationSubscription
+    {
+        return $this->subscription;
     }
 }

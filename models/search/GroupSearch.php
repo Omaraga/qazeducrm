@@ -60,21 +60,11 @@ class GroupSearch extends Group
         }
 
 
-        if ($this->category_id && $this->category_id > 0){
-            $query->andFilterWhere(['category_id' => $this->category_id]);
-        }
-
-        if ($this->subject_id && $this->subject_id > 0){
-            $query->andFilterWhere(['subject_id' => $this->subject_id]);
-        }
-
-        if ($this->name && strlen($this->name) > 0){
-            $query->andFilterWhere(['like', 'name', $this->name]);
-        }
-        if ($this->code && strlen($this->code) > 0){
-            $query->andFilterWhere(['like', 'code', $this->code]);
-        }
-
+        // andFilterWhere автоматически игнорирует пустые значения
+        $query->andFilterWhere(['category_id' => $this->category_id]);
+        $query->andFilterWhere(['subject_id' => $this->subject_id]);
+        $query->andFilterWhere(['like', 'name', $this->name]);
+        $query->andFilterWhere(['like', 'code', $this->code]);
 
         return $dataProvider;
     }

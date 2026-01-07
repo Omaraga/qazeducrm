@@ -2,6 +2,7 @@
 
 use app\models\Payment;
 use app\helpers\OrganizationUrl;
+use app\widgets\tailwind\Icon;
 use app\widgets\tailwind\LinkPager;
 use yii\helpers\Html;
 
@@ -11,17 +12,6 @@ use yii\helpers\Html;
 
 $this->title = Yii::t('main', 'Бухгалтерия');
 $this->params['breadcrumbs'][] = $this->title;
-
-// Calculate totals
-$totalIncome = 0;
-$totalExpense = 0;
-foreach ($dataProvider->getModels() as $payment) {
-    if ($payment->type == Payment::TYPE_PAY) {
-        $totalIncome += $payment->amount;
-    } else {
-        $totalExpense += $payment->amount;
-    }
-}
 ?>
 
 <div class="space-y-6">
@@ -30,6 +20,16 @@ foreach ($dataProvider->getModels() as $payment) {
         <div>
             <h1 class="text-2xl font-bold text-gray-900"><?= Html::encode($this->title) ?></h1>
             <p class="text-gray-500 mt-1">Финансовые операции</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="<?= OrganizationUrl::to(['payment/create', 'type' => Payment::TYPE_PAY]) ?>" class="btn btn-success">
+                <?= Icon::show('arrow-up', 'sm') ?>
+                Приход
+            </a>
+            <a href="<?= OrganizationUrl::to(['payment/create', 'type' => Payment::TYPE_SPENDING]) ?>" class="btn btn-danger">
+                <?= Icon::show('arrow-down', 'sm') ?>
+                Расход
+            </a>
         </div>
     </div>
 
@@ -40,12 +40,10 @@ foreach ($dataProvider->getModels() as $payment) {
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-500">Поступления</p>
-                        <p class="text-2xl font-bold text-success-600"><?= number_format($totalIncome, 0, '.', ' ') ?> ₸</p>
+                        <p class="text-2xl font-bold text-success-600"><?= number_format($searchModel->totalIncome, 0, '.', ' ') ?> ₸</p>
                     </div>
                     <div class="w-12 h-12 bg-success-100 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
-                        </svg>
+                        <?= Icon::show('arrow-up', 'lg', 'text-success-600') ?>
                     </div>
                 </div>
             </div>
@@ -54,13 +52,11 @@ foreach ($dataProvider->getModels() as $payment) {
             <div class="card-body">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-500">Расходы</p>
-                        <p class="text-2xl font-bold text-danger-600"><?= number_format($totalExpense, 0, '.', ' ') ?> ₸</p>
+                        <p class="text-sm text-gray-500">Расходы и возвраты</p>
+                        <p class="text-2xl font-bold text-danger-600"><?= number_format($searchModel->totalExpense, 0, '.', ' ') ?> ₸</p>
                     </div>
                     <div class="w-12 h-12 bg-danger-100 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-danger-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
-                        </svg>
+                        <?= Icon::show('arrow-down', 'lg', 'text-danger-600') ?>
                     </div>
                 </div>
             </div>
@@ -73,14 +69,57 @@ foreach ($dataProvider->getModels() as $payment) {
                         <p class="text-2xl font-bold <?= ($searchModel->sum ?? 0) >= 0 ? 'text-primary-600' : 'text-danger-600' ?>"><?= number_format($searchModel->sum ?? 0, 0, '.', ' ') ?> ₸</p>
                     </div>
                     <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                        </svg>
+                        <?= Icon::show('calculator', 'lg', 'text-primary-600') ?>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Analytics by Payment Method -->
+    <?php if (!empty($searchModel->incomeByMethod) || !empty($searchModel->expenseByMethod)): ?>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <?php if (!empty($searchModel->incomeByMethod)): ?>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-lg font-semibold text-gray-900">Поступления по способам оплаты</h3>
+            </div>
+            <div class="card-body">
+                <div class="space-y-3">
+                    <?php foreach ($searchModel->incomeByMethod as $method): ?>
+                    <div class="flex items-center justify-between p-3 bg-success-50 rounded-lg">
+                        <span class="text-sm text-gray-700"><?= Html::encode($method['name']) ?></span>
+                        <span class="text-lg font-bold text-success-600">
+                            +<?= number_format($method['total'], 0, '.', ' ') ?> ₸
+                        </span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!empty($searchModel->expenseByMethod)): ?>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-lg font-semibold text-gray-900">Расходы по способам оплаты</h3>
+            </div>
+            <div class="card-body">
+                <div class="space-y-3">
+                    <?php foreach ($searchModel->expenseByMethod as $method): ?>
+                    <div class="flex items-center justify-between p-3 bg-danger-50 rounded-lg">
+                        <span class="text-sm text-gray-700"><?= Html::encode($method['name']) ?></span>
+                        <span class="text-lg font-bold text-danger-600">
+                            -<?= number_format($method['total'], 0, '.', ' ') ?> ₸
+                        </span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
 
     <!-- Filters -->
     <div class="card">
@@ -101,7 +140,6 @@ foreach ($dataProvider->getModels() as $payment) {
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Назначение</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Способ</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ученик</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Номер</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Комментарий</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
                     </tr>
@@ -115,6 +153,8 @@ foreach ($dataProvider->getModels() as $payment) {
                         <td class="px-6 py-4 whitespace-nowrap">
                             <?php if ($model->type == Payment::TYPE_PAY): ?>
                                 <span class="badge badge-success">Приход</span>
+                            <?php elseif ($model->type == Payment::TYPE_REFUND): ?>
+                                <span class="badge badge-warning">Возврат</span>
                             <?php else: ?>
                                 <span class="badge badge-danger">Расход</span>
                             <?php endif; ?>
@@ -130,31 +170,44 @@ foreach ($dataProvider->getModels() as $payment) {
                             <?= $model->type == Payment::TYPE_PAY ? Html::encode($model->purposeLabel ?? '') : '' ?>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <?= $model->type == Payment::TYPE_PAY && $model->method ? Html::encode($model->method->name) : '' ?>
+                            <?= $model->method ? Html::encode($model->method->name) : '' ?>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <?= $model->pupil ? Html::encode($model->pupil->fio) : '' ?>
+                            <?php if ($model->pupil): ?>
+                                <a href="<?= OrganizationUrl::to(['pupil/view', 'id' => $model->pupil_id]) ?>" class="text-primary-600 hover:text-primary-800">
+                                    <?= Html::encode($model->pupil->fio) ?>
+                                </a>
+                            <?php else: ?>
+                                <span class="text-gray-400">—</span>
+                            <?php endif; ?>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <?= Html::encode($model->number ?? '') ?>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                        <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title="<?= Html::encode($model->comment ?? '') ?>">
                             <?= Html::encode($model->comment ?? '') ?>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                            <?php if ($model->pupil_id): ?>
-                                <?= Html::a('Посмотреть', OrganizationUrl::to(['pupil/payment', 'id' => $model->pupil_id]), ['class' => 'btn btn-sm btn-secondary']) ?>
-                            <?php endif; ?>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
+                            <a href="<?= OrganizationUrl::to(['payment/view', 'id' => $model->id]) ?>" class="btn btn-sm btn-secondary">
+                                <?= Icon::show('eye', 'sm') ?>
+                            </a>
+                            <a href="<?= OrganizationUrl::to(['payment/update', 'id' => $model->id]) ?>" class="btn btn-sm btn-primary">
+                                <?= Icon::show('edit', 'sm') ?>
+                            </a>
                         </td>
                     </tr>
                     <?php endforeach; ?>
                     <?php if (empty($dataProvider->getModels())): ?>
                     <tr>
-                        <td colspan="9" class="px-6 py-12 text-center text-gray-500">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                            </svg>
-                            <p class="mt-2">Платежи не найдены</p>
+                        <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                            <?= Icon::show('calculator', 'xl', 'mx-auto text-gray-400') ?>
+                            <p class="mt-4 font-medium">Платежи не найдены</p>
+                            <p class="text-sm text-gray-400 mt-1">Добавьте первый платёж или расход</p>
+                            <div class="flex gap-3 justify-center mt-4">
+                                <a href="<?= OrganizationUrl::to(['payment/create', 'type' => Payment::TYPE_PAY]) ?>" class="btn btn-success">
+                                    <?= Icon::show('plus', 'sm') ?> Добавить приход
+                                </a>
+                                <a href="<?= OrganizationUrl::to(['payment/create', 'type' => Payment::TYPE_SPENDING]) ?>" class="btn btn-secondary">
+                                    <?= Icon::show('minus', 'sm') ?> Добавить расход
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     <?php endif; ?>
@@ -163,8 +216,8 @@ foreach ($dataProvider->getModels() as $payment) {
                 <tfoot class="bg-gray-50">
                     <tr>
                         <td colspan="2" class="px-6 py-4 text-sm font-bold text-gray-900">Итого</td>
-                        <td class="px-6 py-4 text-sm font-bold text-gray-900"><?= number_format($searchModel->sum ?? 0, 0, '.', ' ') ?> ₸</td>
-                        <td colspan="6"></td>
+                        <td class="px-6 py-4 text-sm font-bold <?= ($searchModel->sum ?? 0) >= 0 ? 'text-success-600' : 'text-danger-600' ?>"><?= number_format($searchModel->sum ?? 0, 0, '.', ' ') ?> ₸</td>
+                        <td colspan="5"></td>
                     </tr>
                 </tfoot>
                 <?php endif; ?>

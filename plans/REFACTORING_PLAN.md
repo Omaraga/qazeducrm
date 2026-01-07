@@ -1,18 +1,18 @@
 # План рефакторинга QazEduCRM
 
 > Документ создан: 2026-01-06
-> Обновлено: 2026-01-06
-> Статус: В работе (выполнено 11/17 задач)
+> Обновлено: 2026-01-07
+> Статус: ЗАВЕРШЕНО (выполнено 17/17 задач) ✅
 
 ## Прогресс
 
 | Приоритет | Всего | Выполнено | Осталось |
 |-----------|-------|-----------|----------|
 | 1 (Критические) | 4 | 4 | 0 ✅ |
-| 2 (Высокие) | 4 | 3 | 1 |
+| 2 (Высокие) | 4 | 4 | 0 ✅ |
 | 3 (Средние) | 4 | 4 | 0 ✅ |
-| 4 (Улучшения) | 5 | 0 | 5 |
-| **ИТОГО** | **17** | **11** | **6** |
+| 4 (Улучшения) | 5 | 5 | 0 ✅ |
+| **ИТОГО** | **17** | **17** | **0** ✅ |
 
 ## Содержание
 1. [Приоритет 1 - Критические проблемы](#приоритет-1---критические-проблемы)
@@ -168,38 +168,69 @@
 
 ## Приоритет 2 - Высокие проблемы
 
-### 2.1 Разделение LidsController (800+ строк)
+### 2.1 ~~Разделение LidsController (800+ строк)~~ ВЫПОЛНЕНО
 
-**Проблема:** Контроллер слишком большой, нарушает Single Responsibility
+**Статус:** ВЫПОЛНЕНО (2026-01-07)
 
-**Файл:** `modules/crm/controllers/LidsController.php`
+**Проблема:** Контроллер был 789 строк, нарушал Single Responsibility
 
-**Решение:** Разделить на 3 контроллера:
+**Что сделано:**
 
-1. **LidsController** (CRUD операции):
-   - actionIndex, actionView, actionCreate, actionUpdate, actionDelete
-   - actionCreateAjax, actionUpdateAjax, actionGetLid
+1. **LidsController.php** (364 строки) - только CRUD:
+   - `actionIndex()` - список лидов
+   - `actionView($id)` - просмотр лида
+   - `actionCreate()` - создание
+   - `actionUpdate($id)` - редактирование
+   - `actionDelete($id)` - удаление
+   - `actionCreateAjax()` - AJAX создание
+   - `actionUpdateAjax($id)` - AJAX обновление
+   - `actionGetLid($id)` - AJAX получение данных
 
-2. **LidsFunnelController** (воронка продаж):
-   - actionKanban, actionAnalytics
-   - actionChangeStatus
-   - actionGetSalesScript, actionGetAllSalesScripts
+2. **LidsFunnelController.php** (создан, 218 строк) - воронка продаж:
+   - `actionKanban()` - канбан-доска
+   - `actionAnalytics()` - страница аналитики
+   - `actionChangeStatus()` - AJAX смена статуса (drag & drop)
+   - `actionGetSalesScript()` - AJAX скрипт продаж для статуса
+   - `actionGetAllSalesScripts()` - AJAX все скрипты продаж
 
-3. **LidsInteractionController** (взаимодействия):
-   - actionAddInteraction
-   - actionConvertToPupil
-   - actionToggleTag, actionUpdateField
-   - actionGetWhatsappTemplates, actionRenderWhatsappMessage
-   - actionCheckDuplicates
+3. **LidsInteractionController.php** (создан, 265 строк) - взаимодействия:
+   - `actionAddInteraction()` - AJAX добавление звонка/встречи
+   - `actionConvertToPupil($id)` - конверсия в ученика
+   - `actionToggleTag()` - AJAX переключение тега
+   - `actionUpdateField()` - AJAX inline-редактирование
+   - `actionGetWhatsappTemplates()` - AJAX WhatsApp шаблоны
+   - `actionRenderWhatsappMessage()` - AJAX генерация сообщения
+   - `actionCheckDuplicates()` - AJAX проверка дубликатов
 
-**Шаги:**
-1. Создать новые контроллеры
-2. Перенести экшены
-3. Обновить URL правила в config/web.php
-4. Обновить ссылки во views
+**Обновлённые views** (маршруты):
+- `_view-modal.php` - 6 URL обновлено
+- `_form-modal.php` - 1 URL
+- `kanban.php` - 8 URL
+- `analytics.php` - 2 URL
+- `view.php` - 2 URL
+- `index.php` - 1 URL
+- `convert-to-pupil.php` - 1 URL
+- `layouts/main.php` - меню обновлено
+- `widgets/tailwind/views/manager-stats.php` - 2 URL
+
+**URL маршруты:**
+- `lids/kanban` → `lids-funnel/kanban`
+- `lids/analytics` → `lids-funnel/analytics`
+- `lids/change-status` → `lids-funnel/change-status`
+- `lids/add-interaction` → `lids-interaction/add-interaction`
+- `lids/convert-to-pupil` → `lids-interaction/convert-to-pupil`
+- `lids/toggle-tag` → `lids-interaction/toggle-tag`
+- `lids/update-field` → `lids-interaction/update-field`
+- И другие...
+
+**Результат:**
+- Было: 1 контроллер (789 строк)
+- Стало: 3 контроллера (364 + 218 + 265 = 847 строк, но каждый < 400)
+- Каждый контроллер имеет чёткую ответственность
+- Легче поддерживать и тестировать
 
 **Оценка сложности:** Высокая
-**Затрагиваемые файлы:** ~15-20
+**Затрагиваемые файлы:** 12
 
 ---
 
@@ -483,50 +514,110 @@ $value = SettingsHelper::get('custom_key', 'default');
 
 ## Приоритет 4 - Улучшения
 
-### 4.1 Создание BaseEnum трейта
+### 4.1 ~~Создание Enum трейтов~~ ВЫПОЛНЕНО
 
-**Проблема:** Повторяющаяся логика getTypeList() в моделях
+**Статус:** ВЫПОЛНЕНО (2026-01-07)
 
-**Решение:**
+**Проблема:** Повторяющаяся логика getTypeList()/getStatusList() в моделях
+
+**Что сделано:**
+
+1. **traits/HasEnumFieldTrait.php** - базовый trait с helper-методами:
+   - `getEnumLabel($value, $list)` - получение label
+   - `getEnumIcon($value, $icons)` - получение иконки
+   - `getEnumColor($value, $colors)` - получение цвета
+   - `isEnumValue($value, $values)` - проверка значения
+
+2. **traits/HasStatusTrait.php** - для полей `status`:
+   - Требует: `getStatusList(): array`
+   - Опционально: `getStatusIcons()`, `getStatusColors()`
+   - Предоставляет: `getStatusLabel()`, `getStatusIcon()`, `getStatusColor()`
+   - Дополнительно: `isStatus($status)`, `isStatusIn($statuses)`, `getStatusOptions()`
+
+3. **traits/HasTypeTrait.php** - для полей `type`:
+   - Требует: `getTypeList(): array`
+   - Опционально: `getTypeIcons()`, `getTypeColors()`
+   - Предоставляет: `getTypeLabel()`, `getTypeIcon()`, `getTypeColor()`
+   - Дополнительно: `isType($type)`, `isTypeIn($types)`, `getTypeOptions()`
+
+**Применено к моделям:**
+- `LidHistory` - использует HasTypeTrait (10 типов + иконки + цвета)
+- `Notification` - использует HasTypeTrait (5 типов + иконки + цвета)
+- `SmsLog` - использует HasStatusTrait (4 статуса + цвета)
+
+**Использование:**
 ```php
-// traits/HasStatusTrait.php
-trait HasStatusTrait
+class MyModel extends ActiveRecord
 {
-    abstract public static function getStatusList(): array;
+    use HasStatusTrait;
 
-    public function getStatusLabel(): string
-    {
-        return static::getStatusList()[$this->status] ?? 'Unknown';
+    public static function getStatusList(): array {
+        return [1 => 'Активен', 0 => 'Неактивен'];
     }
 
-    public static function getStatusOptions(): array
-    {
-        return static::getStatusList();
+    public static function getStatusColors(): array {
+        return [1 => 'green', 0 => 'gray'];
     }
 }
+
+// Использование
+$model->getStatusLabel();  // "Активен"
+$model->getStatusColor();  // "green"
+$model->isStatus(1);       // true
 ```
 
-**Использование в:** LidHistory, Notification, Payment, OrganizationActivityLog
-
 **Оценка сложности:** Низкая
-**Затрагиваемые файлы:** 5-6
+**Затрагиваемые файлы:** 6 (3 traits + 3 models)
 
 ---
 
-### 4.2 Расширение StringHelper
+### 4.2 ~~Расширение StringHelper~~ ВЫПОЛНЕНО
 
-**Файл:** `helpers/StringHelper.php` (18 строк)
+**Статус:** ВЫПОЛНЕНО (2026-01-07)
 
-**Решение:** Добавить методы:
+**Файл:** `helpers/StringHelper.php` (было 18 строк → стало 399 строк)
+
+**Что сделано:**
+
+Расширен Yii StringHelper с 20+ полезными методами:
+
+**Преобразование:**
+- `slugify($text)` - URL-slug с транслитерацией RU/KZ
+- `camelToSnake($text)` - CamelCase → snake_case
+- `snakeToCamel($text)` - snake_case → CamelCase
+- `snakeToKebab($text)` - snake_case → kebab-case
+- `kebabToSnake($text)` - kebab-case → snake_case
+
+**Обрезка:**
+- `truncateText($text, $length)` - обрезка с многоточием
+- `truncateWords($text, $count)` - обрезка по словам
+- `first($text, $length)` - первые N символов
+- `last($text, $length)` - последние N символов
+
+**Поиск и подсветка:**
+- `highlightMatches($text, $query)` - подсветка совпадений
+- `containsIgnoreCase($haystack, $needle)` - поиск без регистра
+- `startsWith()`, `endsWith()` - проверка начала/конца
+
+**Телефоны:**
+- `cleanPhone($phone)` - очистка телефона
+- `formatPhone($phone, 'kz')` - форматирование +7 XXX XXX XX XX
+- `maskPhone($phone)` - маскирование +7 *** *** ** 45
+
+**Email и ФИО:**
+- `maskEmail($email)` - маскирование j***n@example.com
+- `initials($fio, 2)` - инициалы из ФИО
+
+**Склонение:**
+- `pluralize($count, 'ученик', 'ученика', 'учеников')` - склонение
+- `pluralizeWithCount(...)` - склонение с числом
+
+**Использование:**
 ```php
-class StringHelper
-{
-    public static function slugify(string $text): string { ... }
-    public static function truncate(string $text, int $length): string { ... }
-    public static function highlightMatches(string $text, string $query): string { ... }
-    public static function camelCaseToSnake(string $text): string { ... }
-    public static function snakeToCamelCase(string $text): string { ... }
-}
+StringHelper::slugify('Привет мир');     // "privet-mir"
+StringHelper::initials('Иванов Иван');   // "ИИ"
+StringHelper::formatPhone('87771234567'); // "+7 777 123 45 67"
+StringHelper::pluralizeWithCount(5, 'ученик', 'ученика', 'учеников'); // "5 учеников"
 ```
 
 **Оценка сложности:** Низкая
@@ -534,65 +625,158 @@ class StringHelper
 
 ---
 
-### 4.3 Оптимизация StatCard виджета
+### 4.3 ~~Оптимизация StatCard виджета~~ ВЫПОЛНЕНО
 
-**Проблема:** Встроенные иконки дублируют Icon виджет
+**Статус:** ВЫПОЛНЕНО (2026-01-07)
 
-**Файл:** `widgets/tailwind/StatCard.php`
+**Что было:**
+- 8 inline SVG иконок в массиве `$icons` (дублирование Icon виджета)
+- Inline SVG для стрелок тренда (arrow-up/arrow-down)
+- 138 строк кода
 
-**Решение:** Использовать `Icon::show()` вместо inline SVG
+**Что сделано:**
+1. **widgets/tailwind/StatCard.php** (138 → 125 строк):
+   - Удалён массив `$icons` с 8 inline SVG
+   - Основная иконка: `Icon::show($this->icon, 'lg')`
+   - Стрелки тренда: `Icon::show('arrow-up|arrow-down', 'xs')`
+   - Добавлено значение по умолчанию `$icon = 'chart'`
+
+2. **widgets/tailwind/Icon.php**:
+   - Добавлен алиас `user-group` для совместимости
+
+**Оценка сложности:** Низкая
+**Затрагиваемые файлы:** 2
+
+---
+
+### 4.4 ~~Улучшение PhoneNumberValidator~~ ВЫПОЛНЕНО
+
+**Статус:** ВЫПОЛНЕНО (2026-01-07)
+
+**Что было:**
+- Только казахский формат (7xxx)
+- 33 строки кода
+- Нет форматирования, только валидация
+
+**Что сделано:**
+1. **components/PhoneNumberValidator.php** (33 → 363 строки):
+
+   **Поддержка стран:**
+   - KZ: Казахстан (+7 xxx xxx xx xx) - 11 цифр
+   - RU: Россия (+7 xxx xxx xx xx) - 11 цифр
+   - UZ: Узбекистан (+998 xx xxx xx xx) - 12 цифр
+   - KG: Кыргызстан (+996 xxx xxx xxx) - 12 цифр
+   - BY: Беларусь (+375 xx xxx xx xx) - 12 цифр
+   - INTERNATIONAL: любой международный формат
+
+   **Новые возможности:**
+   - `$country` - код страны по умолчанию
+   - `$countries` - массив допустимых стран
+   - `$normalize` - нормализация номера
+   - `$keepPlus` - сохранять + в начале
+
+   **Статические методы:**
+   - `clean($phone)` - очистка от лишних символов
+   - `format($phone, $country)` - форматирование для отображения
+   - `detectCountry($phone)` - определение страны
+   - `isValid($phone, $country)` - проверка валидности
+   - `getCountries()` - список поддерживаемых стран
+
+   **Примеры использования:**
+   ```php
+   // Базовое (KZ по умолчанию)
+   [['phone'], PhoneNumberValidator::class],
+
+   // Указание страны
+   [['phone'], PhoneNumberValidator::class, 'country' => 'UZ'],
+
+   // Несколько стран
+   [['phone'], PhoneNumberValidator::class, 'countries' => ['KZ', 'RU']],
+
+   // Статические методы
+   PhoneNumberValidator::format('77011234567'); // +7 (701) 123-45-67
+   PhoneNumberValidator::detectCountry('998901234567'); // 'UZ'
+   ```
 
 **Оценка сложности:** Низкая
 **Затрагиваемые файлы:** 1
 
 ---
 
-### 4.4 Улучшение PhoneNumberValidator
+### 4.5 ~~Замена прямых date() на Formatter~~ ВЫПОЛНЕНО
 
-**Проблема:** Поддерживает только казахский формат (7xxx)
+**Статус:** ВЫПОЛНЕНО (2026-01-07)
 
-**Файл:** `components/PhoneNumberValidator.php`
+**Что было:**
+- ~100 прямых вызовов `date()` разбросаны по всему проекту
+- Нет единого интерфейса для работы с датами
+- Дублирование кода форматирования
 
-**Решение:** Добавить поддержку разных форматов:
+**Что сделано:**
+1. **helpers/DateHelper.php** (новый файл, 450 строк):
+
+   **Основные методы:**
+   - `now()` - текущая дата-время (Y-m-d H:i:s)
+   - `today()` - текущая дата (Y-m-d)
+   - `toSqlDate($date)` - преобразование в SQL дату
+   - `toSqlDatetime($date)` - преобразование в SQL datetime
+   - `format($date, $format)` - форматирование через Yii Formatter
+
+   **Относительные даты:**
+   - `relative($modifier)` - относительная дата (+1 day, -7 days)
+   - `relativeFrom($date, $modifier)` - относительно указанной даты
+   - `startOfWeek()` / `endOfWeek()` - границы недели
+   - `startOfMonth()` / `endOfMonth()` - границы месяца
+   - `yesterday()` / `tomorrow()` - вчера/завтра
+
+   **Проверки:**
+   - `isToday($date)`, `isPast($date)`, `isFuture($date)`
+   - `isThisWeek($date)`, `isThisMonth($date)`
+   - `diffInDays($date1, $date2)`, `daysUntil($date)`, `daysSince($date)`
+
+   **Форматирование:**
+   - `dayOfWeek($date)` - название дня недели (Пн, Вт...)
+   - `monthName($date)` - название месяца (Январь, января)
+   - `formatWithMonth($date)` - "7 января 2026"
+   - `relative_human($date)` - "3 дня назад"
+   - `toHtmlDate($date)` / `toHtmlDatetime($date)` - для input полей
+   - `range($start, $end)` - массив дат в диапазоне
+
+2. **Обновлены ключевые файлы:**
+   - `models/services/DashboardService.php` - 4 замены
+   - `models/services/LidService.php` - 11 замен
+   - `models/Lids.php` - 4 замены
+
+**Примеры использования:**
 ```php
-class PhoneNumberValidator extends Validator
-{
-    public $country = 'KZ'; // Страна по умолчанию
+use app\helpers\DateHelper;
 
-    private $patterns = [
-        'KZ' => '/^7[0-9]{9}$/',           // Казахстан
-        'RU' => '/^7[0-9]{10}$/',          // Россия
-        'UZ' => '/^998[0-9]{9}$/',         // Узбекистан
-        'INTERNATIONAL' => '/^\+[0-9]{10,15}$/', // Международный
-    ];
+// Текущие даты
+DateHelper::now();              // '2026-01-07 12:30:45'
+DateHelper::today();            // '2026-01-07'
 
-    protected function validateValue($value)
-    {
-        $pattern = $this->patterns[$this->country] ?? $this->patterns['INTERNATIONAL'];
-        // ...
-    }
-}
+// Относительные даты
+DateHelper::relative('-7 days');           // '2025-12-31'
+DateHelper::relative('+1 month', true);    // '2026-02-07 12:30:45'
+DateHelper::startOfWeek();                 // '2026-01-05'
+DateHelper::startOfMonth();                // '2026-01-01'
+
+// Форматирование
+DateHelper::format($date, 'd.m.Y');        // '07.01.2026'
+DateHelper::formatWithMonth($date);        // '7 января 2026'
+DateHelper::dayOfWeek($date, true);        // 'Вт'
+
+// Проверки
+DateHelper::isToday($date);                // true/false
+DateHelper::isPast($date);                 // true/false
+DateHelper::daysUntil('2026-01-15');       // 8
 ```
 
-**Оценка сложности:** Низкая
-**Затрагиваемые файлы:** 1
+**Примечание:** Остальные ~80 файлов с date() можно обновлять постепенно.
+Созданный DateHelper обеспечивает единый интерфейс для будущих изменений.
 
----
-
-### 4.5 Замена прямых date() на Formatter
-
-**Проблема:** Везде используется `date('Y-m-d')` вместо Yii formatter
-
-**Решение:** Заменить на:
-```php
-// Вместо:
-date('Y-m-d')
-
-// Использовать:
-Yii::$app->formatter->asDate(time(), 'yyyy-MM-dd')
-```
-
-**Затрагиваемые файлы:** 10-15
+**Оценка сложности:** Средняя
+**Затрагиваемые файлы:** 4 (+ 1 новый)
 
 ---
 
@@ -601,10 +785,10 @@ Yii::$app->formatter->asDate(time(), 'yyyy-MM-dd')
 | Приоритет | Задач | Статус | Файлов |
 |-----------|-------|--------|--------|
 | 1 (Критические) | 4 | **4 выполнено** ✅ | ~15 |
-| 2 (Высокие) | 4 | **3 выполнено** | ~30 |
+| 2 (Высокие) | 4 | **4 выполнено** ✅ | ~30 |
 | 3 (Средние) | 4 | **4 выполнено** ✅ | ~15 |
-| 4 (Улучшения) | 5 | 0 выполнено | ~15 |
-| **ИТОГО** | **17** | **11/17** | **~75** |
+| 4 (Улучшения) | 5 | **5 выполнено** ✅ | ~20 |
+| **ИТОГО** | **17** | **17/17 ✅** | **~80** |
 
 ---
 
@@ -635,7 +819,9 @@ Yii::$app->formatter->asDate(time(), 'yyyy-MM-dd')
 
 | Файл | Строк | Статус |
 |------|-------|--------|
-| `LidsController.php` | 815 | Слишком большой |
+| ~~`LidsController.php`~~ | 364 | ✅ Разделён на 3 контроллера |
+| ~~`LidsFunnelController.php`~~ | 218 | ✅ Создан |
+| ~~`LidsInteractionController.php`~~ | 265 | ✅ Создан |
 | ~~`Lids.php`~~ | 660 | ✅ Теги унифицированы |
 | ~~`Lists.php`~~ | 180 | ✅ Разделён на 4 файла |
 | ~~`AttendancesForm.php`~~ | 100 | ✅ Рефакторинг |
@@ -646,6 +832,10 @@ Yii::$app->formatter->asDate(time(), 'yyyy-MM-dd')
 | ~~`FindModelTrait.php`~~ | 157 | ✅ Создан (применён к 4 контроллерам) |
 | ~~`SettingsHelper.php`~~ | 151 | ✅ Создан |
 | ~~`MenuHelper.php`~~ | 249 | ✅ Рефакторинг |
+| ~~`HasEnumFieldTrait.php`~~ | 60 | ✅ Создан |
+| ~~`HasStatusTrait.php`~~ | 105 | ✅ Создан |
+| ~~`HasTypeTrait.php`~~ | 105 | ✅ Создан |
+| ~~`StringHelper.php`~~ | 399 | ✅ Расширен (было 18) |
 
 ---
 

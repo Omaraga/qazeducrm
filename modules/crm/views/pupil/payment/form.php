@@ -47,6 +47,11 @@ if ($model->type == Payment::TYPE_PAY) {
 }
 ?>
 
+<?php
+$hasPayMethods = !empty($payMethods);
+$canAddPayment = $hasPayMethods || $model->type != Payment::TYPE_PAY;
+?>
+
 <div class="space-y-6">
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -55,14 +60,33 @@ if ($model->type == Payment::TYPE_PAY) {
             <p class="text-gray-500 mt-1"><?= Html::encode($subtitle) ?></p>
         </div>
         <div>
-            <a href="<?= OrganizationUrl::to(['pupil/payment', 'id' => $model->pupil_id]) ?>" class="btn btn-secondary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                Назад к оплатам
-            </a>
+            <?= Html::a(
+                Icon::show('arrow-left', 'sm') . ' Назад к оплатам',
+                OrganizationUrl::to(['pupil/payment', 'id' => $model->pupil_id]),
+                ['class' => 'btn btn-secondary']
+            ) ?>
         </div>
     </div>
+
+    <?php if (!$hasPayMethods && $model->type == Payment::TYPE_PAY): ?>
+    <!-- Warning: No payment methods -->
+    <div class="rounded-lg bg-warning-50 border border-warning-200 p-6">
+        <div class="flex items-start gap-4">
+            <?= Icon::show('alert', 'lg', 'text-warning-500 flex-shrink-0') ?>
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-warning-800 mb-2">Не настроены способы оплаты</h3>
+                <p class="text-warning-700 mb-3">
+                    Для добавления оплаты необходимо сначала создать способы оплаты (наличные, карта, перевод и т.д.)
+                </p>
+                <?= Html::a(
+                    Icon::show('plus', 'sm') . ' Создать способ оплаты',
+                    OrganizationUrl::to(['pay-method/create']),
+                    ['class' => 'btn btn-primary']
+                ) ?>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <form action="" method="post" class="space-y-6"
           x-data="formValidation(<?= Json::htmlEncode($validationRules) ?>)"

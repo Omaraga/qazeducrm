@@ -3,6 +3,7 @@
 namespace app\models;
 
 use app\traits\UpdateInsteadOfDeleteTrait;
+use app\traits\HasTypeTrait;
 use Yii;
 use app\components\ActiveRecord;
 use yii\behaviors\TimestampBehavior;
@@ -30,6 +31,7 @@ use yii\db\Expression;
 class LidHistory extends ActiveRecord
 {
     use UpdateInsteadOfDeleteTrait;
+    use HasTypeTrait;
 
     // Типы взаимодействий
     const TYPE_CREATED = 'created';           // Лид создан
@@ -138,8 +140,9 @@ class LidHistory extends ActiveRecord
 
     /**
      * Список типов взаимодействий
+     * @see HasTypeTrait
      */
-    public static function getTypeList()
+    public static function getTypeList(): array
     {
         return [
             self::TYPE_CREATED => 'Создан',
@@ -156,20 +159,12 @@ class LidHistory extends ActiveRecord
     }
 
     /**
-     * Название типа
+     * Иконки типов (HeroIcons)
+     * @see HasTypeTrait::getTypeIcon()
      */
-    public function getTypeLabel()
+    public static function getTypeIcons(): array
     {
-        $list = self::getTypeList();
-        return $list[$this->type] ?? $this->type;
-    }
-
-    /**
-     * Иконка типа (HeroIcons)
-     */
-    public function getTypeIcon()
-    {
-        $icons = [
+        return [
             self::TYPE_CREATED => 'plus-circle',
             self::TYPE_CALL => 'phone',
             self::TYPE_MESSAGE => 'chat-bubble-left',
@@ -181,15 +176,15 @@ class LidHistory extends ActiveRecord
             self::TYPE_FIELD_CHANGED => 'pencil',
             self::TYPE_MANAGER_CHANGED => 'user',
         ];
-        return $icons[$this->type] ?? 'information-circle';
     }
 
     /**
-     * Цвет типа для Tailwind
+     * Цвета типов для Tailwind
+     * @see HasTypeTrait::getTypeColor()
      */
-    public function getTypeColor()
+    public static function getTypeColors(): array
     {
-        $colors = [
+        return [
             self::TYPE_CREATED => 'blue',
             self::TYPE_CALL => 'green',
             self::TYPE_MESSAGE => 'purple',
@@ -201,8 +196,9 @@ class LidHistory extends ActiveRecord
             self::TYPE_FIELD_CHANGED => 'sky',
             self::TYPE_MANAGER_CHANGED => 'violet',
         ];
-        return $colors[$this->type] ?? 'gray';
     }
+
+    // getTypeLabel(), getTypeIcon(), getTypeColor() предоставляются HasTypeTrait
 
     /**
      * Создать запись о смене статуса

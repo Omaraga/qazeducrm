@@ -15,6 +15,8 @@ use yii\db\ActiveRecord;
  * @property string $billing_period
  * @property string|null $started_at
  * @property string|null $expires_at
+ * @property string|null $grace_period_ends_at
+ * @property string $access_mode
  * @property string|null $trial_ends_at
  * @property string|null $cancelled_at
  * @property array|null $custom_limits
@@ -23,6 +25,7 @@ use yii\db\ActiveRecord;
  * @property string $updated_at
  *
  * @property Organizations $organization
+ * @property SaasPlan $plan
  * @property SaasPlan $saasPlan
  * @property OrganizationPayment[] $payments
  */
@@ -38,6 +41,16 @@ class OrganizationSubscription extends ActiveRecord
     // Периоды биллинга
     const PERIOD_MONTHLY = 'monthly';
     const PERIOD_YEARLY = 'yearly';
+
+    // Режимы доступа
+    const ACCESS_FULL = 'full';
+    const ACCESS_LIMITED = 'limited';
+    const ACCESS_READ_ONLY = 'read_only';
+    const ACCESS_BLOCKED = 'blocked';
+
+    // Grace period (дней)
+    const GRACE_PERIOD_DAYS = 3;
+    const READ_ONLY_PERIOD_DAYS = 7;
 
     /**
      * {@inheritdoc}
@@ -59,7 +72,10 @@ class OrganizationSubscription extends ActiveRecord
             [['status'], 'in', 'range' => [self::STATUS_TRIAL, self::STATUS_ACTIVE, self::STATUS_EXPIRED, self::STATUS_SUSPENDED, self::STATUS_CANCELLED]],
             [['billing_period'], 'string', 'max' => 20],
             [['billing_period'], 'in', 'range' => [self::PERIOD_MONTHLY, self::PERIOD_YEARLY]],
-            [['started_at', 'expires_at', 'trial_ends_at', 'cancelled_at'], 'safe'],
+            [['access_mode'], 'string', 'max' => 20],
+            [['access_mode'], 'in', 'range' => [self::ACCESS_FULL, self::ACCESS_LIMITED, self::ACCESS_READ_ONLY, self::ACCESS_BLOCKED]],
+            [['access_mode'], 'default', 'value' => self::ACCESS_FULL],
+            [['started_at', 'expires_at', 'trial_ends_at', 'cancelled_at', 'grace_period_ends_at'], 'safe'],
             [['custom_limits'], 'safe'],
             [['notes'], 'string'],
             [['organization_id'], 'exist', 'targetClass' => Organizations::class, 'targetAttribute' => 'id'],
@@ -82,6 +98,8 @@ class OrganizationSubscription extends ActiveRecord
             'expires_at' => Yii::t('main', 'Окончание подписки'),
             'trial_ends_at' => Yii::t('main', 'Окончание пробного периода'),
             'cancelled_at' => Yii::t('main', 'Дата отмены'),
+            'grace_period_ends_at' => Yii::t('main', 'Окончание grace периода'),
+            'access_mode' => Yii::t('main', 'Режим доступа'),
             'custom_limits' => Yii::t('main', 'Кастомные лимиты'),
             'notes' => Yii::t('main', 'Заметки'),
         ];
@@ -190,15 +208,6 @@ class OrganizationSubscription extends ActiveRecord
     }
 
     /**
-     * Скоро истекает (менее 7 дней)
-     */
-    public function isExpiringSoon(): bool
-    {
-        $days = $this->getDaysRemaining();
-        return $days !== null && $days <= 7 && $days > 0;
-    }
-
-    /**
      * Получить эффективный лимит (кастомный или из плана)
      */
     public function getLimit(string $field): int
@@ -289,5 +298,305 @@ class OrganizationSubscription extends ActiveRecord
             ->andWhere(['in', 'status', [self::STATUS_TRIAL, self::STATUS_ACTIVE]])
             ->orderBy(['id' => SORT_DESC])
             ->one();
+    }
+
+    /**
+     * Алиас для saasPlan для удобства
+     */
+    public function getPlan()
+    {
+        return $this->getSaasPlan();
+    }
+
+    /**
+     * Получить месячную цену подписки
+     */
+    public function getMonthlyPrice(): float
+    {
+        if (!$this->saasPlan) {
+            return 0;
+        }
+
+        if ($this->billing_period === self::PERIOD_YEARLY) {
+            return round($this->saasPlan->price_yearly / 12, 2);
+        }
+
+        return (float)$this->saasPlan->price_monthly;
+    }
+
+    // ==================== Grace Period методы ====================
+
+    /**
+     * Список режимов доступа
+     */
+    public static function getAccessModeList(): array
+    {
+        return [
+            self::ACCESS_FULL => 'Полный доступ',
+            self::ACCESS_LIMITED => 'Ограниченный',
+            self::ACCESS_READ_ONLY => 'Только чтение',
+            self::ACCESS_BLOCKED => 'Заблокирован',
+        ];
+    }
+
+    /**
+     * Название режима доступа
+     */
+    public function getAccessModeLabel(): string
+    {
+        return self::getAccessModeList()[$this->access_mode] ?? $this->access_mode;
+    }
+
+    /**
+     * CSS класс для режима доступа
+     */
+    public function getAccessModeBadgeClass(): string
+    {
+        return match ($this->access_mode) {
+            self::ACCESS_FULL => 'badge-success',
+            self::ACCESS_LIMITED => 'badge-warning',
+            self::ACCESS_READ_ONLY => 'badge-secondary',
+            self::ACCESS_BLOCKED => 'badge-danger',
+            default => 'badge-light',
+        };
+    }
+
+    /**
+     * Находится ли в grace периоде
+     */
+    public function isInGracePeriod(): bool
+    {
+        if ($this->status !== self::STATUS_EXPIRED) {
+            return false;
+        }
+
+        if ($this->grace_period_ends_at) {
+            return strtotime($this->grace_period_ends_at) > time();
+        }
+
+        // Если grace_period_ends_at не установлен, считаем по expires_at
+        if ($this->expires_at) {
+            $daysSinceExpired = $this->getDaysSinceExpired();
+            return $daysSinceExpired <= self::GRACE_PERIOD_DAYS;
+        }
+
+        return false;
+    }
+
+    /**
+     * Дней с момента истечения
+     */
+    public function getDaysSinceExpired(): int
+    {
+        if (!$this->expires_at) {
+            return 0;
+        }
+
+        $expiresAt = strtotime($this->expires_at);
+        $now = time();
+
+        if ($now <= $expiresAt) {
+            return 0;
+        }
+
+        return (int)floor(($now - $expiresAt) / 86400);
+    }
+
+    /**
+     * Дней до окончания grace периода
+     */
+    public function getDaysUntilGraceEnds(): ?int
+    {
+        if (!$this->isInGracePeriod()) {
+            return null;
+        }
+
+        if ($this->grace_period_ends_at) {
+            $diff = strtotime($this->grace_period_ends_at) - time();
+            return max(0, (int)ceil($diff / 86400));
+        }
+
+        $daysSinceExpired = $this->getDaysSinceExpired();
+        return max(0, self::GRACE_PERIOD_DAYS - $daysSinceExpired);
+    }
+
+    /**
+     * Запустить grace период
+     */
+    public function startGracePeriod(): bool
+    {
+        $this->status = self::STATUS_EXPIRED;
+        $this->access_mode = self::ACCESS_LIMITED;
+        $this->grace_period_ends_at = date('Y-m-d H:i:s', strtotime('+' . self::GRACE_PERIOD_DAYS . ' days'));
+
+        return $this->save(false, ['status', 'access_mode', 'grace_period_ends_at']);
+    }
+
+    /**
+     * Перевести в режим read_only
+     */
+    public function setReadOnlyMode(): bool
+    {
+        $this->access_mode = self::ACCESS_READ_ONLY;
+        return $this->save(false, ['access_mode']);
+    }
+
+    /**
+     * Заблокировать доступ
+     */
+    public function block(): bool
+    {
+        $this->access_mode = self::ACCESS_BLOCKED;
+        return $this->save(false, ['access_mode']);
+    }
+
+    /**
+     * Восстановить полный доступ (после оплаты)
+     */
+    public function restoreFullAccess(): bool
+    {
+        $this->access_mode = self::ACCESS_FULL;
+        $this->grace_period_ends_at = null;
+        return $this->save(false, ['access_mode', 'grace_period_ends_at']);
+    }
+
+    /**
+     * Можно ли создавать записи
+     */
+    public function canCreate(): bool
+    {
+        return $this->access_mode === self::ACCESS_FULL;
+    }
+
+    /**
+     * Можно ли редактировать
+     */
+    public function canUpdate(): bool
+    {
+        return in_array($this->access_mode, [self::ACCESS_FULL, self::ACCESS_LIMITED]);
+    }
+
+    /**
+     * Можно ли просматривать
+     */
+    public function canView(): bool
+    {
+        return $this->access_mode !== self::ACCESS_BLOCKED;
+    }
+
+    /**
+     * Обновить режим доступа на основе текущего состояния
+     */
+    public function updateAccessMode(): bool
+    {
+        $newMode = $this->calculateAccessMode();
+
+        if ($this->access_mode !== $newMode) {
+            $this->access_mode = $newMode;
+            return $this->save(false, ['access_mode']);
+        }
+
+        return true;
+    }
+
+    /**
+     * Рассчитать режим доступа
+     */
+    public function calculateAccessMode(): string
+    {
+        // Активная или триал подписка
+        if (in_array($this->status, [self::STATUS_ACTIVE, self::STATUS_TRIAL])) {
+            if (!$this->isExpired()) {
+                return self::ACCESS_FULL;
+            }
+        }
+
+        // Отменённая подписка
+        if ($this->status === self::STATUS_CANCELLED) {
+            return self::ACCESS_READ_ONLY;
+        }
+
+        // Истёкшая подписка - проверяем grace период
+        $daysSinceExpired = $this->getDaysSinceExpired();
+
+        if ($daysSinceExpired <= self::GRACE_PERIOD_DAYS) {
+            return self::ACCESS_LIMITED;
+        }
+
+        if ($daysSinceExpired <= self::GRACE_PERIOD_DAYS + self::READ_ONLY_PERIOD_DAYS) {
+            return self::ACCESS_READ_ONLY;
+        }
+
+        return self::ACCESS_BLOCKED;
+    }
+
+    /**
+     * Скоро истекает (с указанием дней)
+     */
+    public function isExpiringSoon(int $days = 7): bool
+    {
+        $remaining = $this->getDaysRemaining();
+        return $remaining !== null && $remaining <= $days && $remaining > 0;
+    }
+
+    /**
+     * Продлить подписку
+     */
+    public function renew(string $period = null): bool
+    {
+        $period = $period ?? $this->billing_period;
+
+        $this->status = self::STATUS_ACTIVE;
+        $this->billing_period = $period;
+        $this->access_mode = self::ACCESS_FULL;
+        $this->grace_period_ends_at = null;
+
+        // Если подписка ещё активна, продлеваем от текущей даты окончания
+        $baseDate = ($this->expires_at && strtotime($this->expires_at) > time())
+            ? $this->expires_at
+            : date('Y-m-d H:i:s');
+
+        if ($period === self::PERIOD_YEARLY) {
+            $this->expires_at = date('Y-m-d H:i:s', strtotime($baseDate . ' +1 year'));
+        } else {
+            $this->expires_at = date('Y-m-d H:i:s', strtotime($baseDate . ' +1 month'));
+        }
+
+        return $this->save();
+    }
+
+    /**
+     * Найти подписку организации (активную или истёкшую)
+     */
+    public static function findByOrganization(int $organizationId): ?self
+    {
+        return static::find()
+            ->andWhere(['organization_id' => $organizationId])
+            ->orderBy(['id' => SORT_DESC])
+            ->one();
+    }
+
+    /**
+     * Получить статистику по подпискам для SuperAdmin
+     */
+    public static function getStatistics(): array
+    {
+        return [
+            'total' => static::find()->count(),
+            'active' => static::find()->where(['status' => self::STATUS_ACTIVE])->count(),
+            'trial' => static::find()->where(['status' => self::STATUS_TRIAL])->count(),
+            'expired' => static::find()->where(['status' => self::STATUS_EXPIRED])->count(),
+            'cancelled' => static::find()->where(['status' => self::STATUS_CANCELLED])->count(),
+            'expiring_soon' => static::find()
+                ->where(['status' => self::STATUS_ACTIVE])
+                ->andWhere(['between', 'expires_at', date('Y-m-d'), date('Y-m-d', strtotime('+7 days'))])
+                ->count(),
+            'by_access_mode' => [
+                self::ACCESS_FULL => static::find()->where(['access_mode' => self::ACCESS_FULL])->count(),
+                self::ACCESS_LIMITED => static::find()->where(['access_mode' => self::ACCESS_LIMITED])->count(),
+                self::ACCESS_READ_ONLY => static::find()->where(['access_mode' => self::ACCESS_READ_ONLY])->count(),
+                self::ACCESS_BLOCKED => static::find()->where(['access_mode' => self::ACCESS_BLOCKED])->count(),
+            ],
+        ];
     }
 }

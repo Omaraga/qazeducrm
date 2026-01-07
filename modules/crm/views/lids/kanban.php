@@ -31,9 +31,9 @@ $statusColors = [
 ];
 
 $getLidUrl = OrganizationUrl::to(['lids/get-lid']);
-$changeStatusUrl = OrganizationUrl::to(['lids/change-status']);
+$changeStatusUrl = OrganizationUrl::to(['lids-funnel/change-status']);
 $pupilUpdateUrl = OrganizationUrl::to(['pupil/update']);
-$kanbanUrl = OrganizationUrl::to(['lids/kanban']);
+$kanbanUrl = OrganizationUrl::to(['lids-funnel/kanban']);
 
 // Подсчёт активных фильтров
 $activeFiltersCount = count(array_filter($filters, fn($v) => $v !== '' && $v !== null));
@@ -199,43 +199,43 @@ document.addEventListener('alpine:init', () => {
                     <?php if (!empty($filters['my_leads_only'])): ?>
                         <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary-100 text-primary-700 text-xs">
                             Мои лиды
-                            <a href="<?= OrganizationUrl::to(array_merge(['lids/kanban'], array_diff_key($filters, ['my_leads_only' => 1]))) ?>" class="hover:text-primary-900">&times;</a>
+                            <a href="<?= OrganizationUrl::to(array_merge(['lids-funnel/kanban'], array_diff_key($filters, ['my_leads_only' => 1]))) ?>" class="hover:text-primary-900">&times;</a>
                         </span>
                     <?php endif; ?>
                     <?php if (!empty($filters['overdue_only'])): ?>
                         <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-danger-100 text-danger-700 text-xs">
                             Просроченные
-                            <a href="<?= OrganizationUrl::to(array_merge(['lids/kanban'], array_diff_key($filters, ['overdue_only' => 1]))) ?>" class="hover:text-danger-900">&times;</a>
+                            <a href="<?= OrganizationUrl::to(array_merge(['lids-funnel/kanban'], array_diff_key($filters, ['overdue_only' => 1]))) ?>" class="hover:text-danger-900">&times;</a>
                         </span>
                     <?php endif; ?>
                     <?php if (!empty($filters['contact_today'])): ?>
                         <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-warning-100 text-warning-700 text-xs">
                             Контакт сегодня
-                            <a href="<?= OrganizationUrl::to(array_merge(['lids/kanban'], array_diff_key($filters, ['contact_today' => 1]))) ?>" class="hover:text-warning-900">&times;</a>
+                            <a href="<?= OrganizationUrl::to(array_merge(['lids-funnel/kanban'], array_diff_key($filters, ['contact_today' => 1]))) ?>" class="hover:text-warning-900">&times;</a>
                         </span>
                     <?php endif; ?>
                     <?php if (!empty($filters['stale_only'])): ?>
                         <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-orange-100 text-orange-700 text-xs">
                             Долго в статусе
-                            <a href="<?= OrganizationUrl::to(array_merge(['lids/kanban'], array_diff_key($filters, ['stale_only' => 1]))) ?>" class="hover:text-orange-900">&times;</a>
+                            <a href="<?= OrganizationUrl::to(array_merge(['lids-funnel/kanban'], array_diff_key($filters, ['stale_only' => 1]))) ?>" class="hover:text-orange-900">&times;</a>
                         </span>
                     <?php endif; ?>
                     <?php if (!empty($filters['manager_id'])): ?>
                         <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs">
                             <?= Html::encode($managers[$filters['manager_id']] ?? 'Менеджер') ?>
-                            <a href="<?= OrganizationUrl::to(array_merge(['lids/kanban'], array_diff_key($filters, ['manager_id' => 1]))) ?>" class="hover:text-blue-900">&times;</a>
+                            <a href="<?= OrganizationUrl::to(array_merge(['lids-funnel/kanban'], array_diff_key($filters, ['manager_id' => 1]))) ?>" class="hover:text-blue-900">&times;</a>
                         </span>
                     <?php endif; ?>
                     <?php if (!empty($filters['source'])): ?>
                         <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-purple-100 text-purple-700 text-xs">
                             <?= Html::encode(Lids::getSourceList()[$filters['source']] ?? $filters['source']) ?>
-                            <a href="<?= OrganizationUrl::to(array_merge(['lids/kanban'], array_diff_key($filters, ['source' => 1]))) ?>" class="hover:text-purple-900">&times;</a>
+                            <a href="<?= OrganizationUrl::to(array_merge(['lids-funnel/kanban'], array_diff_key($filters, ['source' => 1]))) ?>" class="hover:text-purple-900">&times;</a>
                         </span>
                     <?php endif; ?>
                     <?php if (!empty($filters['search'])): ?>
                         <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs">
                             "<?= Html::encode(mb_substr($filters['search'], 0, 20)) ?>"
-                            <a href="<?= OrganizationUrl::to(array_merge(['lids/kanban'], array_diff_key($filters, ['search' => 1]))) ?>" class="hover:text-gray-900">&times;</a>
+                            <a href="<?= OrganizationUrl::to(array_merge(['lids-funnel/kanban'], array_diff_key($filters, ['search' => 1]))) ?>" class="hover:text-gray-900">&times;</a>
                         </span>
                     <?php endif; ?>
                 </div>
@@ -685,6 +685,9 @@ document.addEventListener('alpine:init', () => {
             </div>
         </div>
     </div>
+
+    <!-- Conversion Modal (Alpine.js) - MUST be inside x-data="kanbanBoard()" scope -->
+    <?= $this->render('_conversion-modal') ?>
 </div>
 
 <!-- Create Modal -->
@@ -716,6 +719,9 @@ function kanbanBoard() {
         lostReason: '',
         customLostReason: '',
 
+        // Conversion modal state (из conversionMixin)
+        ...conversionMixin,
+
         toggleLostColumn() {
             this.lostColumnCollapsed = !this.lostColumnCollapsed;
             localStorage.setItem('lostColumnCollapsed', this.lostColumnCollapsed);
@@ -734,6 +740,12 @@ function kanbanBoard() {
                 });
                 const data = await response.json();
                 if (data.success) {
+                    // Если нужна конверсия - показываем модалку
+                    if (data.needs_conversion && data.lid) {
+                        this.openConversionModal(data.lid);
+                        return;
+                    }
+
                     if (Alpine.store('toast')) Alpine.store('toast').success(data.message);
                     // Reload page to reflect changes
                     location.reload();
@@ -832,17 +844,26 @@ function kanbanBoard() {
             this.updateColumnState(this.sourceColumn);
             this.updateColumnState(targetColumn);
 
+            const draggedId = this.draggedId;
+            this.draggedId = null;
+
             fetch('<?= $changeStatusUrl ?>', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
                 },
-                body: `id=${this.draggedId}&status=${newStatus}`
+                body: `id=${draggedId}&status=${newStatus}`
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Если нужна конверсия - показываем модалку
+                    if (data.needs_conversion && data.lid) {
+                        this.openConversionModal(data.lid);
+                        return;
+                    }
+
                     if (typeof Alpine !== 'undefined' && Alpine.store('toast')) {
                         Alpine.store('toast').success(data.message);
                     }
@@ -856,8 +877,6 @@ function kanbanBoard() {
                 }
             })
             .catch(() => location.reload());
-
-            this.draggedId = null;
         },
 
         updateColumnState(column) {

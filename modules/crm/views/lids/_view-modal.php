@@ -8,16 +8,21 @@ use app\models\Lids;
 use app\widgets\tailwind\Icon;
 use yii\helpers\Html;
 
-$toggleTagUrl = OrganizationUrl::to(['lids/toggle-tag']);
-$updateFieldUrl = OrganizationUrl::to(['lids/update-field']);
-$getWhatsappTemplatesUrl = OrganizationUrl::to(['lids/get-whatsapp-templates']);
-$renderWhatsappMessageUrl = OrganizationUrl::to(['lids/render-whatsapp-message']);
-$changeStatusUrl = OrganizationUrl::to(['lids/change-status']);
-$getSalesScriptUrl = OrganizationUrl::to(['lids/get-sales-script']);
+// Funnel controller routes
+$changeStatusUrl = OrganizationUrl::to(['lids-funnel/change-status']);
+$getSalesScriptUrl = OrganizationUrl::to(['lids-funnel/get-sales-script']);
+
+// Interaction controller routes
+$toggleTagUrl = OrganizationUrl::to(['lids-interaction/toggle-tag']);
+$updateFieldUrl = OrganizationUrl::to(['lids-interaction/update-field']);
+$getWhatsappTemplatesUrl = OrganizationUrl::to(['lids-interaction/get-whatsapp-templates']);
+$renderWhatsappMessageUrl = OrganizationUrl::to(['lids-interaction/render-whatsapp-message']);
+$addInteractionUrl = OrganizationUrl::to(['lids-interaction/add-interaction']);
+
+// Tag controller routes
 $getTagsUrl = OrganizationUrl::to(['lid-tag/list']);
 $toggleCustomTagUrl = OrganizationUrl::to(['lid-tag/toggle']);
 $createTagUrl = OrganizationUrl::to(['lid-tag/create']);
-$addInteractionUrl = OrganizationUrl::to(['lids/add-interaction']);
 
 // Получаем менеджеров для inline-select
 $managers = \app\models\services\LidService::getManagersForDropdown();

@@ -63,7 +63,18 @@
       "Bash(php test_kanban.php:*)",
       "Bash(php test_script.php:*)",
       "Bash(del \"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\components\\\\SortableGridView.php\")",
-      "Bash(del \"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\components\\\\assets\\\\SortableGridViewAsset.php\")"
+      "Bash(del \"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\components\\\\assets\\\\SortableGridViewAsset.php\")",
+      "Bash(findstr:*)",
+      "Bash(CSRF=\"nED6L8wxLbDwR_vP1hKp5R9lmzgn9WGqxaVh4qH21oT2M7cbmFVJ5cU9rI6ZJMCSayvwbEqdKp-L4yuolaXvvA==\":*)",
+      "Bash(CSRF=\"IcWX6wmA8VJDtp7udErE6Aw3mSVMTKcqwHSy00E5QZ5AiqCMXN-zYAjzs6UbJLW8IWjaZwl1xRuREYubCGEMxA==\")",
+      "Bash(CSRF=\"70TvJUMPqC8CAJa9jCHWeFx0N_cYLT2n3PXmgCCSO8uADJtsBz7HYnRmyY3hT64yJCBkjXkYV5WmlqjZVPlO_g==\")",
+      "Bash(CSRF=\"JTUAmofEs4G9nUVTGCOlNdGcDKoD5E2AJCdOTgJhyiJuYGys0IXUwsrvFwNpWeBkhOROwzXSGPBcaz4sVyWNVQ==\")",
+      "Bash(for file in modules/superadmin/views/addon/*.php)",
+      "Bash(php test_forecast.php:*)",
+      "Bash(del test_forecast.php)",
+      "Bash(CSRF=\"KbJLTa3jlFUajoqejg214ynDHSC7A3Yl0bXygRY-9m5b5BsA4tPfB3fX8_W4esWVYIl0GfAzPlzj2qjeblKlAw==\")",
+      "Bash(echo:*)",
+      "Bash(__NEW_LINE__ echo \"\")"
     ]
   }
 }

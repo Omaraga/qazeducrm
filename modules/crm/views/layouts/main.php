@@ -11,6 +11,8 @@ use app\widgets\tailwind\Breadcrumbs;
 use app\widgets\tailwind\ConfirmModal;
 use app\widgets\tailwind\Icon;
 use app\widgets\tailwind\SidebarMenu;
+use app\widgets\tailwind\SubscriptionAlert;
+use app\widgets\tailwind\SubscriptionBadge;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
@@ -32,11 +34,11 @@ $menuConfig = [
             [
                 'label' => 'Лиды',
                 'icon' => 'funnel',
-                'controller' => 'lids',
+                'controller' => ['lids', 'lids-funnel', 'lids-interaction'],
                 'items' => [
-                    ['label' => 'Kanban', 'url' => ['/crm/lids/kanban']],
+                    ['label' => 'Kanban', 'url' => ['/crm/lids-funnel/kanban']],
                     ['label' => 'Таблица', 'url' => ['/crm/lids/index']],
-                    ['label' => 'Аналитика', 'url' => ['/crm/lids/analytics']],
+                    ['label' => 'Аналитика', 'url' => ['/crm/lids-funnel/analytics']],
                     ['label' => 'Скрипты продаж', 'url' => ['/crm/sales-script/index']],
                 ],
             ],
@@ -255,6 +257,9 @@ endforeach;
         </div>
 
         <div class="flex items-center gap-3">
+            <!-- Subscription Badge -->
+            <?= SubscriptionBadge::widget(['compact' => false]) ?>
+
             <?php if ($hasMultipleOrganizations): ?>
             <!-- Organization Switcher -->
             <div x-data="{ open: false }" class="relative">
@@ -325,6 +330,7 @@ endforeach;
     <!-- Page Content -->
     <main class="p-4 lg:p-6">
         <?= Alert::widget() ?>
+        <?= SubscriptionAlert::widget(['level' => 'warning']) ?>
         <?= $content ?>
     </main>
 </div>

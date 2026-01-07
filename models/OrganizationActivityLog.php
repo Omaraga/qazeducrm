@@ -231,7 +231,7 @@ class OrganizationActivityLog extends ActiveRecord
         $log->description = $description;
         $log->old_value = $oldValue ? (is_array($oldValue) ? json_encode($oldValue) : $oldValue) : null;
         $log->new_value = $newValue ? (is_array($newValue) ? json_encode($newValue) : $newValue) : null;
-        $log->metadata = $metadata;
+        $log->metadata = $metadata ? json_encode($metadata) : null;
 
         // Определяем пользователя
         if (!Yii::$app->request->isConsoleRequest && !Yii::$app->user->isGuest) {

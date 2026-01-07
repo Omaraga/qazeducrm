@@ -338,6 +338,69 @@ class Organizations extends ActiveRecord
     }
 
     /**
+     * Была ли хоть одна оплата
+     */
+    public function hasEverPaid(): bool
+    {
+        return OrganizationPayment::find()
+            ->where(['organization_id' => $this->id])
+            ->andWhere(['status' => OrganizationPayment::STATUS_COMPLETED])
+            ->exists();
+    }
+
+    /**
+     * Количество завершённых платежей
+     */
+    public function getPaymentCount(): int
+    {
+        return (int)OrganizationPayment::find()
+            ->where(['organization_id' => $this->id])
+            ->andWhere(['status' => OrganizationPayment::STATUS_COMPLETED])
+            ->count();
+    }
+
+    /**
+     * Количество месяцев подряд с оплатами (для накопительных скидок)
+     */
+    public function getConsecutivePaymentMonths(): int
+    {
+        // Получаем все завершённые платежи отсортированные по дате
+        $payments = OrganizationPayment::find()
+            ->select(['DATE_FORMAT(processed_at, "%Y-%m") as month'])
+            ->where(['organization_id' => $this->id])
+            ->andWhere(['status' => OrganizationPayment::STATUS_COMPLETED])
+            ->andWhere(['IS NOT', 'processed_at', null])
+            ->orderBy(['processed_at' => SORT_DESC])
+            ->distinct()
+            ->column();
+
+        if (empty($payments)) {
+            return 0;
+        }
+
+        $consecutive = 0;
+        $currentMonth = date('Y-m');
+
+        foreach ($payments as $paymentMonth) {
+            $expectedMonth = date('Y-m', strtotime("-{$consecutive} months"));
+
+            if ($paymentMonth === $expectedMonth || $paymentMonth === $currentMonth) {
+                $consecutive++;
+            } else {
+                // Проверяем предыдущий месяц
+                $prevMonth = date('Y-m', strtotime("-" . ($consecutive + 1) . " months"));
+                if ($paymentMonth === $prevMonth) {
+                    $consecutive++;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        return $consecutive;
+    }
+
+    /**
      * Связь с логами активности
      */
     public function getActivityLogs()

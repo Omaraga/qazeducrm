@@ -2,6 +2,7 @@
 
 namespace app\models\services;
 
+use app\helpers\DateHelper;
 use app\models\enum\StatusEnum;
 use app\models\Group;
 use app\models\Lesson;
@@ -22,7 +23,7 @@ class DashboardService
     public function __construct(?int $organizationId = null)
     {
         $this->organizationId = $organizationId ?? Organizations::getCurrentOrganizationId();
-        $this->today = date('Y-m-d');
+        $this->today = DateHelper::today();
     }
 
     /**
@@ -78,7 +79,7 @@ class DashboardService
     {
         return (float) (Payment::find()
             ->andWhere(['organization_id' => $this->organizationId])
-            ->andWhere(['>=', 'date', date('Y-m-01')])
+            ->andWhere(['>=', 'date', DateHelper::startOfMonth()])
             ->andWhere(['type' => Payment::TYPE_PAY])
             ->sum('amount') ?? 0);
     }
@@ -164,21 +165,34 @@ class DashboardService
 
     /**
      * Данные платежей за неделю (для графика)
+     * Оптимизировано: один запрос вместо 7
      */
     public function getWeekPaymentsData(): array
     {
-        $weekStart = strtotime('monday this week');
-        $weekEnd = strtotime('sunday this week');
+        $startOfWeek = DateHelper::startOfWeek();
+        $endOfWeek = DateHelper::endOfWeek();
+        $weekDates = DateHelper::range($startOfWeek, $endOfWeek);
 
+        // Один запрос с группировкой по дате
+        $payments = Payment::find()
+            ->select(['DATE(date) as payment_date', 'SUM(amount) as total'])
+            ->andWhere(['organization_id' => $this->organizationId])
+            ->andWhere(['type' => Payment::TYPE_PAY])
+            ->andWhere(['between', 'DATE(date)', $startOfWeek, $endOfWeek])
+            ->groupBy(['DATE(date)'])
+            ->asArray()
+            ->all();
+
+        // Индексируем результаты по дате
+        $paymentsByDate = [];
+        foreach ($payments as $payment) {
+            $paymentsByDate[$payment['payment_date']] = (float)$payment['total'];
+        }
+
+        // Формируем массив данных для графика
         $data = [];
-        for ($i = $weekStart; $i <= $weekEnd; $i += 86400) {
-            $date = date('Y-m-d', $i);
-            $amount = Payment::find()
-                ->andWhere(['organization_id' => $this->organizationId])
-                ->andWhere(['date' => $date])
-                ->andWhere(['type' => Payment::TYPE_PAY])
-                ->sum('amount') ?? 0;
-            $data[] = (float) $amount;
+        foreach ($weekDates as $date) {
+            $data[] = $paymentsByDate[$date] ?? 0.0;
         }
 
         return $data;
@@ -189,13 +203,12 @@ class DashboardService
      */
     public function getWeekLabels(): array
     {
-        $weekStart = strtotime('monday this week');
+        $weekDates = DateHelper::range(DateHelper::startOfWeek(), DateHelper::endOfWeek());
         $days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
         $labels = [];
-        for ($i = 0; $i < 7; $i++) {
-            $date = date('d.m', $weekStart + ($i * 86400));
-            $labels[] = $days[$i] . ' ' . $date;
+        foreach ($weekDates as $i => $date) {
+            $labels[] = $days[$i] . ' ' . DateHelper::format($date, 'd.m');
         }
 
         return $labels;

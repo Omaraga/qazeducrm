@@ -75,7 +75,7 @@ document.addEventListener('alpine:init', () => {
         <div class="flex items-center gap-3">
             <!-- View Switcher -->
             <div class="inline-flex items-center rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
-                <a href="<?= OrganizationUrl::to(['lids/kanban']) ?>"
+                <a href="<?= OrganizationUrl::to(['lids-funnel/kanban']) ?>"
                    class="inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
                    title="Kanban">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use app\helpers\DateHelper;
 use app\traits\UpdateInsteadOfDeleteTrait;
 use Yii;
 use app\components\ActiveRecord;
@@ -152,12 +153,12 @@ class Lids extends ActiveRecord
     {
         // Автоматическое обновление status_changed_at при смене статуса
         if (!$insert && $this->isAttributeChanged('status')) {
-            $this->status_changed_at = date('Y-m-d H:i:s');
+            $this->status_changed_at = DateHelper::now();
         }
 
         // При создании устанавливаем status_changed_at
         if ($insert) {
-            $this->status_changed_at = date('Y-m-d H:i:s');
+            $this->status_changed_at = DateHelper::now();
         }
 
         return parent::beforeSave($insert);
@@ -440,11 +441,13 @@ class Lids extends ActiveRecord
 
     /**
      * Можно ли конвертировать в ученика
+     * Разрешено при статусах ENROLLED (Записан) и PAID (Оплатил)
      */
-    public function canConvertToPupil()
+    public function canConvertToPupil(): bool
     {
-        // Можно конвертировать если статус PAID и ещё не конвертирован
-        return $this->status === self::STATUS_PAID && $this->pupil_id === null;
+        // Можно конвертировать если статус ENROLLED или PAID и ещё не конвертирован
+        return in_array($this->status, [self::STATUS_ENROLLED, self::STATUS_PAID])
+               && $this->pupil_id === null;
     }
 
     /**
@@ -508,7 +511,7 @@ class Lids extends ActiveRecord
         if (!$this->next_contact_date) {
             return false;
         }
-        return $this->next_contact_date === date('Y-m-d');
+        return $this->next_contact_date === DateHelper::today();
     }
 
     /**
@@ -520,7 +523,7 @@ class Lids extends ActiveRecord
             ->byOrganization()
             ->notDeleted()
             ->andWhere(['not in', 'status', [self::STATUS_PAID, self::STATUS_LOST]])
-            ->andWhere(['<=', 'next_contact_date', date('Y-m-d')])
+            ->andWhere(['<=', 'next_contact_date', DateHelper::today()])
             ->orderBy(['next_contact_date' => SORT_ASC]);
     }
 

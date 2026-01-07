@@ -4,6 +4,7 @@ namespace app\models;
 
 use app\components\ActiveRecord;
 use app\traits\UpdateInsteadOfDeleteTrait;
+use app\traits\HasTypeTrait;
 use Yii;
 use yii\db\Expression;
 
@@ -31,6 +32,7 @@ use yii\db\Expression;
 class Notification extends ActiveRecord
 {
     use UpdateInsteadOfDeleteTrait;
+    use HasTypeTrait;
 
     // Типы уведомлений
     const TYPE_INFO = 1;           // Информационное
@@ -121,8 +123,9 @@ class Notification extends ActiveRecord
 
     /**
      * Список типов уведомлений
+     * @see HasTypeTrait
      */
-    public static function getTypeList()
+    public static function getTypeList(): array
     {
         return [
             self::TYPE_INFO => 'Информация',
@@ -134,34 +137,44 @@ class Notification extends ActiveRecord
     }
 
     /**
-     * CSS класс для типа
+     * Иконки типов
+     * @see HasTypeTrait::getTypeIcon()
      */
-    public function getTypeClass()
+    public static function getTypeIcons(): array
     {
-        $classes = [
-            self::TYPE_INFO => 'text-blue-500',
-            self::TYPE_WARNING => 'text-amber-500',
-            self::TYPE_SUCCESS => 'text-green-500',
-            self::TYPE_DANGER => 'text-red-500',
-            self::TYPE_REMINDER => 'text-purple-500',
-        ];
-        return $classes[$this->type] ?? 'text-gray-500';
-    }
-
-    /**
-     * Иконка для типа
-     */
-    public function getTypeIcon()
-    {
-        $icons = [
+        return [
             self::TYPE_INFO => 'information-circle',
             self::TYPE_WARNING => 'exclamation-triangle',
             self::TYPE_SUCCESS => 'check-circle',
             self::TYPE_DANGER => 'exclamation-circle',
             self::TYPE_REMINDER => 'bell',
         ];
-        return $icons[$this->type] ?? 'bell';
     }
+
+    /**
+     * Цвета типов
+     * @see HasTypeTrait::getTypeColor()
+     */
+    public static function getTypeColors(): array
+    {
+        return [
+            self::TYPE_INFO => 'blue',
+            self::TYPE_WARNING => 'amber',
+            self::TYPE_SUCCESS => 'green',
+            self::TYPE_DANGER => 'red',
+            self::TYPE_REMINDER => 'purple',
+        ];
+    }
+
+    /**
+     * CSS класс для типа (Tailwind text color)
+     */
+    public function getTypeClass(): string
+    {
+        return 'text-' . $this->getTypeColor() . '-500';
+    }
+
+    // getTypeLabel(), getTypeIcon(), getTypeColor() предоставляются HasTypeTrait
 
     /**
      * Отметить как прочитанное

@@ -3,6 +3,7 @@
 namespace app\models;
 
 use app\components\ActiveRecord;
+use app\traits\HasStatusTrait;
 use Yii;
 use yii\db\Expression;
 
@@ -28,6 +29,7 @@ use yii\db\Expression;
  */
 class SmsLog extends ActiveRecord
 {
+    use HasStatusTrait;
     // Статусы
     const STATUS_PENDING = 1;    // В очереди
     const STATUS_SENT = 2;       // Отправлено
@@ -115,8 +117,9 @@ class SmsLog extends ActiveRecord
 
     /**
      * Список статусов
+     * @see HasStatusTrait
      */
-    public static function getStatusList()
+    public static function getStatusList(): array
     {
         return [
             self::STATUS_PENDING => 'В очереди',
@@ -127,18 +130,23 @@ class SmsLog extends ActiveRecord
     }
 
     /**
-     * Название статуса
+     * Цвета статусов
+     * @see HasStatusTrait::getStatusColor()
      */
-    public function getStatusLabel()
+    public static function getStatusColors(): array
     {
-        $list = self::getStatusList();
-        return $list[$this->status] ?? 'Неизвестно';
+        return [
+            self::STATUS_PENDING => 'gray',
+            self::STATUS_SENT => 'blue',
+            self::STATUS_DELIVERED => 'green',
+            self::STATUS_FAILED => 'red',
+        ];
     }
 
     /**
-     * CSS класс для бейджа
+     * CSS класс для бейджа (Bootstrap)
      */
-    public function getStatusBadgeClass()
+    public function getStatusBadgeClass(): string
     {
         $classes = [
             self::STATUS_PENDING => 'bg-secondary',
@@ -148,6 +156,8 @@ class SmsLog extends ActiveRecord
         ];
         return $classes[$this->status] ?? 'bg-secondary';
     }
+
+    // getStatusLabel(), getStatusColor() предоставляются HasStatusTrait
 
     /**
      * Отметить как отправленное

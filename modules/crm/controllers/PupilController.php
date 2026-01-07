@@ -13,6 +13,8 @@ use app\models\Pupil;
 use app\models\PupilEducation;
 use app\models\search\PupilSearch;
 use app\models\services\PupilService;
+use app\services\SubscriptionLimitService;
+use Yii;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -98,6 +100,13 @@ class PupilController extends Controller
      */
     public function actionCreate()
     {
+        // Проверка лимита тарифного плана
+        $limitService = SubscriptionLimitService::forCurrentOrganization();
+        if ($limitService && !$limitService->canAddPupil()) {
+            Yii::$app->session->setFlash('error', SubscriptionLimitService::getLimitErrorMessage('pupil'));
+            return $this->redirect(['index']);
+        }
+
         $model = new Pupil();
 
         if ($this->request->isPost) {
@@ -214,27 +223,37 @@ class PupilController extends Controller
      */
     public function actionDeleteEdu($id)
     {
-        $model = PupilEducation::findOne($id);
+        // Security: проверяем organization_id
+        $model = PupilEducation::find()
+            ->where(['id' => $id])
+            ->byOrganization()
+            ->one();
+
         if ($model === null) {
             \Yii::$app->session->setFlash('error', \Yii::t('main', 'Обучение не найдено'));
             return $this->redirect(['index']);
+        }
+
+        // Проверяем права на удаление
+        if (!$model->canDelete()) {
+            \Yii::$app->session->setFlash('error', \Yii::t('main', 'Нет прав на удаление этого обучения'));
+            return $this->redirect(['edu', 'id' => $model->pupil_id]);
         }
 
         $pupilId = $model->pupil_id;
         $transaction = \Yii::$app->db->beginTransaction();
 
         try {
-            // Удаляем связи с группами
-            foreach ($model->groups as $group) {
-                if (!$group->delete()) {
-                    throw new \Exception('Ошибка при удалении связи с группой');
-                }
-            }
+            // Batch delete - удаляем все связи с группами одним запросом
+            \app\models\relations\EducationGroup::deleteAll(['education_id' => $model->id]);
 
             // Удаляем само обучение
             if (!$model->delete()) {
                 throw new \Exception('Ошибка при удалении обучения');
             }
+
+            // Пересчитываем баланс
+            PupilService::updateBalance($pupilId);
 
             $transaction->commit();
             \Yii::$app->session->setFlash('success', \Yii::t('main', 'Обучение удалено'));
@@ -242,6 +261,7 @@ class PupilController extends Controller
         } catch (\Exception $e) {
             $transaction->rollBack();
             \Yii::$app->session->setFlash('error', \Yii::t('main', 'Ошибка при удалении'));
+            \Yii::error('Error deleting education: ' . $e->getMessage(), 'application');
         }
 
         return $this->redirect(['edu', 'id' => $pupilId]);
@@ -267,10 +287,18 @@ class PupilController extends Controller
         ]);
     }
 
-    public function actionCreatePayment($pupil_id){
-        $model = new PaymentForm();
+    public function actionCreatePayment($pupil_id)
+    {
         $pupil = Pupil::findOne($pupil_id);
+
+        // Проверка null
+        if ($pupil === null) {
+            throw new NotFoundHttpException(\Yii::t('main', 'Ученик не найден'));
+        }
+
+        $model = new PaymentForm();
         $model->loadDefaultValues();
+
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
                 return $this->redirect(OrganizationUrl::to(['pupil/payment', 'id' => $model->pupil_id]));

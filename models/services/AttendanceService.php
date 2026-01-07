@@ -4,6 +4,7 @@ namespace app\models\services;
 
 use app\models\Lesson;
 use app\models\LessonAttendance;
+use app\models\Organizations;
 use Yii;
 
 /**
@@ -13,6 +14,7 @@ class AttendanceService
 {
     /**
      * Сохранить посещаемость для занятия
+     * Оптимизировано: загружает все записи одним запросом
      *
      * @param Lesson $lesson Занятие
      * @param array $statuses Массив статусов [pupil_id => ['status' => int]]
@@ -24,9 +26,35 @@ class AttendanceService
         $transaction = Yii::$app->db->beginTransaction();
 
         try {
+            // Загружаем все существующие записи посещаемости одним запросом
+            $existingAttendances = LessonAttendance::find()
+                ->where(['lesson_id' => $lesson->id])
+                ->byOrganization($lesson->organization_id)
+                ->notDeleted()
+                ->indexBy('pupil_id')
+                ->all();
+
             foreach ($statuses as $pupilId => $item) {
-                if (!$this->saveAttendance($lesson, (int)$pupilId, $item['status'])) {
-                    throw new \Exception("Failed to save attendance for pupil {$pupilId}");
+                $pupilId = (int)$pupilId;
+                $status = $item['status'];
+
+                if (isset($existingAttendances[$pupilId])) {
+                    // Обновляем существующую запись
+                    $attendance = $existingAttendances[$pupilId];
+                    $attendance->status = $status;
+                    if (!$attendance->save()) {
+                        throw new \Exception("Failed to update attendance for pupil {$pupilId}");
+                    }
+                } else {
+                    // Создаем новую запись
+                    $attendance = new LessonAttendance();
+                    $attendance->lesson_id = $lesson->id;
+                    $attendance->pupil_id = $pupilId;
+                    $attendance->teacher_id = $lesson->teacher_id;
+                    $attendance->status = $status;
+                    if (!$attendance->save()) {
+                        throw new \Exception("Failed to create attendance for pupil {$pupilId}");
+                    }
                 }
             }
 
@@ -52,38 +80,8 @@ class AttendanceService
     }
 
     /**
-     * Сохранить одну запись посещаемости
-     *
-     * @param Lesson $lesson
-     * @param int $pupilId
-     * @param int $status
-     * @return bool
-     */
-    private function saveAttendance(Lesson $lesson, int $pupilId, int $status): bool
-    {
-        $attendance = LessonAttendance::find()
-            ->where([
-                'pupil_id' => $pupilId,
-                'lesson_id' => $lesson->id,
-            ])
-            ->byOrganization($lesson->organization_id)
-            ->notDeleted()
-            ->one();
-
-        if (!$attendance) {
-            $attendance = new LessonAttendance();
-            $attendance->lesson_id = $lesson->id;
-            $attendance->pupil_id = $pupilId;
-            $attendance->teacher_id = $lesson->teacher_id;
-        }
-
-        $attendance->status = $status;
-
-        return $attendance->save();
-    }
-
-    /**
      * Найти или создать записи посещаемости для всех учеников занятия
+     * Оптимизировано: один запрос + batch insert
      *
      * @param Lesson $lesson
      * @return array [pupil_id => LessonAttendance]
@@ -91,29 +89,58 @@ class AttendanceService
     public function getOrCreateAttendances(Lesson $lesson): array
     {
         $pupils = $lesson->getPupils();
-        $attendances = [];
+        $pupilIds = array_map(function($pupil) {
+            return $pupil->id;
+        }, $pupils);
 
-        foreach ($pupils as $pupil) {
-            $attendance = LessonAttendance::find()
-                ->where([
-                    'pupil_id' => $pupil->id,
-                    'lesson_id' => $lesson->id,
-                ])
-                ->byOrganization($lesson->organization_id)
-                ->notDeleted()
-                ->one();
-
-            if (!$attendance) {
-                $attendance = new LessonAttendance();
-                $attendance->lesson_id = $lesson->id;
-                $attendance->pupil_id = $pupil->id;
-                $attendance->teacher_id = $lesson->teacher_id;
-                $attendance->save();
-            }
-
-            $attendances[$pupil->id] = $attendance;
+        if (empty($pupilIds)) {
+            return [];
         }
 
-        return $attendances;
+        // Загружаем все существующие записи одним запросом
+        $existingAttendances = LessonAttendance::find()
+            ->where(['lesson_id' => $lesson->id])
+            ->andWhere(['in', 'pupil_id', $pupilIds])
+            ->byOrganization($lesson->organization_id)
+            ->notDeleted()
+            ->indexBy('pupil_id')
+            ->all();
+
+        // Определяем, для каких учеников нужно создать записи
+        $toCreate = [];
+        foreach ($pupils as $pupil) {
+            if (!isset($existingAttendances[$pupil->id])) {
+                $toCreate[] = [
+                    'lesson_id' => $lesson->id,
+                    'pupil_id' => $pupil->id,
+                    'teacher_id' => $lesson->teacher_id,
+                    'organization_id' => $lesson->organization_id,
+                    'status' => LessonAttendance::STATUS_PRESENT,
+                    'is_deleted' => 0,
+                ];
+            }
+        }
+
+        // Batch insert для новых записей
+        if (!empty($toCreate)) {
+            Yii::$app->db->createCommand()
+                ->batchInsert(
+                    LessonAttendance::tableName(),
+                    ['lesson_id', 'pupil_id', 'teacher_id', 'organization_id', 'status', 'is_deleted'],
+                    $toCreate
+                )
+                ->execute();
+
+            // Перезагружаем все записи после insert
+            $existingAttendances = LessonAttendance::find()
+                ->where(['lesson_id' => $lesson->id])
+                ->andWhere(['in', 'pupil_id', $pupilIds])
+                ->byOrganization($lesson->organization_id)
+                ->notDeleted()
+                ->indexBy('pupil_id')
+                ->all();
+        }
+
+        return $existingAttendances;
     }
 }

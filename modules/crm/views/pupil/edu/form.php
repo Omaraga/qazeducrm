@@ -4,6 +4,7 @@ use app\helpers\OrganizationUrl;
 use app\models\forms\EducationForm;
 use app\models\Group;
 use app\models\Tariff;
+use app\widgets\tailwind\Icon;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 
@@ -21,10 +22,15 @@ if ($model->getScenario() === EducationForm::TYPE_EDIT) {
 $this->params['breadcrumbs'][] = ['label' => 'Обучение', 'url' => OrganizationUrl::to(['pupil/edu', 'id' => $model->pupil_id])];
 $this->params['breadcrumbs'][] = $this->title;
 
-$tariffs = ArrayHelper::map(Tariff::find()->byOrganization()->all(), 'id', 'nameFull');
-$groups = ArrayHelper::map(Group::find()->byOrganization()->all(), 'id', 'nameFull');
+$tariffs = ArrayHelper::map(Tariff::find()->byOrganization()->notDeleted()->all(), 'id', 'nameFull');
+$groups = ArrayHelper::map(Group::find()->byOrganization()->notDeleted()->all(), 'id', 'nameFull');
 $subjects = Tariff::getSubjectsMap();
 $isEdit = $model->getScenario() == EducationForm::TYPE_EDIT;
+
+// Проверка наличия необходимых данных
+$hasTariffs = !empty($tariffs);
+$hasGroups = !empty($groups);
+$canCreateEducation = $hasTariffs && $hasGroups;
 
 // Convert date formats for HTML5 date input
 $dateStart = $model->date_start ? date('Y-m-d', strtotime(str_replace('.', '-', $model->date_start))) : '';
@@ -39,23 +45,69 @@ $dateEnd = $model->date_end ? date('Y-m-d', strtotime(str_replace('.', '-', $mod
             <p class="text-gray-500 mt-1">Заполните данные об обучении</p>
         </div>
         <div>
-            <a href="<?= OrganizationUrl::to(['pupil/edu', 'id' => $model->pupil_id]) ?>" class="btn btn-secondary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                Назад к обучению
-            </a>
+            <?= Html::a(
+                Icon::show('arrow-left', 'sm') . ' Назад к обучению',
+                OrganizationUrl::to(['pupil/edu', 'id' => $model->pupil_id]),
+                ['class' => 'btn btn-secondary']
+            ) ?>
         </div>
     </div>
 
+    <?php if (!$canCreateEducation): ?>
+    <!-- Warning: Missing prerequisites -->
+    <div class="rounded-lg bg-warning-50 border border-warning-200 p-6">
+        <div class="flex items-start gap-4">
+            <?= Icon::show('alert', 'lg', 'text-warning-500 flex-shrink-0') ?>
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-warning-800 mb-2">Для добавления обучения необходимо</h3>
+                <ul class="space-y-2 text-warning-700">
+                    <?php if (!$hasTariffs): ?>
+                    <li class="flex items-center gap-2">
+                        <?= Icon::show('x', 'xs', 'text-danger-500') ?>
+                        <span>Создать хотя бы один тариф</span>
+                        <?= Html::a(
+                            Icon::show('plus', 'xs') . ' Создать тариф',
+                            OrganizationUrl::to(['tariff/create']),
+                            ['class' => 'text-primary-600 hover:text-primary-700 font-medium ml-2']
+                        ) ?>
+                    </li>
+                    <?php else: ?>
+                    <li class="flex items-center gap-2">
+                        <?= Icon::show('check', 'xs', 'text-success-500') ?>
+                        <span class="text-success-700">Тарифы созданы (<?= count($tariffs) ?>)</span>
+                    </li>
+                    <?php endif; ?>
+
+                    <?php if (!$hasGroups): ?>
+                    <li class="flex items-center gap-2">
+                        <?= Icon::show('x', 'xs', 'text-danger-500') ?>
+                        <span>Создать хотя бы одну группу</span>
+                        <?= Html::a(
+                            Icon::show('plus', 'xs') . ' Создать группу',
+                            OrganizationUrl::to(['group/create']),
+                            ['class' => 'text-primary-600 hover:text-primary-700 font-medium ml-2']
+                        ) ?>
+                    </li>
+                    <?php else: ?>
+                    <li class="flex items-center gap-2">
+                        <?= Icon::show('check', 'xs', 'text-success-500') ?>
+                        <span class="text-success-700">Группы созданы (<?= count($groups) ?>)</span>
+                    </li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <form action="<?= $model->getActionUrl() ?>" method="post" id="education-form" class="space-y-6">
-        <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
+        <input type="hidden" name="<?= \Yii::$app->request->csrfParam ?>" value="<?= \Yii::$app->request->csrfToken ?>">
         <input type="hidden" id="scenario" value="<?= $model->getScenario() ?>">
 
         <!-- Tariff Selection -->
         <div class="card">
             <div class="card-header">
-                <h3 class="text-lg font-semibold text-gray-900"><?= Yii::t('main', 'Тариф') ?></h3>
+                <h3 class="text-lg font-semibold text-gray-900"><?= \Yii::t('main', 'Тариф') ?></h3>
             </div>
             <div class="card-body">
                 <div>
@@ -76,15 +128,15 @@ $dateEnd = $model->date_end ? date('Y-m-d', strtotime(str_replace('.', '-', $mod
         <!-- Groups Selection -->
         <div class="card" id="group-card" style="<?= $model->tariff_id ? '' : 'display: none;' ?>">
             <div class="card-header">
-                <h3 class="text-lg font-semibold text-gray-900"><?= Yii::t('main', 'Выберите группы согласно тарифа') ?></h3>
+                <h3 class="text-lg font-semibold text-gray-900"><?= \Yii::t('main', 'Выберите группы согласно тарифа') ?></h3>
             </div>
             <div class="card-body">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200" id="education-table">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><?= Yii::t('main', 'Предмет') ?></th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><?= Yii::t('main', 'Группа') ?></th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><?= \Yii::t('main', 'Предмет') ?></th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><?= \Yii::t('main', 'Группа') ?></th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -100,7 +152,7 @@ $dateEnd = $model->date_end ? date('Y-m-d', strtotime(str_replace('.', '-', $mod
                                 </td>
                                 <td class="px-4 py-3">
                                     <select name="EducationForm[groups][<?= $k ?>][group_id]" class="form-select group_input" <?= $isEdit ? 'disabled' : '' ?>>
-                                        <option value=""><?= Yii::t('main', 'Выберите группу') ?></option>
+                                        <option value=""><?= \Yii::t('main', 'Выберите группу') ?></option>
                                         <?php foreach ($groups as $id => $name): ?>
                                             <option value="<?= $id ?>" <?= ($group->group_id ?? '') == $id ? 'selected' : '' ?>><?= Html::encode($name) ?></option>
                                         <?php endforeach; ?>
@@ -117,7 +169,7 @@ $dateEnd = $model->date_end ? date('Y-m-d', strtotime(str_replace('.', '-', $mod
         <!-- Dates and Settings -->
         <div class="card">
             <div class="card-header">
-                <h3 class="text-lg font-semibold text-gray-900"><?= Yii::t('main', 'Период и условия') ?></h3>
+                <h3 class="text-lg font-semibold text-gray-900"><?= \Yii::t('main', 'Период и условия') ?></h3>
             </div>
             <div class="card-body">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -154,18 +206,27 @@ $dateEnd = $model->date_end ? date('Y-m-d', strtotime(str_replace('.', '-', $mod
 
         <!-- Actions -->
         <div class="flex items-center gap-3">
-            <button type="button" id="submit-btn" class="btn btn-primary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                <?= Yii::t('main', 'Сохранить') ?>
+            <?php if ($canCreateEducation): ?>
+            <button type="button" id="submit-btn" class="btn btn-primary" title="Сохранить данные обучения">
+                <?= Icon::show('check', 'sm') ?>
+                <?= \Yii::t('main', 'Сохранить') ?>
             </button>
-            <a href="<?= OrganizationUrl::to(['pupil/edu', 'id' => $model->pupil_id]) ?>" class="btn btn-secondary">Отмена</a>
+            <?php else: ?>
+            <span class="btn btn-secondary opacity-50 cursor-not-allowed" title="Сначала создайте тарифы и группы">
+                <?= Icon::show('lock', 'sm') ?>
+                <?= \Yii::t('main', 'Сохранить') ?>
+            </span>
+            <?php endif; ?>
+            <?= Html::a('Отмена', OrganizationUrl::to(['pupil/edu', 'id' => $model->pupil_id]), ['class' => 'btn btn-secondary']) ?>
         </div>
     </form>
 </div>
 
 <?php
+// Extract CSRF values for use in heredoc (heredoc doesn't process PHP tags)
+$csrfParam = \Yii::$app->request->csrfParam;
+$csrfToken = \Yii::$app->request->csrfToken;
+
 $js = <<<JS
 document.addEventListener('DOMContentLoaded', function() {
     const tariffSelect = document.getElementById('educationform-tariff_id');
@@ -245,7 +306,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('date_start', dateStart);
         formData.append('date_end', dateEnd);
         formData.append('sale', sale);
-        formData.append('<?= Yii::$app->request->csrfParam ?>', '<?= Yii::$app->request->csrfToken ?>');
+        formData.append('{$csrfParam}', '{$csrfToken}');
 
         fetch('/tariff/get-info', {
             method: 'POST',

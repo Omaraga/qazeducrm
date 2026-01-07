@@ -4,11 +4,13 @@
 /** @var app\models\OrganizationPayment $model */
 /** @var app\models\Organizations[] $organizations */
 /** @var app\models\OrganizationSubscription[] $subscriptions */
+/** @var array $managers */
 
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\helpers\ArrayHelper;
 use yii\widgets\ActiveForm;
+use app\models\OrganizationPayment;
 
 $this->title = 'Создание платежа';
 ?>
@@ -39,20 +41,70 @@ $this->title = 'Создание платежа';
                     ]
                 )->label('Подписка') ?>
 
-                <?= $form->field($model, 'amount', [
-                    'template' => '{label}<div class="input-group">{input}<div class="input-group-append"><span class="input-group-text">KZT</span></div></div>{error}{hint}',
-                ])->textInput(['type' => 'number', 'class' => 'form-control'])->label('Сумма') ?>
+                <div class="row">
+                    <div class="col-md-6">
+                        <?= $form->field($model, 'original_amount', [
+                            'template' => '{label}<div class="input-group">{input}<div class="input-group-append"><span class="input-group-text">KZT</span></div></div>{error}{hint}',
+                        ])->textInput(['type' => 'number', 'class' => 'form-control'])->label('Сумма до скидки') ?>
+                    </div>
+                    <div class="col-md-6">
+                        <?= $form->field($model, 'amount', [
+                            'template' => '{label}<div class="input-group">{input}<div class="input-group-append"><span class="input-group-text">KZT</span></div></div>{error}{hint}',
+                        ])->textInput(['type' => 'number', 'class' => 'form-control'])->label('Сумма к оплате') ?>
+                    </div>
+                </div>
 
-                <?= $form->field($model, 'payment_method')->dropDownList([
-                    'kaspi' => 'Kaspi',
-                    'bank_transfer' => 'Банковский перевод',
-                    'cash' => 'Наличные',
-                    'card' => 'Карта',
-                    'other' => 'Другое',
-                ], [
-                    'class' => 'form-control',
-                    'prompt' => '-- Способ оплаты --',
-                ])->label('Способ оплаты') ?>
+                <div class="row">
+                    <div class="col-md-6">
+                        <?= $form->field($model, 'discount_type')->dropDownList(
+                            OrganizationPayment::getDiscountTypeList(),
+                            [
+                                'class' => 'form-control',
+                                'prompt' => '-- Без скидки --',
+                            ]
+                        )->label('Тип скидки') ?>
+                    </div>
+                    <div class="col-md-6">
+                        <?= $form->field($model, 'payment_method')->dropDownList([
+                            'kaspi' => 'Kaspi',
+                            'bank_transfer' => 'Банковский перевод',
+                            'cash' => 'Наличные',
+                            'card' => 'Карта',
+                            'other' => 'Другое',
+                        ], [
+                            'class' => 'form-control',
+                            'prompt' => '-- Способ оплаты --',
+                        ])->label('Способ оплаты') ?>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+                <h6 class="text-primary mb-3"><i class="fas fa-user-tie"></i> Менеджер продаж</h6>
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <?= $form->field($model, 'manager_id')->dropDownList(
+                            $managers,
+                            [
+                                'class' => 'form-control',
+                                'prompt' => '-- Без менеджера --',
+                            ]
+                        )->label('Менеджер') ?>
+                    </div>
+                    <div class="col-md-4">
+                        <?= $form->field($model, 'manager_bonus_percent', [
+                            'template' => '{label}<div class="input-group">{input}<div class="input-group-append"><span class="input-group-text">%</span></div></div>{error}{hint}',
+                        ])->textInput([
+                            'type' => 'number',
+                            'step' => '0.01',
+                            'min' => '0',
+                            'max' => '100',
+                            'class' => 'form-control',
+                        ])->label('Бонус') ?>
+                    </div>
+                </div>
+
+                <hr class="my-4">
 
                 <?= $form->field($model, 'payment_reference')->textInput([
                     'class' => 'form-control',
@@ -84,10 +136,29 @@ $this->title = 'Создание платежа';
                 <p class="text-muted mb-2">
                     После подтверждения платежа подписка автоматически продлевается.
                 </p>
-                <p class="text-muted mb-0">
+                <p class="text-muted mb-2">
                     Период определяется автоматически на основе текущего срока подписки.
+                </p>
+                <hr>
+                <p class="text-muted mb-2">
+                    <strong>Менеджер:</strong> Если указан менеджер, при подтверждении платежа автоматически рассчитается его бонус.
+                </p>
+                <p class="text-muted mb-0">
+                    <strong>Скидка:</strong> Укажите сумму до скидки и итоговую сумму для учёта скидок в отчётах.
                 </p>
             </div>
         </div>
+
+        <?php if (!empty($managers)): ?>
+        <div class="card card-custom mt-3">
+            <div class="card-header">Менеджеры</div>
+            <div class="card-body">
+                <p class="text-muted small mb-0">
+                    В списке отображаются сотрудники, которые ранее были назначены менеджерами платежей
+                    или имеют соответствующую роль.
+                </p>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 </div>

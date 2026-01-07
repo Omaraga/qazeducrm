@@ -91,12 +91,20 @@ class ScheduleService
     {
         $result = [];
 
-        $group = Group::findOne($groupId);
+        // Проверяем существование группы с учетом организации
+        $group = Group::find()
+            ->where(['id' => $groupId])
+            ->byOrganization()
+            ->notDeleted()
+            ->one();
+
         if (!$group) {
             return $result;
         }
 
+        // Используем eager loading для предотвращения N+1 (исправление)
         $teacherGroups = TeacherGroup::find()
+            ->with('teacher')
             ->where(['target_id' => $group->id])
             ->byOrganization()
             ->notDeleted()
@@ -290,13 +298,23 @@ class ScheduleService
 
         // Получаем учеников группы
         $pupils = $lesson->getPupils();
+        $pupilIds = array_map(fn($pupil) => $pupil->id, $pupils);
+
+        // Загружаем все посещения одним запросом (исправление N+1)
+        $attendances = [];
+        if (!empty($pupilIds)) {
+            $attendanceRecords = \app\models\LessonAttendance::find()
+                ->where(['lesson_id' => $lesson->id])
+                ->andWhere(['in', 'pupil_id', $pupilIds])
+                ->notDeleted()
+                ->indexBy('pupil_id')
+                ->all();
+            $attendances = $attendanceRecords;
+        }
+
         $pupilsData = [];
         foreach ($pupils as $pupil) {
-            $attendance = \app\models\LessonAttendance::find()
-                ->where(['lesson_id' => $lesson->id, 'pupil_id' => $pupil->id])
-                ->notDeleted()
-                ->one();
-
+            $attendance = $attendances[$pupil->id] ?? null;
             $pupilsData[] = [
                 'id' => $pupil->id,
                 'fio' => $pupil->fio,

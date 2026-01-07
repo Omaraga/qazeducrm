@@ -119,7 +119,7 @@ $this->params['breadcrumbs'][] = 'Создание ученика';
             <?= Icon::show('arrow-left', 'sm') ?>
             Назад к лиду
         </a>
-        <?= Html::beginForm(['lids/convert-to-pupil', 'id' => $lid->id], 'post') ?>
+        <?= Html::beginForm(['lids-interaction/convert-to-pupil', 'id' => $lid->id], 'post') ?>
             <button type="submit" class="btn btn-success">
                 <?= Icon::show('user-plus', 'sm') ?>
                 Создать ученика
