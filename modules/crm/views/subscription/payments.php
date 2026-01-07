@@ -114,7 +114,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900">
-                                    <?= $payment->billing_period === 'yearly' ? 'Годовой' : 'Месячный' ?>
+                                    <?= ($payment->subscription->billing_period ?? 'monthly') === 'yearly' ? 'Годовой' : 'Месячный' ?>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">

@@ -13,13 +13,47 @@ AppAsset::register($this);
 $currentController = Yii::$app->controller->id;
 $currentAction = Yii::$app->controller->action->id;
 
+// Счётчик ожидающих запросов
+$pendingRequestsCount = \app\models\OrganizationSubscriptionRequest::getPendingCount();
+
 $menuItems = [
     ['label' => 'Dashboard', 'icon' => 'fa-tachometer-alt', 'url' => ['/superadmin/default/index'], 'controller' => 'default'],
     ['label' => 'Организации', 'icon' => 'fa-building', 'url' => ['/superadmin/organization/index'], 'controller' => 'organization'],
     ['label' => 'Тарифы', 'icon' => 'fa-tags', 'url' => ['/superadmin/plan/index'], 'controller' => 'plan'],
-    ['label' => 'Подписки', 'icon' => 'fa-credit-card', 'url' => ['/superadmin/subscription/index'], 'controller' => 'subscription'],
-    ['label' => 'Платежи', 'icon' => 'fa-money-bill-wave', 'url' => ['/superadmin/payment/index'], 'controller' => 'payment'],
-    ['label' => 'Аналитика', 'icon' => 'fa-chart-line', 'url' => ['/superadmin/revenue/index'], 'controller' => 'revenue'],
+    [
+        'label' => 'Подписки',
+        'icon' => 'fa-credit-card',
+        'url' => ['/superadmin/subscription/index'],
+        'controller' => 'subscription',
+        'submenu' => [
+            ['label' => 'Все подписки', 'url' => ['/superadmin/subscription/index'], 'action' => 'index'],
+            ['label' => 'Запросы', 'url' => ['/superadmin/subscription/requests'], 'action' => 'requests', 'badge' => $pendingRequestsCount],
+        ],
+    ],
+    [
+        'label' => 'Платежи',
+        'icon' => 'fa-money-bill-wave',
+        'url' => ['/superadmin/payment/index'],
+        'controller' => 'payment',
+        'submenu' => [
+            ['label' => 'Все платежи', 'url' => ['/superadmin/payment/index'], 'action' => 'index'],
+            ['label' => 'Продажи менеджеров', 'url' => ['/superadmin/payment/manager-sales'], 'action' => 'manager-sales'],
+            ['label' => 'Ожидающие бонусы', 'url' => ['/superadmin/payment/pending-bonuses'], 'action' => 'pending-bonuses'],
+        ],
+    ],
+    [
+        'label' => 'Аналитика',
+        'icon' => 'fa-chart-line',
+        'url' => ['/superadmin/revenue/index'],
+        'controller' => 'revenue',
+        'submenu' => [
+            ['label' => 'Обзор', 'url' => ['/superadmin/revenue/index'], 'action' => 'index'],
+            ['label' => 'Отчёты', 'url' => ['/superadmin/revenue/reports'], 'action' => 'reports'],
+            ['label' => 'KPI метрики', 'url' => ['/superadmin/revenue/metrics'], 'action' => 'metrics'],
+            ['label' => 'Прогноз', 'url' => ['/superadmin/revenue/forecast'], 'action' => 'forecast'],
+            ['label' => 'MRR под риском', 'url' => ['/superadmin/revenue/mrr-at-risk'], 'action' => 'mrr-at-risk'],
+        ],
+    ],
     ['label' => 'Дополнения', 'icon' => 'fa-puzzle-piece', 'url' => ['/superadmin/addon/index'], 'controller' => 'addon'],
     ['label' => 'Промокоды', 'icon' => 'fa-ticket-alt', 'url' => ['/superadmin/promo-code/index'], 'controller' => 'promo-code'],
     ['label' => 'База знаний', 'icon' => 'fa-book', 'url' => ['/superadmin/knowledge/index'], 'controller' => 'knowledge'],
@@ -114,6 +148,64 @@ $menuItems = [
         .superadmin-sidebar .nav-link i {
             width: 1.5rem;
             margin-right: 0.75rem;
+        }
+
+        /* Submenu styles */
+        .superadmin-sidebar .nav-item.has-submenu .nav-link {
+            justify-content: space-between;
+        }
+
+        .superadmin-sidebar .nav-item.has-submenu .nav-link::after {
+            content: '\f107';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+
+        .superadmin-sidebar .nav-item.has-submenu.open .nav-link::after {
+            transform: rotate(180deg);
+        }
+
+        .superadmin-sidebar .submenu {
+            display: none;
+            list-style: none;
+            padding: 0.25rem 0;
+            margin: 0;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: var(--radius);
+            margin-top: 0.25rem;
+        }
+
+        .superadmin-sidebar .nav-item.has-submenu.open .submenu {
+            display: block;
+        }
+
+        .superadmin-sidebar .submenu li {
+            margin: 0;
+        }
+
+        .superadmin-sidebar .submenu .nav-link {
+            padding: 0.5rem 1rem 0.5rem 2.5rem;
+            font-size: 0.875rem;
+        }
+
+        .superadmin-sidebar .submenu .nav-link.active {
+            background: var(--primary);
+        }
+
+        .superadmin-sidebar .nav-link .badge {
+            background: var(--error);
+            color: white;
+            padding: 0.15rem 0.4rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
+        }
+
+        .superadmin-sidebar .nav-link .menu-label {
+            display: flex;
+            align-items: center;
         }
 
         .sidebar-footer {
@@ -274,15 +366,57 @@ $menuItems = [
     </div>
     <ul class="nav-menu">
         <?php foreach ($menuItems as $item): ?>
-            <li class="nav-item">
-                <a href="<?= Url::to($item['url']) ?>"
-                   class="nav-link <?= $currentController === $item['controller'] ? 'active' : '' ?>">
-                    <i class="fas <?= $item['icon'] ?>"></i>
-                    <?= $item['label'] ?>
-                </a>
+            <?php
+            $hasSubmenu = !empty($item['submenu']);
+            $isActive = $currentController === $item['controller'];
+            $isOpen = $isActive && $hasSubmenu;
+            ?>
+            <li class="nav-item <?= $hasSubmenu ? 'has-submenu' : '' ?> <?= $isOpen ? 'open' : '' ?>">
+                <?php if ($hasSubmenu): ?>
+                    <a href="#" class="nav-link <?= $isActive && !$hasSubmenu ? 'active' : '' ?>" onclick="toggleSubmenu(this); return false;">
+                        <span class="menu-label">
+                            <i class="fas <?= $item['icon'] ?>"></i>
+                            <?= $item['label'] ?>
+                            <?php
+                            // Показать badge если есть в любом подпункте
+                            $totalBadge = 0;
+                            foreach ($item['submenu'] as $sub) {
+                                if (!empty($sub['badge'])) $totalBadge += $sub['badge'];
+                            }
+                            if ($totalBadge > 0): ?>
+                                <span class="badge"><?= $totalBadge ?></span>
+                            <?php endif; ?>
+                        </span>
+                    </a>
+                    <ul class="submenu">
+                        <?php foreach ($item['submenu'] as $sub): ?>
+                            <?php $subActive = $isActive && $currentAction === $sub['action']; ?>
+                            <li>
+                                <a href="<?= Url::to($sub['url']) ?>" class="nav-link <?= $subActive ? 'active' : '' ?>">
+                                    <?= $sub['label'] ?>
+                                    <?php if (!empty($sub['badge'])): ?>
+                                        <span class="badge"><?= $sub['badge'] ?></span>
+                                    <?php endif; ?>
+                                </a>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <a href="<?= Url::to($item['url']) ?>" class="nav-link <?= $isActive ? 'active' : '' ?>">
+                        <i class="fas <?= $item['icon'] ?>"></i>
+                        <?= $item['label'] ?>
+                    </a>
+                <?php endif; ?>
             </li>
         <?php endforeach; ?>
     </ul>
+
+    <script>
+    function toggleSubmenu(element) {
+        const li = element.closest('.nav-item');
+        li.classList.toggle('open');
+    }
+    </script>
 
     <div class="sidebar-footer">
         <a href="<?= Url::to(['/site/index']) ?>" class="nav-link">

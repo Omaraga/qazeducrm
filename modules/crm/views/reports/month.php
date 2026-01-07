@@ -1,7 +1,10 @@
 <?php
 
 use app\helpers\OrganizationUrl;
+use app\helpers\OrganizationRoles;
 use app\models\search\DateSearch;
+use app\widgets\tailwind\EmptyState;
+use app\widgets\tailwind\Icon;
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
@@ -10,19 +13,8 @@ use yii\helpers\Html;
 /** @var array $dataArray */
 /** @var integer $type */
 
-$this->title = Yii::t('main', 'Отчет за месяц');
+$this->title = Yii::t('main', 'Месячный отчет');
 $onlyMonth = true;
-
-if ($type == DateSearch::TYPE_ATTENDANCE) {
-    $this->title = 'Статистика посещаемости занятий';
-    $onlyMonth = false;
-} elseif ($type == DateSearch::TYPE_SALARY) {
-    $this->title = 'Отчет за месяц. Зарплата преподавателей';
-} elseif ($type == DateSearch::TYPE_PAYMENT) {
-    $this->title = 'Отчет за месяц. Приход';
-} elseif ($type == DateSearch::TYPE_PUPIL_PAYMENT) {
-    $this->title = 'Отчет за месяц. Оплата и задолженность по ученикам';
-}
 
 $this->params['breadcrumbs'][] = $this->title;
 ?>
@@ -31,13 +23,9 @@ $this->params['breadcrumbs'][] = $this->title;
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900" id="report-title"><?= Html::encode($this->title) ?></h1>
+            <h1 class="text-2xl font-bold text-gray-900"><?= Html::encode($this->title) ?></h1>
             <p class="text-gray-500 mt-1">
-                <?php if ($onlyMonth): ?>
-                    За <?= date('F Y', strtotime($searchModel->date ? str_replace('.', '-', $searchModel->date) : 'now')) ?>
-                <?php else: ?>
-                    За <?= Html::encode($searchModel->date) ?>
-                <?php endif; ?>
+                Отчет за <?= date('F Y', strtotime($searchModel->date ? str_replace('.', '-', $searchModel->date) : 'now')) ?>
             </p>
         </div>
     </div>
@@ -49,6 +37,34 @@ $this->params['breadcrumbs'][] = $this->title;
         </div>
     </div>
 
+    <!-- Tabs -->
+    <div class="border-b border-gray-200">
+        <nav class="flex flex-wrap gap-2" aria-label="Tabs">
+            <a href="<?= OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_ATTENDANCE, 'DateSearch[date]' => $searchModel->date]) ?>"
+               class="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 <?= $type == DateSearch::TYPE_ATTENDANCE ? 'border-primary-500 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' ?>">
+                <?= Icon::show('check', 'sm') ?>
+                Посещаемость
+            </a>
+            <?php if (Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR) || Yii::$app->user->can(OrganizationRoles::DIRECTOR)): ?>
+            <a href="<?= OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_SALARY, 'DateSearch[date]' => $searchModel->date]) ?>"
+               class="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 <?= $type == DateSearch::TYPE_SALARY ? 'border-primary-500 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' ?>">
+                <?= Icon::show('wallet', 'sm') ?>
+                Зарплата преподавателей
+            </a>
+            <?php endif; ?>
+            <a href="<?= OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_PAYMENT, 'DateSearch[date]' => $searchModel->date]) ?>"
+               class="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 <?= $type == DateSearch::TYPE_PAYMENT ? 'border-primary-500 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' ?>">
+                <?= Icon::show('payment', 'sm') ?>
+                Приход
+            </a>
+            <a href="<?= OrganizationUrl::to(['reports/month', 'type' => DateSearch::TYPE_PUPIL_PAYMENT, 'DateSearch[date]' => $searchModel->date]) ?>"
+               class="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 <?= $type == DateSearch::TYPE_PUPIL_PAYMENT ? 'border-primary-500 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' ?>">
+                <?= Icon::show('users', 'sm') ?>
+                Оплата по ученикам
+            </a>
+        </nav>
+    </div>
+
     <!-- Content -->
     <?php if ($type == DateSearch::TYPE_ATTENDANCE): ?>
         <?php if (!empty($dataArray['lessons'])): ?>
@@ -57,14 +73,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attendances' => $dataArray['attendances']
             ]) ?>
         <?php else: ?>
-            <div class="card">
-                <div class="card-body text-center py-12">
-                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    <p class="text-lg font-medium text-gray-900"><?= Html::encode($searchModel->date) ?> нет ни одного занятия</p>
-                </div>
-            </div>
+            <?= EmptyState::card('calendar', $searchModel->date . ' нет ни одного занятия', 'Выберите другую дату для просмотра отчёта') ?>
         <?php endif; ?>
 
     <?php elseif ($type == DateSearch::TYPE_SALARY): ?>
@@ -75,14 +84,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'lessonPupilSalary' => $dataArray['lessonPupilSalary']
             ]) ?>
         <?php else: ?>
-            <div class="card">
-                <div class="card-body text-center py-12">
-                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    <p class="text-lg font-medium text-gray-900">За выбранный период нет ни одного занятия</p>
-                </div>
-            </div>
+            <?= EmptyState::card('calendar', 'За выбранный период нет ни одного занятия', 'Выберите другую дату для просмотра отчёта') ?>
         <?php endif; ?>
 
     <?php elseif ($type == DateSearch::TYPE_PAYMENT): ?>
@@ -91,14 +93,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'payments' => $dataArray,
             ]) ?>
         <?php else: ?>
-            <div class="card">
-                <div class="card-body text-center py-12">
-                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <p class="text-lg font-medium text-gray-900">За выбранный период нет ни одной оплаты</p>
-                </div>
-            </div>
+            <?= EmptyState::card('payment', 'За выбранный период нет ни одной оплаты', 'Выберите другую дату для просмотра отчёта') ?>
         <?php endif; ?>
 
     <?php elseif ($type == DateSearch::TYPE_PUPIL_PAYMENT): ?>

@@ -147,7 +147,7 @@ class SidebarMenu extends Widget
             $html .= '</button>';
 
             // Элементы секции
-            $html .= '<div x-show="open" x-collapse>';
+            $html .= '<div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">';
             foreach ($items as $item) {
                 $html .= $this->renderItem($item);
             }
@@ -185,9 +185,15 @@ class SidebarMenu extends Widget
         $badgeClass = $item['badgeClass'] ?? 'bg-primary-500 text-white';
         $visible = $item['visible'] ?? true;
         $items = $item['items'] ?? []; // Вложенные элементы
+        $isHeader = $item['header'] ?? false; // Заголовок группы
 
         if (!$visible) {
             return '';
+        }
+
+        // Если это заголовок группы - просто текст
+        if ($isHeader) {
+            return '<div class="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">' . Html::encode($label) . '</div>';
         }
 
         // Определяем активность
@@ -245,7 +251,7 @@ class SidebarMenu extends Widget
 
         // Кнопка раскрытия
         $buttonClass = $this->linkClass . ' ' . ($hasActiveChild ? 'text-primary-700 font-medium' : $this->inactiveClass);
-        $html .= '<button @click="open = !open" class="w-full ' . $buttonClass . '">';
+        $html .= '<button @click="open = !open" type="button" class="w-full ' . $buttonClass . '">';
 
         if ($icon) {
             $html .= Icon::show($icon);
@@ -255,8 +261,8 @@ class SidebarMenu extends Widget
         $html .= '<svg class="w-4 h-4 transition-transform duration-200" :class="open ? \'rotate-180\' : \'\'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>';
         $html .= '</button>';
 
-        // Вложенные элементы
-        $html .= '<div x-show="open" x-collapse class="ml-4 mt-1 border-l border-gray-200 pl-3">';
+        // Вложенные элементы с анимацией
+        $html .= '<div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="ml-4 mt-1 border-l border-gray-200 pl-3 overflow-hidden">';
         foreach ($items as $child) {
             $html .= $this->renderItem($child);
         }
@@ -277,12 +283,30 @@ class SidebarMenu extends Widget
             return $this->currentController === $item['controller'];
         }
 
-        // По URL - точное совпадение controller + action
+        // По URL - точное совпадение controller + action + параметры
         if (isset($item['url']) && is_array($item['url'])) {
             $route = $item['url'][0] ?? '';
             // Извлекаем контроллер и action из роута
             if (preg_match('/\/([^\/]+)\/([^\/]+)$/', $route, $matches)) {
-                return $this->currentController === $matches[1] && $this->currentAction === $matches[2];
+                $controllerMatch = $this->currentController === $matches[1];
+                $actionMatch = $this->currentAction === $matches[2];
+
+                if (!$controllerMatch || !$actionMatch) {
+                    return false;
+                }
+
+                // Проверяем параметры URL (например, type=finance-income)
+                $urlParams = array_slice($item['url'], 1);
+                if (!empty($urlParams)) {
+                    $requestParams = Yii::$app->request->queryParams;
+                    foreach ($urlParams as $key => $value) {
+                        if (!isset($requestParams[$key]) || $requestParams[$key] !== $value) {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
             }
         }
 

@@ -14,13 +14,16 @@ class ActiveQuery extends \yii\db\ActiveQuery
      */
     public function byOrganization($organization_id = null)
     {
-        if ($organization_id === null AND Organizations::getCurrentOrganizationId() === 0) {
+        $currentOrgId = Organizations::getCurrentOrganizationId();
+
+        // Если организация не указана и текущая org_id = 0 или null (SUPER или CLI) - не фильтруем
+        if ($organization_id === null && ($currentOrgId === 0 || $currentOrgId === null)) {
             // AND \Yii::$app->user->can("SUPER")
             return $this;
         }
 
         return $this->andWhere([
-            "$this->alias.organization_id" => $organization_id ?: Organizations::getCurrentOrganizationId()
+            "$this->alias.organization_id" => $organization_id ?: $currentOrgId
         ]);
     }
 

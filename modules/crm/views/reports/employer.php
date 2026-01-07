@@ -73,6 +73,7 @@ $this->registerJs($js);
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <?php foreach ($dateTeacherSalary as $date => $item): ?>
+                                <?php if (isset($item[$teacher->id]) && $item[$teacher->id] > 0): ?>
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <a href="<?= OrganizationUrl::to(['reports/day', 'DateSearch[date]' => $date, 'type' => DateSearch::TYPE_SALARY]) ?>" target="_blank" class="text-primary-600 hover:text-primary-800">
@@ -85,6 +86,7 @@ $this->registerJs($js);
                                     </td>
                                 </tr>
                                 <?php $sum += $item[$teacher->id]; ?>
+                                <?php endif; ?>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>

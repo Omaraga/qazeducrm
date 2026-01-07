@@ -74,7 +74,20 @@
       "Bash(del test_forecast.php)",
       "Bash(CSRF=\"KbJLTa3jlFUajoqejg214ynDHSC7A3Yl0bXygRY-9m5b5BsA4tPfB3fX8_W4esWVYIl0GfAzPlzj2qjeblKlAw==\")",
       "Bash(echo:*)",
-      "Bash(__NEW_LINE__ echo \"\")"
+      "Bash(__NEW_LINE__ echo \"\")",
+      "Bash(1 grep -o \"reports/day[^\"\"]*\" /tmp/day_report.html)",
+      "Bash(php test_subscription_request.php:*)",
+      "Bash(del:*)",
+      "Bash(CSRF=\"ZRNDxFklNeKiRA5tCMNeXX4iqzBxJRE4z8VD0pwhVlIVYi-hABd6ss8GfwJd9yoqPxWcVy5iW1S48SG-3VFmCg==\")",
+      "Bash(cd:*)",
+      "Bash(for type in leads-sources leads-managers finance-debts finance-expenses pupils-enrollment)",
+      "Bash(do echo \"Testing $type:\")",
+      "Bash(php:*)",
+      "Bash(python:*)",
+      "Bash(CSRF=\"JdsP0GNUtGfr-5g34P8PnByhdYq-Y-XUlKw7RetAU81z6mykTiPmLqKvzl7Yr2L_fZMyxu4tku3y1U0R2y1jqw==\" curl -s -c \"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\cookies.txt\" -b \"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\cookies.txt\"  -X POST \"http://localhost/qazeducrm/web/login\"  -d \"_csrf=$CSRF&LoginForm%5Busername%5D=admin%40qazedu.kz&LoginForm%5Bpassword%5D=123456&LoginForm%5BrememberMe%5D=0\"  -w \"\\\\nHTTP Code: %{http_code}\\\\nRedirect: %{redirect_url}\\\\n\")",
+      "Bash(true curl -s -c \"C:/xampp8/htdocs/qazeducrm/cookies.txt\" \"http://localhost/qazeducrm/web/login\")",
+      "Bash(CSRF=\"6SZ9TCBDO3UKYJhhLXD1sv2R-OZl20YqMDce1I45DrmHRUsvdQJrEX0kyTJ6L43LjfTIgzKUd1hFaEjku2lC2g==\")",
+      "Bash(CSRF=\"Apv6bRbiHx0DHlzyCIHK1IaRlUhi9S4HjJcolQbfGUxTopI_Ra5renl4JqVK6LuesNzSGCWCG3PV5WnBSr1fYQ==\")"
     ]
   }
 }

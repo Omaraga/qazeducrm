@@ -7,6 +7,7 @@ use app\models\OrganizationSubscription;
 use Yii;
 use yii\base\Widget;
 use yii\helpers\Html;
+use yii\helpers\Url;
 
 /**
  * SubscriptionBadge Widget - бейдж текущего тарифа организации
@@ -44,6 +45,11 @@ class SubscriptionBadge extends Widget
     public $showExpiry = true;
 
     /**
+     * @var bool делать бейдж кликабельным (ссылка на страницу подписки)
+     */
+    public $clickable = true;
+
+    /**
      * @var array дополнительные HTML атрибуты
      */
     public $options = [];
@@ -67,6 +73,7 @@ class SubscriptionBadge extends Widget
             'compact' => $this->compact,
             'showTrial' => $this->showTrial,
             'showExpiry' => $this->showExpiry,
+            'clickable' => $this->clickable,
             'options' => $this->options,
         ]);
     }
@@ -79,6 +86,7 @@ class SubscriptionBadge extends Widget
         $compact = $options['compact'] ?? false;
         $showTrial = $options['showTrial'] ?? true;
         $showExpiry = $options['showExpiry'] ?? true;
+        $clickable = $options['clickable'] ?? true;
         $htmlOptions = $options['options'] ?? [];
 
         $org = Organizations::getCurrentOrganization();
@@ -88,12 +96,14 @@ class SubscriptionBadge extends Widget
 
         $subscription = $org->getActiveSubscription();
         if (!$subscription) {
-            return self::renderNoPlan($htmlOptions);
+            $badge = self::renderNoPlan($htmlOptions);
+            return $clickable ? self::wrapInLink($badge) : $badge;
         }
 
         $plan = $subscription->saasPlan;
         if (!$plan) {
-            return self::renderNoPlan($htmlOptions);
+            $badge = self::renderNoPlan($htmlOptions);
+            return $clickable ? self::wrapInLink($badge) : $badge;
         }
 
         $planCode = $plan->code ?? 'free';
@@ -103,10 +113,23 @@ class SubscriptionBadge extends Widget
         $daysRemaining = $subscription->getDaysRemaining();
 
         if ($compact) {
-            return self::renderCompact($planName, $color, $isTrial, $htmlOptions);
+            $badge = self::renderCompact($planName, $color, $isTrial, $htmlOptions);
+        } else {
+            $badge = self::renderFull($planName, $color, $isTrial, $daysRemaining, $showTrial, $showExpiry, $htmlOptions);
         }
 
-        return self::renderFull($planName, $color, $isTrial, $daysRemaining, $showTrial, $showExpiry, $htmlOptions);
+        return $clickable ? self::wrapInLink($badge) : $badge;
+    }
+
+    /**
+     * Обернуть бейдж в ссылку на страницу подписки
+     */
+    private static function wrapInLink(string $badge): string
+    {
+        return Html::a($badge, ['/crm/subscription/index'], [
+            'class' => 'hover:opacity-80 transition-opacity',
+            'title' => Yii::t('main', 'Управление подпиской'),
+        ]);
     }
 
     /**

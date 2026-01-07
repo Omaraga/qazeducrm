@@ -5,6 +5,7 @@
 /** @var app\models\Organizations[] $organizations */
 /** @var app\models\OrganizationSubscription[] $subscriptions */
 /** @var array $managers */
+/** @var app\models\OrganizationSubscriptionRequest|null $subscriptionRequest */
 
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -16,10 +17,40 @@ $this->title = 'Создание платежа';
 ?>
 
 <div class="mb-3">
-    <a href="<?= Url::to(['index']) ?>" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-left"></i> К списку
-    </a>
+    <?php if (!empty($subscriptionRequest)): ?>
+        <a href="<?= Url::to(['/superadmin/subscription/view-request', 'id' => $subscriptionRequest->id]) ?>" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> К заявке #<?= $subscriptionRequest->id ?>
+        </a>
+    <?php else: ?>
+        <a href="<?= Url::to(['index']) ?>" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> К списку
+        </a>
+    <?php endif; ?>
 </div>
+
+<?php if (!empty($subscriptionRequest)): ?>
+<div class="alert alert-info mb-4">
+    <h5 class="alert-heading mb-2">
+        <i class="fas fa-file-invoice"></i>
+        Платёж по заявке #<?= $subscriptionRequest->id ?>
+    </h5>
+    <div class="row">
+        <div class="col-md-4">
+            <strong>Организация:</strong><br>
+            <?= Html::encode($subscriptionRequest->organization->name ?? '-') ?>
+        </div>
+        <div class="col-md-4">
+            <strong>Тип заявки:</strong><br>
+            <?= $subscriptionRequest->getTypeLabel() ?>
+        </div>
+        <div class="col-md-4">
+            <strong>Запрашиваемый план:</strong><br>
+            <?= Html::encode($subscriptionRequest->requestedPlan->name ?? '-') ?>
+            (<?= $subscriptionRequest->billing_period === 'yearly' ? 'годовой' : 'месячный' ?>)
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="row">
     <div class="col-lg-8">
@@ -27,6 +58,12 @@ $this->title = 'Создание платежа';
             <div class="card-header">Новый платёж</div>
             <div class="card-body">
                 <?php $form = ActiveForm::begin(); ?>
+
+                <?php // Скрытые поля для связи с заявкой ?>
+                <?php if ($model->subscription_request_id): ?>
+                    <?= Html::activeHiddenInput($model, 'subscription_request_id') ?>
+                    <?= Html::activeHiddenInput($model, 'organization_id') ?>
+                <?php endif; ?>
 
                 <?= $form->field($model, 'subscription_id')->dropDownList(
                     ArrayHelper::map($subscriptions, 'id', function($sub) {

@@ -79,7 +79,7 @@ class ManagerSalesService
             ->alias('p')
             ->select([
                 'p.manager_id',
-                'u.name as manager_name',
+                'COALESCE(u.fio, u.username) as manager_name',
                 'u.email as manager_email',
                 'SUM(p.amount) as total_sales',
                 'COUNT(*) as payments_count',
@@ -167,7 +167,7 @@ class ManagerSalesService
             ->alias('p')
             ->select([
                 'p.*',
-                'u.name as manager_name',
+                'COALESCE(u.fio, u.username) as manager_name',
                 'o.name as organization_name',
             ])
             ->innerJoin(['u' => User::tableName()], 'p.manager_id = u.id')
@@ -197,7 +197,7 @@ class ManagerSalesService
             ->alias('p')
             ->select([
                 'p.manager_id',
-                'u.name as manager_name',
+                'COALESCE(u.fio, u.username) as manager_name',
                 'SUM(p.manager_bonus_amount) as pending_amount',
                 'COUNT(*) as payments_count',
             ])
@@ -220,14 +220,14 @@ class ManagerSalesService
         // или имеют соответствующую роль
         $managers = User::find()
             ->alias('u')
-            ->select(['u.id', 'u.name', 'u.email'])
+            ->select(['u.id', 'COALESCE(u.fio, u.username) as name', 'u.email'])
             ->where(['u.status' => User::STATUS_ACTIVE])
             ->andWhere([
                 'or',
                 ['in', 'u.id', OrganizationPayment::find()->select('manager_id')->distinct()],
-                ['u.role' => 'manager'], // Если есть роль manager
+                ['u.system_role' => 'superadmin'], // Супер-админы могут быть менеджерами
             ])
-            ->orderBy(['u.name' => SORT_ASC])
+            ->orderBy(['u.username' => SORT_ASC])
             ->asArray()
             ->all();
 

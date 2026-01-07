@@ -200,7 +200,7 @@ class RevenueReportService
             ->alias('p')
             ->select([
                 'u.id as manager_id',
-                'u.name as manager_name',
+                'COALESCE(u.fio, u.username) as manager_name',
                 'SUM(p.amount) as revenue',
                 'SUM(p.manager_bonus_amount) as total_bonus',
                 "SUM(CASE WHEN p.manager_bonus_status = 'pending' THEN p.manager_bonus_amount ELSE 0 END) as pending_bonus",

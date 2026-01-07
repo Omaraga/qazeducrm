@@ -13,6 +13,7 @@ use app\services\SubscriptionAccessService;
 use app\services\SubscriptionLimitService;
 use app\services\AddonTrialService;
 use app\models\SaasFeature;
+use app\models\OrganizationSubscriptionRequest;
 
 /**
  * Контроллер управления подпиской для пользователей
@@ -232,14 +233,29 @@ class SubscriptionController extends Controller
             $planId = Yii::$app->request->post('plan_id');
             $period = Yii::$app->request->post('period', 'monthly');
             $comment = Yii::$app->request->post('comment', '');
+            $contactPhone = Yii::$app->request->post('contact_phone');
+            $contactName = Yii::$app->request->post('contact_name');
 
-            // Здесь можно создать заявку на оплату или отправить уведомление администратору
-            // В реальной системе это может быть интеграция с платёжной системой
-
-            Yii::$app->session->setFlash('success',
-                'Заявка на продление подписки отправлена. ' .
-                'Наш менеджер свяжется с вами в ближайшее время.'
+            // Создаём запрос на продление
+            $request = OrganizationSubscriptionRequest::createRenewalRequest(
+                $organization->id,
+                $planId ? (int)$planId : null,
+                $period,
+                $comment ?: null,
+                $contactPhone ?: null,
+                $contactName ?: null
             );
+
+            if ($request->save()) {
+                Yii::$app->session->setFlash('success',
+                    'Заявка на продление подписки отправлена. ' .
+                    'Наш менеджер свяжется с вами в ближайшее время.'
+                );
+            } else {
+                Yii::$app->session->setFlash('error',
+                    'Не удалось создать заявку. Попробуйте позже.'
+                );
+            }
 
             return $this->redirect(['index']);
         }
@@ -381,21 +397,105 @@ class SubscriptionController extends Controller
 
         $featureCode = Yii::$app->request->post('feature');
         $period = Yii::$app->request->post('period', 'monthly');
+        $planId = Yii::$app->request->post('plan_id');
+        $contactPhone = Yii::$app->request->post('contact_phone');
+        $contactName = Yii::$app->request->post('contact_name');
+        $comment = Yii::$app->request->post('comment');
 
-        if (!$featureCode) {
-            Yii::$app->session->setFlash('error', 'Не указана функция');
+        if (!$featureCode && !$planId) {
+            Yii::$app->session->setFlash('error', 'Не указана функция или план');
             return $this->redirect(['trials']);
         }
 
-        // Здесь в реальной системе будет создание заявки на оплату
-        // Пока просто показываем сообщение
+        // Создаём запрос на конвертацию trial
+        $request = OrganizationSubscriptionRequest::createTrialConvertRequest(
+            $organization->id,
+            $planId ? (int)$planId : null,
+            $period,
+            $comment ?: ($featureCode ? "Запрос на покупку: " . $featureCode : null),
+            $contactPhone ?: null,
+            $contactName ?: null
+        );
 
-        $feature = SaasFeature::findByCode($featureCode);
-        Yii::$app->session->setFlash('success', sprintf(
-            'Заявка на подключение "%s" отправлена. Наш менеджер свяжется с вами в ближайшее время.',
-            $feature ? $feature->name : $featureCode
-        ));
+        if ($request->save()) {
+            $feature = $featureCode ? SaasFeature::findByCode($featureCode) : null;
+            Yii::$app->session->setFlash('success', sprintf(
+                'Заявка на подключение%s отправлена. Наш менеджер свяжется с вами в ближайшее время.',
+                $feature ? ' "' . $feature->name . '"' : ''
+            ));
+        } else {
+            Yii::$app->session->setFlash('error', 'Не удалось создать заявку. Попробуйте позже.');
+        }
 
         return $this->redirect(['trials']);
+    }
+
+    /**
+     * Запрос на апгрейд тарифа
+     */
+    public function actionRequestUpgrade()
+    {
+        $organization = Organizations::getCurrentOrganization();
+        if (!$organization) {
+            throw new NotFoundHttpException('Организация не найдена');
+        }
+
+        if (!Yii::$app->request->isPost) {
+            return $this->redirect(['upgrade']);
+        }
+
+        $planId = Yii::$app->request->post('plan_id');
+        $period = Yii::$app->request->post('period', 'monthly');
+        $comment = Yii::$app->request->post('comment');
+        $contactPhone = Yii::$app->request->post('contact_phone');
+        $contactName = Yii::$app->request->post('contact_name');
+
+        if (!$planId) {
+            Yii::$app->session->setFlash('error', 'Не указан тарифный план');
+            return $this->redirect(['upgrade']);
+        }
+
+        // Создаём запрос на апгрейд
+        $request = OrganizationSubscriptionRequest::createUpgradeRequest(
+            $organization->id,
+            (int)$planId,
+            $period,
+            $comment ?: null,
+            $contactPhone ?: null,
+            $contactName ?: null
+        );
+
+        if ($request->save()) {
+            $plan = SaasPlan::findOne($planId);
+            Yii::$app->session->setFlash('success', sprintf(
+                'Заявка на переход на тариф "%s" отправлена. Наш менеджер свяжется с вами в ближайшее время.',
+                $plan ? $plan->name : 'новый'
+            ));
+        } else {
+            Yii::$app->session->setFlash('error', 'Не удалось создать заявку. Попробуйте позже.');
+        }
+
+        return $this->redirect(['index']);
+    }
+
+    /**
+     * Мои заявки на изменение подписки
+     */
+    public function actionRequests()
+    {
+        $organization = Organizations::getCurrentOrganization();
+        if (!$organization) {
+            throw new NotFoundHttpException('Организация не найдена');
+        }
+
+        $requests = OrganizationSubscriptionRequest::find()
+            ->where(['organization_id' => $organization->id])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->all();
+
+        return $this->render('requests', [
+            'organization' => $organization,
+            'requests' => $requests,
+        ]);
     }
 }

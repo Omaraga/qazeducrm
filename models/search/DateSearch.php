@@ -177,8 +177,11 @@ class DateSearch extends Model
                     foreach ($tariff->subjectsRelation as $subject){
                         $lessonCount += $subject->lesson_amount;
                     }
-                    $sum = (($education['total_price'] / ($lessonCount*4.33)) * 50)/100;
-                    $totalSum += intval($sum);
+                    // Защита от деления на ноль
+                    if ($lessonCount > 0) {
+                        $sum = (($education['total_price'] / ($lessonCount*4.33)) * 50)/100;
+                        $totalSum += intval($sum);
+                    }
 
                 }
                 $dateTeacherSalary[date('d.m.Y', strtotime($lessonAttendance->lesson->date))][$lessonAttendance->lesson->teacher_id] += $totalSum;
@@ -263,8 +266,11 @@ class DateSearch extends Model
                         foreach ($tariff->subjectsRelation as $subject){
                             $lessonCount += $subject->lesson_amount;
                         }
-                        $sum = (($education['total_price'] / ($lessonCount*4.33)) * 50)/100;
-                        $totalSum += intval($sum);
+                        // Защита от деления на ноль
+                        if ($lessonCount > 0) {
+                            $sum = (($education['total_price'] / ($lessonCount*4.33)) * 50)/100;
+                            $totalSum += intval($sum);
+                        }
                     }
                     $lessonPupilSalary[$lessonAttendance->lesson_id][$pupil->id] = $totalSum;
 

@@ -49,7 +49,28 @@ $menuConfig = [
             ['label' => 'Зарплаты', 'icon' => 'wallet', 'url' => ['/crm/salary/index'], 'controller' => 'salary'],
 
             ['label' => 'SMS', 'icon' => 'sms', 'url' => ['/crm/sms/index'], 'controller' => 'sms'],
-            ['label' => 'Отчёты', 'icon' => 'chart', 'url' => ['/crm/reports/index'], 'controller' => 'reports'],
+            [
+                'label' => 'Отчёты',
+                'icon' => 'chart',
+                'controller' => 'reports',
+                'items' => [
+                    ['label' => 'Все отчёты', 'url' => ['/crm/reports/index']],
+                    ['label' => '─── Финансы ───', 'header' => true],
+                    ['label' => 'Доходы', 'url' => ['/crm/reports/view', 'type' => 'finance-income']],
+                    ['label' => 'Расходы', 'url' => ['/crm/reports/view', 'type' => 'finance-expenses']],
+                    ['label' => 'Задолженности', 'url' => ['/crm/reports/view', 'type' => 'finance-debts']],
+                    ['label' => '─── Продажи ───', 'header' => true],
+                    ['label' => 'Воронка продаж', 'url' => ['/crm/reports/view', 'type' => 'leads-funnel']],
+                    ['label' => 'Источники лидов', 'url' => ['/crm/reports/view', 'type' => 'leads-sources']],
+                    ['label' => 'Менеджеры', 'url' => ['/crm/reports/view', 'type' => 'leads-managers']],
+                    ['label' => '─── Ученики ───', 'header' => true],
+                    ['label' => 'Посещаемость', 'url' => ['/crm/reports/view', 'type' => 'pupils-attendance']],
+                    ['label' => '─── Учителя ───', 'header' => true],
+                    ['label' => 'Зарплаты учителей', 'url' => ['/crm/reports/view', 'type' => 'teachers-salary']],
+                    ['label' => '─── Операции ───', 'header' => true],
+                    ['label' => 'Загрузка групп', 'url' => ['/crm/reports/view', 'type' => 'operations-groups']],
+                ],
+            ],
         ]
     ],
     [
@@ -62,6 +83,7 @@ $menuConfig = [
             ['label' => 'Тарифы', 'icon' => 'tag', 'url' => ['/crm/tariff/index'], 'controller' => 'tariff'],
             ['label' => 'Кабинеты', 'icon' => 'building-office', 'url' => ['/crm/room/index'], 'controller' => 'room'],
             ['label' => 'Способы оплаты', 'icon' => 'card', 'url' => ['/crm/pay-method/index'], 'controller' => 'pay-method'],
+            ['label' => 'Подписка', 'icon' => 'credit-card', 'url' => ['/crm/subscription/index'], 'controller' => 'subscription'],
         ]
     ],
     [

@@ -91,12 +91,32 @@ class PaymentController extends Controller
     /**
      * Создание платежа
      */
-    public function actionCreate($organization_id = null, $subscription_id = null)
+    public function actionCreate($organization_id = null, $subscription_id = null, $request_id = null, $amount = null)
     {
         $model = new OrganizationPayment();
         $model->status = OrganizationPayment::STATUS_PENDING;
         $model->currency = 'KZT';
         $model->manager_bonus_percent = 10; // Default 10%
+
+        // Данные из заявки на подписку
+        $subscriptionRequest = null;
+        if ($request_id) {
+            $subscriptionRequest = \app\models\OrganizationSubscriptionRequest::findOne($request_id);
+            if ($subscriptionRequest) {
+                $model->organization_id = $subscriptionRequest->organization_id;
+                $model->subscription_request_id = $subscriptionRequest->id; // Связь с заявкой
+                // Получаем подписку если есть
+                $subscription = $subscriptionRequest->organization->getActiveSubscription();
+                if ($subscription) {
+                    $model->subscription_id = $subscription->id;
+                }
+                // Сумма из заявки
+                if ($amount) {
+                    $model->amount = $amount;
+                    $model->original_amount = $amount;
+                }
+            }
+        }
 
         if ($organization_id) {
             $model->organization_id = $organization_id;
@@ -116,7 +136,18 @@ class PaymentController extends Controller
             }
         }
 
+        // Сумма из параметра (перезаписывает)
+        if ($amount && !$subscription_id) {
+            $model->amount = $amount;
+            $model->original_amount = $amount;
+        }
+
         if ($model->load(Yii::$app->request->post())) {
+            // Загружаем связанную заявку из POST если есть
+            if ($model->subscription_request_id && !$subscriptionRequest) {
+                $subscriptionRequest = \app\models\OrganizationSubscriptionRequest::findOne($model->subscription_request_id);
+            }
+
             // Устанавливаем период
             $subscription = OrganizationSubscription::findOne($model->subscription_id);
             if ($subscription) {
@@ -168,6 +199,7 @@ class PaymentController extends Controller
             'organizations' => $organizations,
             'subscriptions' => $subscriptions,
             'managers' => $managers,
+            'subscriptionRequest' => $subscriptionRequest,
         ]);
     }
 
@@ -180,15 +212,88 @@ class PaymentController extends Controller
 
         // Используем метод confirm() который рассчитает бонус менеджера
         if ($model->confirm(Yii::$app->user->id)) {
-            // Продлеваем подписку
-            if ($model->subscription) {
+            $subscription = null;
+            $planChanged = false;
+            $subscriptionCreated = false;
+
+            // Если платёж создан из заявки на подписку
+            if ($model->subscription_request_id && $model->subscriptionRequest) {
+                $request = $model->subscriptionRequest;
+
+                // Находим или создаём подписку для организации
+                $subscription = OrganizationSubscription::findByOrganization($model->organization_id);
+
+                if (!$subscription) {
+                    // Создаём новую подписку
+                    $subscription = new OrganizationSubscription();
+                    $subscription->organization_id = $model->organization_id;
+                    $subscriptionCreated = true;
+                }
+
+                // Обновляем план если указан в заявке
+                if ($request->requested_plan_id) {
+                    $oldPlanId = $subscription->saas_plan_id;
+                    $subscription->saas_plan_id = $request->requested_plan_id;
+                    if ($oldPlanId !== $request->requested_plan_id) {
+                        $planChanged = true;
+                    }
+                }
+
+                // Устанавливаем период биллинга из заявки
+                if ($request->billing_period) {
+                    $subscription->billing_period = $request->billing_period;
+                }
+
+                // Активируем подписку
+                $subscription->status = OrganizationSubscription::STATUS_ACTIVE;
+                $subscription->access_mode = OrganizationSubscription::ACCESS_FULL;
+                $subscription->grace_period_ends_at = null;
+
+                // Устанавливаем даты
+                $baseDate = ($subscription->expires_at && strtotime($subscription->expires_at) > time())
+                    ? $subscription->expires_at
+                    : date('Y-m-d H:i:s');
+
+                if ($subscription->billing_period === 'yearly') {
+                    $subscription->expires_at = date('Y-m-d H:i:s', strtotime($baseDate . ' +1 year'));
+                } else {
+                    $subscription->expires_at = date('Y-m-d H:i:s', strtotime($baseDate . ' +1 month'));
+                }
+
+                if ($subscriptionCreated) {
+                    $subscription->started_at = date('Y-m-d H:i:s');
+                }
+
+                if ($subscription->save()) {
+                    // Связываем платёж с подпиской
+                    $model->subscription_id = $subscription->id;
+                    $model->period_start = date('Y-m-d H:i:s');
+                    $model->period_end = $subscription->expires_at;
+                    $model->save(false, ['subscription_id', 'period_start', 'period_end']);
+
+                    // Отмечаем заявку как выполненную
+                    $request->complete('Оплата получена, подписка активирована.');
+                }
+            } elseif ($model->subscription) {
+                // Стандартная логика продления существующей подписки
                 $subscription = $model->subscription;
                 $subscription->status = OrganizationSubscription::STATUS_ACTIVE;
                 $subscription->expires_at = $model->period_end;
+                $subscription->access_mode = OrganizationSubscription::ACCESS_FULL;
+                $subscription->grace_period_ends_at = null;
                 $subscription->save();
             }
 
-            $message = 'Платёж подтверждён, подписка продлена.';
+            // Формируем сообщение
+            $message = 'Платёж подтверждён.';
+            if ($subscriptionCreated) {
+                $message .= ' Подписка создана.';
+            } elseif ($planChanged && $subscription?->saasPlan) {
+                $message .= ' Тариф изменён на "' . $subscription->saasPlan->name . '".';
+            } else {
+                $message .= ' Подписка продлена.';
+            }
+
             if ($model->manager_bonus_amount > 0) {
                 $message .= ' Бонус менеджера: ' . number_format($model->manager_bonus_amount, 0, '.', ' ') . ' KZT';
             }

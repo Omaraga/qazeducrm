@@ -11,6 +11,7 @@ use yii\db\ActiveRecord;
  * @property int $id
  * @property int $organization_id
  * @property int|null $subscription_id
+ * @property int|null $subscription_request_id
  * @property float $amount
  * @property float|null $original_amount
  * @property float $discount_amount
@@ -81,7 +82,7 @@ class OrganizationPayment extends ActiveRecord
     {
         return [
             [['organization_id', 'amount'], 'required'],
-            [['organization_id', 'subscription_id', 'processed_by', 'manager_id'], 'integer'],
+            [['organization_id', 'subscription_id', 'subscription_request_id', 'processed_by', 'manager_id'], 'integer'],
             [['amount', 'original_amount', 'discount_amount', 'manager_bonus_percent', 'manager_bonus_amount'], 'number'],
             [['period_start', 'period_end', 'processed_at', 'manager_bonus_paid_at'], 'safe'],
             [['notes'], 'string'],
@@ -150,6 +151,14 @@ class OrganizationPayment extends ActiveRecord
     public function getSubscription()
     {
         return $this->hasOne(OrganizationSubscription::class, ['id' => 'subscription_id']);
+    }
+
+    /**
+     * Связь с заявкой на подписку
+     */
+    public function getSubscriptionRequest()
+    {
+        return $this->hasOne(OrganizationSubscriptionRequest::class, ['id' => 'subscription_request_id']);
     }
 
     /**

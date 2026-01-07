@@ -4,6 +4,7 @@ namespace app\modules\superadmin\controllers;
 
 use app\models\Organizations;
 use app\models\OrganizationSubscription;
+use app\models\OrganizationSubscriptionRequest;
 use app\models\OrganizationActivityLog;
 use app\models\SaasPlan;
 use Yii;
@@ -26,6 +27,9 @@ class SubscriptionController extends Controller
                     'activate' => ['POST'],
                     'suspend' => ['POST'],
                     'cancel' => ['POST'],
+                    'approve-request' => ['POST'],
+                    'reject-request' => ['POST'],
+                    'complete-request' => ['POST'],
                 ],
             ],
         ];
@@ -224,6 +228,128 @@ class SubscriptionController extends Controller
         ]);
     }
 
+    /**
+     * Список запросов на изменение подписки
+     */
+    public function actionRequests()
+    {
+        $query = OrganizationSubscriptionRequest::find()
+            ->with(['organization', 'requestedPlan', 'currentPlan', 'processedByUser'])
+            ->orderBy(['created_at' => SORT_DESC]);
+
+        // Фильтр по статусу
+        $status = Yii::$app->request->get('status');
+        if ($status) {
+            $query->andWhere(['status' => $status]);
+        }
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query,
+            'pagination' => ['pageSize' => 20],
+        ]);
+
+        // Количество ожидающих для бейджа
+        $pendingCount = OrganizationSubscriptionRequest::getPendingCount();
+
+        return $this->render('requests', [
+            'dataProvider' => $dataProvider,
+            'pendingCount' => $pendingCount,
+        ]);
+    }
+
+    /**
+     * Просмотр запроса
+     */
+    public function actionViewRequest($id)
+    {
+        $model = $this->findRequest($id);
+
+        return $this->render('view-request', [
+            'model' => $model,
+        ]);
+    }
+
+    /**
+     * Одобрить запрос
+     */
+    public function actionApproveRequest($id)
+    {
+        $model = $this->findRequest($id);
+
+        if (!$model->isPending()) {
+            Yii::$app->session->setFlash('error', 'Запрос уже обработан.');
+            return $this->redirect(['requests']);
+        }
+
+        $adminComment = Yii::$app->request->post('admin_comment');
+
+        if ($model->approve($adminComment)) {
+            OrganizationActivityLog::log(
+                $model->organization_id,
+                OrganizationActivityLog::ACTION_SUBSCRIPTION_ACTIVATED,
+                OrganizationActivityLog::CATEGORY_SUBSCRIPTION,
+                "Запрос на {$model->getTypeLabel()} одобрен"
+            );
+
+            Yii::$app->session->setFlash('success', 'Запрос одобрен. Не забудьте создать/продлить подписку.');
+        } else {
+            Yii::$app->session->setFlash('error', 'Ошибка при одобрении запроса.');
+        }
+
+        return $this->redirect(['view-request', 'id' => $id]);
+    }
+
+    /**
+     * Отклонить запрос
+     */
+    public function actionRejectRequest($id)
+    {
+        $model = $this->findRequest($id);
+
+        if (!$model->isPending()) {
+            Yii::$app->session->setFlash('error', 'Запрос уже обработан.');
+            return $this->redirect(['requests']);
+        }
+
+        $adminComment = Yii::$app->request->post('admin_comment');
+
+        if (empty($adminComment)) {
+            Yii::$app->session->setFlash('error', 'Укажите причину отклонения.');
+            return $this->redirect(['view-request', 'id' => $id]);
+        }
+
+        if ($model->reject($adminComment)) {
+            Yii::$app->session->setFlash('warning', 'Запрос отклонён.');
+        } else {
+            Yii::$app->session->setFlash('error', 'Ошибка при отклонении запроса.');
+        }
+
+        return $this->redirect(['requests']);
+    }
+
+    /**
+     * Отметить запрос как выполненный
+     */
+    public function actionCompleteRequest($id)
+    {
+        $model = $this->findRequest($id);
+
+        if ($model->status === OrganizationSubscriptionRequest::STATUS_COMPLETED) {
+            Yii::$app->session->setFlash('info', 'Запрос уже выполнен.');
+            return $this->redirect(['requests']);
+        }
+
+        $adminComment = Yii::$app->request->post('admin_comment');
+
+        if ($model->complete($adminComment)) {
+            Yii::$app->session->setFlash('success', 'Запрос отмечен как выполненный.');
+        } else {
+            Yii::$app->session->setFlash('error', 'Ошибка при обновлении запроса.');
+        }
+
+        return $this->redirect(['requests']);
+    }
+
     protected function findModel($id)
     {
         if (($model = OrganizationSubscription::findOne($id)) !== null) {
@@ -231,5 +357,14 @@ class SubscriptionController extends Controller
         }
 
         throw new NotFoundHttpException('Подписка не найдена.');
+    }
+
+    protected function findRequest($id)
+    {
+        if (($model = OrganizationSubscriptionRequest::findOne($id)) !== null) {
+            return $model;
+        }
+
+        throw new NotFoundHttpException('Запрос не найден.');
     }
 }
