@@ -47,6 +47,36 @@ class Settings extends ActiveRecord
     {
         return [
             'email',
+            // Соцсети (хранятся в info если нет колонок в БД)
+            'telegram',
+            'youtube',
+            'instagram',
+            'whatsapp',
+            'facebook',
+            // Контакты
+            'working_hours',
+            // Статистика лендинга
+            'stat_centers_count',
+            'stat_centers_label',
+            'stat_pupils_count',
+            'stat_pupils_label',
+            'stat_satisfaction_count',
+            'stat_satisfaction_label',
+            // SEO
+            'meta_title',
+            'meta_description',
+            'meta_keywords',
+            // Информация о системе (features page)
+            'features_hero_title',
+            'features_hero_subtitle',
+            'feature_1_title',
+            'feature_1_description',
+            'feature_2_title',
+            'feature_2_description',
+            'feature_3_title',
+            'feature_3_description',
+            'feature_4_title',
+            'feature_4_description',
         ];
     }
 
@@ -57,7 +87,20 @@ class Settings extends ActiveRecord
     {
         return [
             [['phones'], 'string'],
-            ['email','email'],
+            ['email', 'email'],
+            // Соцсети и контакты
+            [['telegram', 'youtube', 'instagram', 'whatsapp', 'facebook', 'working_hours'], 'string', 'max' => 255],
+            // Статистика
+            [['stat_centers_count', 'stat_centers_label', 'stat_pupils_count',
+              'stat_pupils_label', 'stat_satisfaction_count', 'stat_satisfaction_label'], 'string', 'max' => 50],
+            // SEO
+            [['meta_title'], 'string', 'max' => 70],
+            [['meta_description'], 'string', 'max' => 160],
+            [['meta_keywords'], 'string', 'max' => 255],
+            // Features
+            [['features_hero_title', 'features_hero_subtitle'], 'string', 'max' => 255],
+            [['feature_1_title', 'feature_2_title', 'feature_3_title', 'feature_4_title'], 'string', 'max' => 100],
+            [['feature_1_description', 'feature_2_description', 'feature_3_description', 'feature_4_description'], 'string', 'max' => 500],
         ];
     }
 
@@ -150,6 +193,33 @@ class Settings extends ActiveRecord
             'project_amount' => Yii::t('app', 'Количество проектов по РК'),
             'dir_email' => Yii::t('app', 'Почта председателя'),
             'kadr_email' => Yii::t('app', 'Почта кадровика'),
+            // Соцсети
+            'telegram' => Yii::t('app', 'Telegram'),
+            'youtube' => Yii::t('app', 'YouTube'),
+            // Контакты
+            'working_hours' => Yii::t('app', 'Часы работы'),
+            // Статистика лендинга
+            'stat_centers_count' => Yii::t('app', 'Количество центров'),
+            'stat_centers_label' => Yii::t('app', 'Подпись (центры)'),
+            'stat_pupils_count' => Yii::t('app', 'Количество учеников'),
+            'stat_pupils_label' => Yii::t('app', 'Подпись (ученики)'),
+            'stat_satisfaction_count' => Yii::t('app', 'Процент довольных'),
+            'stat_satisfaction_label' => Yii::t('app', 'Подпись (довольные)'),
+            // SEO
+            'meta_title' => Yii::t('app', 'Meta Title'),
+            'meta_description' => Yii::t('app', 'Meta Description'),
+            'meta_keywords' => Yii::t('app', 'Meta Keywords'),
+            // Features
+            'features_hero_title' => Yii::t('app', 'Заголовок Features'),
+            'features_hero_subtitle' => Yii::t('app', 'Подзаголовок Features'),
+            'feature_1_title' => Yii::t('app', 'Функция 1 - Заголовок'),
+            'feature_1_description' => Yii::t('app', 'Функция 1 - Описание'),
+            'feature_2_title' => Yii::t('app', 'Функция 2 - Заголовок'),
+            'feature_2_description' => Yii::t('app', 'Функция 2 - Описание'),
+            'feature_3_title' => Yii::t('app', 'Функция 3 - Заголовок'),
+            'feature_3_description' => Yii::t('app', 'Функция 3 - Описание'),
+            'feature_4_title' => Yii::t('app', 'Функция 4 - Заголовок'),
+            'feature_4_description' => Yii::t('app', 'Функция 4 - Описание'),
         ];
     }
 }

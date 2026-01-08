@@ -286,6 +286,18 @@ class SidebarMenu extends Widget
     {
         // По контроллеру (только если нет вложенных элементов)
         if (isset($item['controller']) && empty($item['items'])) {
+            // Поддержка массива контроллеров
+            if (is_array($item['controller'])) {
+                return in_array($this->currentController, $item['controller']);
+            }
+            return $this->currentController === $item['controller'];
+        }
+
+        // По контроллеру для элементов с вложенными items
+        if (isset($item['controller']) && !empty($item['items'])) {
+            if (is_array($item['controller'])) {
+                return in_array($this->currentController, $item['controller']);
+            }
             return $this->currentController === $item['controller'];
         }
 

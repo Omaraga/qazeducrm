@@ -6,6 +6,7 @@ use app\components\reports\BaseReport;
 use app\components\reports\ReportFilterDTO;
 use app\components\reports\ReportRegistry;
 use app\helpers\OrganizationRoles;
+use app\helpers\RoleChecker;
 use app\models\enum\StatusEnum;
 use app\models\Lesson;
 use app\models\LessonAttendance;
@@ -51,7 +52,39 @@ class PupilsAttendanceReport extends BaseReport
             OrganizationRoles::GENERAL_DIRECTOR,
             OrganizationRoles::DIRECTOR,
             OrganizationRoles::ADMIN,
+            OrganizationRoles::TEACHER,
         ];
+    }
+
+    /**
+     * Проверка - является ли пользователь учителем
+     */
+    protected function isTeacher(): bool
+    {
+        return RoleChecker::isTeacherOnly();
+    }
+
+    /**
+     * Получить ID групп учителя (для фильтрации)
+     * Возвращает null если пользователь не учитель
+     * Возвращает пустой массив если учитель без групп
+     */
+    protected function getTeacherGroupIds(): ?array
+    {
+        if (!$this->isTeacher()) {
+            return null; // Не учитель - фильтр не нужен
+        }
+
+        $teacherId = RoleChecker::getCurrentTeacherId();
+        if (!$teacherId) {
+            return []; // Учитель без ID - пустой результат
+        }
+
+        return \app\models\relations\TeacherGroup::find()
+            ->select('target_id')
+            ->where(['related_id' => $teacherId])
+            ->andWhere(['is_deleted' => 0])
+            ->column();
     }
 
     public function getAvailableFilters(): array
@@ -88,6 +121,17 @@ class PupilsAttendanceReport extends BaseReport
                 ->orderBy(['g.name' => SORT_ASC]);
 
             $this->applyOrganizationFilter($query, 'g.organization_id');
+
+            // Для учителя - только его группы
+            $teacherGroupIds = $this->getTeacherGroupIds();
+            if ($teacherGroupIds !== null) {
+                // Это учитель
+                if (empty($teacherGroupIds)) {
+                    // У учителя нет групп - возвращаем пустой результат
+                    return [];
+                }
+                $query->andWhere(['g.id' => $teacherGroupIds]);
+            }
 
             if ($filter->dateFrom) {
                 $query->andWhere(['>=', 'l.date', $filter->dateFrom]);
@@ -128,6 +172,21 @@ class PupilsAttendanceReport extends BaseReport
 
             $this->applyOrganizationFilter($query, 'l.organization_id');
 
+            // Для учителя - только его группы
+            $teacherGroupIds = $this->getTeacherGroupIds();
+            if ($teacherGroupIds !== null) {
+                if (empty($teacherGroupIds)) {
+                    return [
+                        'total_records' => 0,
+                        'visits' => 0,
+                        'misses' => 0,
+                        'attendance_rate' => 0,
+                        'lessons_count' => 0,
+                    ];
+                }
+                $query->andWhere(['l.group_id' => $teacherGroupIds]);
+            }
+
             if ($filter->dateFrom) {
                 $query->andWhere(['>=', 'l.date', $filter->dateFrom]);
             }
@@ -153,6 +212,11 @@ class PupilsAttendanceReport extends BaseReport
                 ->andFilterWhere(['<=', 'date', $filter->dateTo])
                 ->andFilterWhere(['group_id' => $filter->groupId]);
             $this->applyOrganizationFilter($lessonsQuery);
+
+            // Для учителя - только его группы (teacherGroupIds уже проверен выше)
+            if ($teacherGroupIds !== null && !empty($teacherGroupIds)) {
+                $lessonsQuery->andWhere(['group_id' => $teacherGroupIds]);
+            }
 
             $lessonsCount = $lessonsQuery->count();
 
@@ -222,6 +286,15 @@ class PupilsAttendanceReport extends BaseReport
                 ->andFilterWhere(['l.group_id' => $filter->groupId]);
 
             $this->applyOrganizationFilter($query, 'l.organization_id');
+
+            // Для учителя - только его группы
+            $teacherGroupIds = $this->getTeacherGroupIds();
+            if ($teacherGroupIds !== null) {
+                if (empty($teacherGroupIds)) {
+                    return null; // У учителя нет групп
+                }
+                $query->andWhere(['l.group_id' => $teacherGroupIds]);
+            }
 
             $data = $query
                 ->groupBy(['DATE(l.date)'])

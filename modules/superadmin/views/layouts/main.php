@@ -57,6 +57,7 @@ $menuItems = [
     ['label' => 'Дополнения', 'icon' => 'fa-puzzle-piece', 'url' => ['/superadmin/addon/index'], 'controller' => 'addon'],
     ['label' => 'Промокоды', 'icon' => 'fa-ticket-alt', 'url' => ['/superadmin/promo-code/index'], 'controller' => 'promo-code'],
     ['label' => 'База знаний', 'icon' => 'fa-book', 'url' => ['/superadmin/knowledge/index'], 'controller' => 'knowledge'],
+    ['label' => 'Настройки', 'icon' => 'fa-cog', 'url' => ['/superadmin/settings/index'], 'controller' => 'settings'],
 ];
 ?>
 <?php $this->beginPage() ?>

@@ -287,6 +287,18 @@ class OrganizationAccessSettings extends ActiveRecord
     }
 
     /**
+     * Установить значение конкретной настройки
+     * @param string $key
+     * @param bool $value
+     */
+    public function setSetting(string $key, bool $value): void
+    {
+        $settings = $this->getSettingsArray();
+        $settings[$key] = $value;
+        $this->setSettingsArray($settings);
+    }
+
+    /**
      * Получить или создать настройки для организации
      * @param int|null $organizationId
      * @return self
@@ -344,7 +356,9 @@ class OrganizationAccessSettings extends ActiveRecord
      */
     public function save($runValidation = true, $attributeNames = null)
     {
-        $this->updated_by = Yii::$app->user->id;
+        if (Yii::$app->has('user') && !Yii::$app->user->isGuest) {
+            $this->updated_by = Yii::$app->user->id;
+        }
         return parent::save($runValidation, $attributeNames);
     }
 }

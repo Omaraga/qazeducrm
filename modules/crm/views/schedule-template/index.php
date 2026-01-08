@@ -25,18 +25,56 @@ $this->title = Yii::t('main', 'Шаблоны расписания');
 
     <!-- Templates Grid -->
     <?php if (empty($templates)): ?>
-        <div class="text-center py-12">
-            <div class="text-gray-400 mb-4">
-                <?= Icon::svg('calendar', ['class' => 'w-16 h-16 mx-auto']) ?>
+        <div class="card">
+            <div class="card-body py-12">
+                <div class="max-w-lg mx-auto text-center">
+                    <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <?= Icon::svg('clipboard-document-list', ['class' => 'w-8 h-8 text-primary-600']) ?>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Шаблоны расписания</h3>
+                    <p class="text-gray-500 mb-6">Шаблоны помогают быстро создавать типовое расписание на неделю или месяц</p>
+
+                    <!-- Benefits -->
+                    <div class="text-left bg-gray-50 rounded-lg p-4 mb-6">
+                        <div class="space-y-3">
+                            <div class="flex items-start gap-3">
+                                <div class="w-5 h-5 rounded-full bg-success-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <?= Icon::svg('check', ['class' => 'w-3 h-3 text-success-600']) ?>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-gray-900">Создайте шаблон один раз</span>
+                                    <p class="text-sm text-gray-500">Добавьте типовые занятия на каждый день недели</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="w-5 h-5 rounded-full bg-success-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <?= Icon::svg('check', ['class' => 'w-3 h-3 text-success-600']) ?>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-gray-900">Применяйте к любому периоду</span>
+                                    <p class="text-sm text-gray-500">Генерируйте расписание на неделю, месяц или другой период</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="w-5 h-5 rounded-full bg-success-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <?= Icon::svg('check', ['class' => 'w-3 h-3 text-success-600']) ?>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-gray-900">Автоматическая проверка конфликтов</span>
+                                    <p class="text-sm text-gray-500">Система проверит занятость преподавателей и кабинетов</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button"
+                            @click="$dispatch('open-modal', 'create-template-modal')"
+                            class="btn btn-primary btn-lg">
+                        <?= Icon::svg('plus', ['class' => 'w-5 h-5 mr-2']) ?>
+                        Создать первый шаблон
+                    </button>
+                </div>
             </div>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">Нет шаблонов</h3>
-            <p class="text-gray-500 mb-4">Создайте первый шаблон расписания для организации работы</p>
-            <button type="button"
-                    @click="$dispatch('open-modal', 'create-template-modal')"
-                    class="btn btn-primary">
-                <?= Icon::svg('plus', ['class' => 'w-5 h-5 mr-2']) ?>
-                Создать шаблон
-            </button>
         </div>
     <?php else: ?>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

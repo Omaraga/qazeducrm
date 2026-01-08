@@ -4,6 +4,7 @@ namespace app\modules\crm\controllers;
 
 use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
+use app\helpers\RoleChecker;
 use app\helpers\SystemRoles;
 use app\models\OrganizationAccessSettings;
 use Yii;
@@ -36,16 +37,11 @@ class SettingsController extends Controller
                         // Доступ к настройкам - только для директоров
                         [
                             'allow' => true,
-                            'roles' => [
-                                SystemRoles::SUPER,
-                                OrganizationRoles::DIRECTOR,
-                                OrganizationRoles::GENERAL_DIRECTOR,
-                            ]
+                            'roles' => ['@'],
+                            'matchCallback' => function ($rule, $action) {
+                                return RoleChecker::isDirector();
+                            }
                         ],
-                        [
-                            'allow' => false,
-                            'roles' => ['?']
-                        ]
                     ],
                 ],
             ]
@@ -89,6 +85,40 @@ class SettingsController extends Controller
             'labels' => OrganizationAccessSettings::LABELS,
             'hints' => OrganizationAccessSettings::HINTS,
         ]);
+    }
+
+    /**
+     * AJAX сохранение одной настройки
+     * @return array
+     */
+    public function actionAjaxSaveSetting()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        if (!$this->request->isAjax || !$this->request->isPost) {
+            return ['success' => false, 'message' => 'Invalid request'];
+        }
+
+        $key = $this->request->post('key');
+        $value = $this->request->post('value');
+
+        if (!$key || !array_key_exists($key, OrganizationAccessSettings::DEFAULTS)) {
+            return ['success' => false, 'message' => 'Invalid setting key'];
+        }
+
+        $model = OrganizationAccessSettings::getForOrganization();
+        $model->setSetting($key, (bool)$value);
+
+        if ($model->save()) {
+            return [
+                'success' => true,
+                'message' => 'Сохранено',
+                'key' => $key,
+                'value' => (bool)$value
+            ];
+        }
+
+        return ['success' => false, 'message' => 'Ошибка сохранения'];
     }
 
     /**

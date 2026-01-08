@@ -20,7 +20,7 @@ class ScheduleTemplateController extends CrmBaseController
     /**
      * @inheritDoc
      */
-    protected array $postActions = ['delete', 'create', 'update', 'duplicate', 'add-lesson', 'update-lesson', 'delete-lesson', 'generate'];
+    protected array $postActions = ['delete', 'create', 'update', 'duplicate', 'add-lesson', 'update-lesson', 'delete-lesson', 'generate', 'create-from-schedule'];
 
     protected array $allowedRoles = [
         SystemRoles::SUPER,
@@ -300,6 +300,36 @@ class ScheduleTemplateController extends CrmBaseController
             'success' => true,
             'data' => ScheduleTemplateService::getFormData(),
         ];
+    }
+
+    /**
+     * Создать шаблон из существующего расписания (AJAX)
+     *
+     * Получает все занятия за указанный период и создает шаблон
+     */
+    public function actionCreateFromSchedule()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $name = Yii::$app->request->post('name');
+        $description = Yii::$app->request->post('description', '');
+        $dateStart = Yii::$app->request->post('date_start');
+        $dateEnd = Yii::$app->request->post('date_end');
+
+        if (!$name || !$dateStart || !$dateEnd) {
+            return [
+                'success' => false,
+                'message' => 'Укажите название и период'
+            ];
+        }
+
+        $result = ScheduleTemplateService::createFromSchedule($name, $description, $dateStart, $dateEnd);
+
+        if ($result['success']) {
+            $result['redirect'] = OrganizationUrl::to(['schedule-template/view', 'id' => $result['id']]);
+        }
+
+        return $result;
     }
 
     /**

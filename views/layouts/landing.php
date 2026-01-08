@@ -3,416 +3,219 @@
 /** @var yii\web\View $this */
 /** @var string $content */
 
-use app\assets\AppAsset;
+use app\assets\TailwindAsset;
+use app\helpers\SettingsHelper;
 use app\helpers\SystemRoles;
 use app\models\Organizations;
-use yii\bootstrap4\Html;
+use yii\helpers\Html;
 use yii\helpers\Url;
 
-AppAsset::register($this);
+TailwindAsset::register($this);
 
 $currentAction = Yii::$app->controller->action->id;
 $isGuest = Yii::$app->user->isGuest;
 $user = $isGuest ? null : Yii::$app->user->identity;
 $isSuperAdmin = $user && $user->system_role === SystemRoles::SUPER;
 $currentOrg = $isGuest ? null : Organizations::getCurrentOrganization();
+
+// SEO данные
+$metaTitle = SettingsHelper::getMetaTitle();
+$metaDescription = SettingsHelper::getMetaDescription();
+$social = SettingsHelper::getSocialLinks();
+$siteName = SettingsHelper::getSiteName() ?: 'Qazaq Education CRM';
+$canonicalUrl = Yii::$app->request->absoluteUrl;
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
-<html lang="<?= Yii::$app->language ?>" class="h-100">
+<html lang="<?= Yii::$app->language ?>" class="h-full">
 <head>
     <meta charset="<?= Yii::$app->charset ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="Qazaq Education CRM - современная система управления учебным центром. Учет учеников, расписание, финансы, отчёты.">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="<?= Html::encode($metaDescription) ?>">
+    <meta name="keywords" content="<?= Html::encode(SettingsHelper::getMetaKeywords()) ?>">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<?= Html::encode($canonicalUrl) ?>">
+    <meta property="og:title" content="<?= Html::encode($this->title) ?> — <?= Html::encode($siteName) ?>">
+    <meta property="og:description" content="<?= Html::encode($metaDescription) ?>">
+    <meta property="og:image" content="/images/og-image.png">
+    <meta property="og:locale" content="ru_RU">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?= Html::encode($this->title) ?> — <?= Html::encode($siteName) ?>">
+    <meta name="twitter:description" content="<?= Html::encode($metaDescription) ?>">
+    <meta name="twitter:image" content="/images/og-image.png">
+
+    <!-- Mobile App Meta -->
+    <meta name="theme-color" content="#FE8D00">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="<?= Html::encode($canonicalUrl) ?>">
+
     <?php $this->registerCsrfMetaTags() ?>
-    <title><?= Html::encode($this->title) ?> — Qazaq Education CRM</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="/css/theme.css" rel="stylesheet">
+    <title><?= Html::encode($this->title) ?> — <?= Html::encode($siteName) ?></title>
+
     <?php $this->head() ?>
-    <script src="https://kit.fontawesome.com/baa51cad6c.js" crossorigin="anonymous"></script>
-    <style>
-        /* ========================================
-           LANDING NAVIGATION (Dark Header)
-           ======================================== */
-        .landing-nav {
-            background: var(--dark);
-            padding: 0.875rem 0;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            transition: all var(--transition);
-        }
-        .landing-nav.scrolled {
-            box-shadow: var(--shadow-lg);
-            padding: 0.75rem 0;
-        }
-        .landing-nav .nav-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .landing-nav .brand {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-        }
-        .landing-nav .brand img {
-            height: 30px;
-        }
-        .landing-nav .brand-crm {
-            background: var(--primary);
-            color: var(--text-white);
-            font-size: 0.65rem;
-            font-weight: 700;
-            padding: 0.2rem 0.5rem;
-            border-radius: var(--radius-sm);
-            letter-spacing: 0.05em;
-        }
-        .landing-nav .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 2.5rem;
-        }
-        .landing-nav .nav-link {
-            color: var(--dark-text-muted);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: color var(--transition-fast);
-            padding: 0.5rem 0;
-            position: relative;
-        }
-        .landing-nav .nav-link:hover,
-        .landing-nav .nav-link.active {
-            color: var(--text-white);
-        }
-        .landing-nav .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--primary);
-            border-radius: 2px;
-        }
-        .landing-nav .nav-buttons {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        .btn-nav-login {
-            color: var(--dark-text);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.9rem;
-            padding: 0.5rem 1rem;
-            transition: color var(--transition-fast);
-        }
-        .btn-nav-login:hover {
-            color: var(--primary);
-            text-decoration: none;
-        }
-        .btn-nav-register {
-            background: var(--primary);
-            color: var(--text-white);
-            padding: 0.6rem 1.25rem;
-            border-radius: var(--radius);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all var(--transition);
-        }
-        .btn-nav-register:hover {
-            background: var(--primary-hover);
-            color: var(--text-white);
-            text-decoration: none;
-            box-shadow: var(--shadow-md);
-        }
-        /* Authenticated user info */
-        .nav-user-info {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        .nav-user-info .user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        .nav-user-info .user-details {
-            display: flex;
-            flex-direction: column;
-            line-height: 1.2;
-        }
-        .nav-user-info .user-name {
-            color: var(--dark-text);
-            font-weight: 500;
-            font-size: 0.9rem;
-            text-decoration: none;
-        }
-        .nav-user-info .user-name:hover {
-            color: var(--primary);
-        }
-        .nav-user-info .user-org {
-            color: var(--text-muted);
-            font-size: 0.75rem;
-        }
-        .btn-nav-logout {
-            color: var(--dark-text);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.85rem;
-            padding: 0.4rem 0.75rem;
-            border: 1px solid var(--dark-border);
-            border-radius: var(--radius);
-            transition: all var(--transition-fast);
-        }
-        .btn-nav-logout:hover {
-            background: var(--danger);
-            border-color: var(--danger);
-            color: white;
-            text-decoration: none;
-        }
-        .btn-nav-dashboard {
-            background: var(--primary);
-            color: var(--text-white);
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.85rem;
-            transition: all var(--transition);
-        }
-        .btn-nav-dashboard:hover {
-            background: var(--primary-hover);
-            color: var(--text-white);
-            text-decoration: none;
-        }
-
-        /* ========================================
-           MAIN CONTENT
-           ======================================== */
-        .landing-main {
-            padding-top: 60px;
-            background: var(--bg-white);
-        }
-
-        /* ========================================
-           SECTION STYLES
-           ======================================== */
-        .section {
-            padding: 5rem 0;
-        }
-        .section-light {
-            background: var(--bg-light);
-        }
-        .section-title {
-            font-size: 2.25rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 1rem;
-        }
-        .section-subtitle {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            margin-bottom: 3rem;
-        }
-
-        /* ========================================
-           FOOTER (Dark)
-           ======================================== */
-        .landing-footer {
-            background: var(--dark);
-            color: var(--dark-text-muted);
-            padding: 4rem 0 2rem;
-        }
-        .landing-footer h5 {
-            color: var(--text-white);
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: 1.25rem;
-        }
-        .landing-footer a {
-            color: var(--dark-text-muted);
-            text-decoration: none;
-            display: block;
-            margin-bottom: 0.6rem;
-            font-size: 0.9rem;
-            transition: color var(--transition-fast);
-        }
-        .landing-footer a:hover {
-            color: var(--primary);
-        }
-        .footer-bottom {
-            border-top: 1px solid var(--dark-border);
-            padding-top: 2rem;
-            margin-top: 3rem;
-        }
-        .footer-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-        .footer-brand img {
-            height: 26px;
-        }
-        .footer-brand span {
-            background: var(--primary);
-            color: var(--text-white);
-            font-size: 0.6rem;
-            font-weight: 700;
-            padding: 0.15rem 0.4rem;
-            border-radius: 3px;
-        }
-        .footer-social a {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            background: var(--dark-light);
-            border-radius: var(--radius);
-            color: var(--dark-text-muted);
-            margin-right: 0.5rem;
-            transition: all var(--transition-fast);
-        }
-        .footer-social a:hover {
-            background: var(--primary);
-            color: var(--text-white);
-        }
-
-        /* ========================================
-           RESPONSIVE
-           ======================================== */
-        @media (max-width: 991px) {
-            .landing-nav .nav-links {
-                display: none;
-            }
-        }
-        @media (max-width: 575px) {
-            .btn-nav-login {
-                display: none;
-            }
-            .section-title {
-                font-size: 1.75rem;
-            }
-        }
-    </style>
+    <script defer src="https://kit.fontawesome.com/baa51cad6c.js" crossorigin="anonymous"></script>
 </head>
-<body>
+<body class="h-full bg-white font-sans antialiased">
 <?php $this->beginBody() ?>
 
 <!-- Navigation -->
-<nav class="landing-nav" id="mainNav">
-    <div class="container">
-        <div class="nav-container">
-            <a href="<?= Url::to(['/landing/index']) ?>" class="brand">
-                <img src="/images/logo-text.svg" alt="Qazaq Education">
-                <span class="brand-crm">CRM</span>
+<nav id="mainNav" class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 transition-all duration-200">
+    <div class="container mx-auto px-4">
+        <div class="flex items-center justify-between h-16">
+            <!-- Brand -->
+            <a href="<?= Url::to(['/landing/index']) ?>" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <img src="<?= Yii::$app->request->baseUrl ?>/images/logo-text-dark.svg" alt="Qazaq Education" class="h-7">
+                <span class="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">CRM</span>
             </a>
 
-            <div class="nav-links">
-                <a href="<?= Url::to(['/']) ?>" class="nav-link <?= $currentAction === 'index' ? 'active' : '' ?>">Главная</a>
-                <a href="<?= Url::to(['/features']) ?>" class="nav-link <?= $currentAction === 'features' ? 'active' : '' ?>">Возможности</a>
-                <a href="<?= Url::to(['/pricing']) ?>" class="nav-link <?= $currentAction === 'pricing' ? 'active' : '' ?>">Тарифы</a>
-                <a href="<?= Url::to(['/contact']) ?>" class="nav-link <?= $currentAction === 'contact' ? 'active' : '' ?>">Контакты</a>
+            <!-- Desktop Navigation -->
+            <div class="hidden lg:flex items-center gap-8">
+                <a href="<?= Url::to(['/']) ?>" class="text-gray-600 hover:text-orange-500 font-medium text-sm transition-colors <?= $currentAction === 'index' ? 'text-orange-500' : '' ?>">Главная</a>
+                <a href="<?= Url::to(['/features']) ?>" class="text-gray-600 hover:text-orange-500 font-medium text-sm transition-colors <?= $currentAction === 'features' ? 'text-orange-500' : '' ?>">Возможности</a>
+                <a href="<?= Url::to(['/pricing']) ?>" class="text-gray-600 hover:text-orange-500 font-medium text-sm transition-colors <?= $currentAction === 'pricing' ? 'text-orange-500' : '' ?>">Тарифы</a>
+                <a href="<?= Url::to(['/contact']) ?>" class="text-gray-600 hover:text-orange-500 font-medium text-sm transition-colors <?= $currentAction === 'contact' ? 'text-orange-500' : '' ?>">Контакты</a>
             </div>
 
-            <div class="nav-buttons">
+            <!-- Right side -->
+            <div class="flex items-center gap-4">
                 <?php if ($isGuest): ?>
-                    <a href="<?= Url::to(['/login']) ?>" class="btn-nav-login">Войти</a>
-                    <a href="<?= Url::to(['/register']) ?>" class="btn-nav-register">Попробовать бесплатно</a>
+                    <a href="<?= Url::to(['/login']) ?>" class="hidden sm:block text-gray-600 hover:text-orange-500 font-medium text-sm transition-colors">Войти</a>
+                    <a href="<?= Url::to(['/register']) ?>" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition-all shadow-sm hover:shadow-md">
+                        Попробовать бесплатно
+                    </a>
                 <?php else: ?>
-                    <div class="nav-user-info">
-                        <div class="user-avatar">
+                    <div class="hidden sm:flex items-center gap-3">
+                        <div class="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-semibold text-sm">
                             <?= mb_substr($user->fio ?? $user->username ?? 'U', 0, 1) ?>
                         </div>
-                        <div class="user-details">
-                            <a href="<?= Url::to($isSuperAdmin ? ['/superadmin'] : ['/crm']) ?>" class="user-name">
+                        <div class="flex flex-col">
+                            <a href="<?= Url::to($isSuperAdmin ? ['/superadmin'] : ['/crm']) ?>" class="text-gray-900 text-sm font-medium hover:text-orange-500 transition-colors">
                                 <?= Html::encode($user->fio ?? $user->username ?? 'Пользователь') ?>
                             </a>
                             <?php if ($isSuperAdmin): ?>
-                                <span class="user-org">Супер-администратор</span>
+                                <span class="text-gray-500 text-xs">Супер-администратор</span>
                             <?php elseif ($currentOrg): ?>
-                                <span class="user-org"><?= Html::encode($currentOrg->name) ?></span>
+                                <span class="text-gray-500 text-xs"><?= Html::encode($currentOrg->name) ?></span>
                             <?php endif; ?>
                         </div>
                     </div>
-                    <a href="<?= Url::to($isSuperAdmin ? ['/superadmin'] : ['/crm']) ?>" class="btn-nav-dashboard">
+                    <a href="<?= Url::to($isSuperAdmin ? ['/superadmin'] : ['/crm']) ?>" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition-all shadow-sm hover:shadow-md">
                         <?= $isSuperAdmin ? 'Админка' : 'CRM' ?>
                     </a>
-                    <a href="<?= Url::to(['/logout']) ?>" class="btn-nav-logout" data-method="post">Выйти</a>
+                    <a href="<?= Url::to(['/logout']) ?>" class="text-gray-500 hover:text-red-500 border border-gray-300 hover:border-red-400 px-3 py-1.5 rounded-lg text-sm transition-all" data-method="post">
+                        Выйти
+                    </a>
                 <?php endif; ?>
+
+                <!-- Mobile menu button -->
+                <button id="mobileMenuBtn" class="lg:hidden flex flex-col justify-center items-center w-8 h-8 gap-1.5">
+                    <span class="block w-5 h-0.5 bg-gray-600 transition-transform"></span>
+                    <span class="block w-5 h-0.5 bg-gray-600 transition-opacity"></span>
+                    <span class="block w-5 h-0.5 bg-gray-600 transition-transform"></span>
+                </button>
             </div>
         </div>
     </div>
 </nav>
 
+<!-- Mobile Menu -->
+<div id="mobileMenu" class="fixed top-16 left-0 right-0 bg-white z-40 hidden lg:hidden border-b border-gray-200 shadow-lg">
+    <div class="container mx-auto px-4 py-4">
+        <a href="<?= Url::to(['/']) ?>" class="block py-3 text-gray-700 hover:text-orange-500 font-medium <?= $currentAction === 'index' ? 'text-orange-500' : '' ?>">Главная</a>
+        <a href="<?= Url::to(['/features']) ?>" class="block py-3 text-gray-700 hover:text-orange-500 font-medium <?= $currentAction === 'features' ? 'text-orange-500' : '' ?>">Возможности</a>
+        <a href="<?= Url::to(['/pricing']) ?>" class="block py-3 text-gray-700 hover:text-orange-500 font-medium <?= $currentAction === 'pricing' ? 'text-orange-500' : '' ?>">Тарифы</a>
+        <a href="<?= Url::to(['/contact']) ?>" class="block py-3 text-gray-700 hover:text-orange-500 font-medium <?= $currentAction === 'contact' ? 'text-orange-500' : '' ?>">Контакты</a>
+        <?php if ($isGuest): ?>
+        <div class="flex gap-3 mt-4 pt-4 border-t border-gray-200">
+            <a href="<?= Url::to(['/login']) ?>" class="text-gray-700 hover:text-orange-500 font-medium">Войти</a>
+            <a href="<?= Url::to(['/register']) ?>" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium text-sm">
+                Попробовать бесплатно
+            </a>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
+
 <!-- Main Content -->
-<main class="landing-main">
+<main class="pt-16">
     <?= $content ?>
 </main>
 
 <!-- Footer -->
-<footer class="landing-footer">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-4 mb-4 mb-lg-0">
-                <div class="footer-brand">
-                    <img src="/images/logo-text.svg" alt="Qazaq Education">
-                    <span>CRM</span>
+<footer class="bg-gray-50 border-t border-gray-200 text-gray-600 pt-16 pb-8">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+            <!-- Brand -->
+            <div class="md:col-span-2 lg:col-span-1">
+                <div class="flex items-center gap-2 mb-4">
+                    <img src="<?= Yii::$app->request->baseUrl ?>/images/logo-text-dark.svg" alt="Qazaq Education" class="h-6">
+                    <span class="bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">CRM</span>
                 </div>
-                <p class="mb-3" style="font-size: 0.9rem; max-width: 280px;">
+                <p class="text-sm leading-relaxed mb-4 max-w-[280px]">
                     Современная система управления учебным центром. Автоматизируйте рутину и сосредоточьтесь на главном.
                 </p>
-                <div class="footer-social">
-                    <a href="#"><i class="fab fa-telegram"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-youtube"></i></a>
+                <div class="flex gap-2">
+                    <?php if ($social['telegram'] !== '#'): ?>
+                    <a href="<?= Html::encode($social['telegram']) ?>" class="w-9 h-9 bg-gray-200 hover:bg-orange-500 rounded-lg flex items-center justify-center text-gray-500 hover:text-white transition-all" aria-label="Telegram">
+                        <i class="fab fa-telegram"></i>
+                    </a>
+                    <?php endif; ?>
+                    <?php if ($social['instagram'] !== '#'): ?>
+                    <a href="<?= Html::encode($social['instagram']) ?>" class="w-9 h-9 bg-gray-200 hover:bg-orange-500 rounded-lg flex items-center justify-center text-gray-500 hover:text-white transition-all" aria-label="Instagram">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <?php endif; ?>
+                    <?php if ($social['youtube'] !== '#'): ?>
+                    <a href="<?= Html::encode($social['youtube']) ?>" class="w-9 h-9 bg-gray-200 hover:bg-orange-500 rounded-lg flex items-center justify-center text-gray-500 hover:text-white transition-all" aria-label="YouTube">
+                        <i class="fab fa-youtube"></i>
+                    </a>
+                    <?php endif; ?>
                 </div>
             </div>
-            <div class="col-6 col-lg-2">
-                <h5>Продукт</h5>
-                <a href="<?= Url::to(['/features']) ?>">Возможности</a>
-                <a href="<?= Url::to(['/pricing']) ?>">Тарифы</a>
-                <a href="#">Обновления</a>
+
+            <!-- Product -->
+            <div>
+                <h5 class="text-gray-900 font-semibold mb-4">Продукт</h5>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="<?= Url::to(['/features']) ?>" class="hover:text-orange-500 transition-colors">Возможности</a></li>
+                    <li><a href="<?= Url::to(['/pricing']) ?>" class="hover:text-orange-500 transition-colors">Тарифы</a></li>
+                </ul>
             </div>
-            <div class="col-6 col-lg-2">
-                <h5>Компания</h5>
-                <a href="#">О нас</a>
-                <a href="<?= Url::to(['/contact']) ?>">Контакты</a>
-                <a href="#">Партнёрам</a>
+
+            <!-- Company -->
+            <div>
+                <h5 class="text-gray-900 font-semibold mb-4">Компания</h5>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="<?= Url::to(['/contact']) ?>" class="hover:text-orange-500 transition-colors">Контакты</a></li>
+                    <?php if ($social['telegram'] !== '#'): ?>
+                    <li><a href="<?= Html::encode($social['telegram']) ?>" class="hover:text-orange-500 transition-colors">Telegram</a></li>
+                    <?php endif; ?>
+                </ul>
             </div>
-            <div class="col-6 col-lg-2">
-                <h5>Поддержка</h5>
-                <a href="#">Документация</a>
-                <a href="#">FAQ</a>
-                <a href="#">Telegram</a>
-            </div>
-            <div class="col-6 col-lg-2">
-                <h5>Правовое</h5>
-                <a href="#">Конфиденциальность</a>
-                <a href="#">Условия</a>
-                <a href="#">Оферта</a>
+
+            <!-- Quick Actions -->
+            <div>
+                <h5 class="text-gray-900 font-semibold mb-4">Начать</h5>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="<?= Url::to(['/register']) ?>" class="hover:text-orange-500 transition-colors">Регистрация</a></li>
+                    <li><a href="<?= Url::to(['/login']) ?>" class="hover:text-orange-500 transition-colors">Войти</a></li>
+                </ul>
             </div>
         </div>
 
-        <div class="footer-bottom d-flex flex-column flex-md-row justify-content-between align-items-center">
-            <p class="mb-2 mb-md-0" style="font-size: 0.85rem;">
-                &copy; <?= date('Y') ?> Qazaq Education CRM. Все права защищены.
-            </p>
+        <!-- Bottom -->
+        <div class="border-t border-gray-200 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p class="text-sm text-gray-500">&copy; <?= date('Y') ?> Qazaq Education CRM. Все права защищены.</p>
         </div>
     </div>
 </footer>
@@ -422,11 +225,86 @@ $currentOrg = $isGuest ? null : Organizations::getCurrentOrganization();
 window.addEventListener('scroll', function() {
     var nav = document.getElementById('mainNav');
     if (window.scrollY > 50) {
-        nav.classList.add('scrolled');
+        nav.classList.add('shadow-lg');
     } else {
-        nav.classList.remove('scrolled');
+        nav.classList.remove('shadow-lg');
     }
 });
+
+// Mobile menu toggle
+(function() {
+    var menuBtn = document.getElementById('mobileMenuBtn');
+    var mobileMenu = document.getElementById('mobileMenu');
+    var spans = menuBtn ? menuBtn.querySelectorAll('span') : [];
+
+    if (menuBtn && mobileMenu) {
+        menuBtn.addEventListener('click', function() {
+            var isOpen = !mobileMenu.classList.contains('hidden');
+            if (isOpen) {
+                mobileMenu.classList.add('hidden');
+                spans[0].style.transform = '';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = '';
+            } else {
+                mobileMenu.classList.remove('hidden');
+                spans[0].style.transform = 'rotate(45deg) translate(4px, 4px)';
+                spans[1].style.opacity = '0';
+                spans[2].style.transform = 'rotate(-45deg) translate(4px, -4px)';
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!menuBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
+                mobileMenu.classList.add('hidden');
+                spans[0].style.transform = '';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = '';
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                mobileMenu.classList.add('hidden');
+                spans[0].style.transform = '';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = '';
+            }
+        });
+    }
+})();
+</script>
+
+<!-- Schema.org Organization -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "<?= Html::encode($siteName) ?>",
+    "url": "<?= Html::encode(Yii::$app->request->hostInfo) ?>",
+    "logo": "<?= Html::encode(Yii::$app->request->hostInfo) ?>/images/logo.svg",
+    "description": "<?= Html::encode($metaDescription) ?>",
+    "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "<?= Html::encode(SettingsHelper::getMainPhone()) ?>",
+        "contactType": "customer service",
+        "email": "<?= Html::encode(SettingsHelper::getEmail()) ?>",
+        "areaServed": "KZ",
+        "availableLanguage": ["Russian", "Kazakh"]
+    },
+    "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "KZ",
+        "addressLocality": "Астана",
+        "streetAddress": "<?= Html::encode(SettingsHelper::getAddress()) ?>"
+    },
+    "sameAs": [
+        <?php $sameAs = []; ?>
+        <?php if ($social['telegram'] !== '#'): $sameAs[] = '"' . Html::encode($social['telegram']) . '"'; endif; ?>
+        <?php if ($social['instagram'] !== '#'): $sameAs[] = '"' . Html::encode($social['instagram']) . '"'; endif; ?>
+        <?php if ($social['youtube'] !== '#'): $sameAs[] = '"' . Html::encode($social['youtube']) . '"'; endif; ?>
+        <?= implode(",\n        ", $sameAs) ?>
+    ]
+}
 </script>
 
 <?php $this->endBody() ?>

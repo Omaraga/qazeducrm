@@ -16,9 +16,9 @@ use yii\filters\AccessControl;
 class RegistrationController extends Controller
 {
     /**
-     * Используем гостевой layout для страниц регистрации
+     * Используем landing layout для страниц регистрации
      */
-    public $layout = 'guest';
+    public $layout = 'landing';
 
     /**
      * {@inheritdoc}

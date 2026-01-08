@@ -26,7 +26,7 @@ class TailwindAsset extends AssetBundle
 
     public $css = [
         'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
-        'dist/css/app.css',
+        'css/tailwind.css',
     ];
 
     public $js = [
@@ -59,11 +59,11 @@ class TailwindAsset extends AssetBundle
     ];
 
     /**
-     * Публикуемые файлы (для FontAwesome иконок)
+     * Публикуемые файлы
      */
     public $publishOptions = [
         'only' => [
-            'dist/css/app.css',
+            'css/tailwind.css',
         ],
     ];
 }

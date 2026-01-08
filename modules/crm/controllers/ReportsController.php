@@ -6,6 +6,7 @@ use app\components\ActiveRecord;
 use app\components\reports\ReportFilterDTO;
 use app\components\reports\ReportRegistry;
 use app\helpers\OrganizationRoles;
+use app\helpers\RoleChecker;
 use app\helpers\SystemRoles;
 use app\models\Organizations;
 use app\models\search\DateSearch;
@@ -85,12 +86,10 @@ class ReportsController extends Controller
         }
 
         // Проверка доступа к категории
-        $hasAccess = false;
-        foreach ($categoryInfo['roles'] as $role) {
-            if (\Yii::$app->user->can($role)) {
-                $hasAccess = true;
-                break;
-            }
+        $hasAccess = RoleChecker::isSuper();
+        if (!$hasAccess) {
+            $currentRole = RoleChecker::getCurrentRole();
+            $hasAccess = $currentRole && in_array($currentRole, $categoryInfo['roles']);
         }
         if (!$hasAccess) {
             throw new ForbiddenHttpException('Доступ запрещен');

@@ -5,6 +5,7 @@ namespace app\modules\crm\controllers;
 use app\helpers\ActivityLogger;
 use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
+use app\helpers\RoleChecker;
 use app\helpers\SystemRoles;
 use app\models\forms\EducationForm;
 use app\models\forms\PaymentForm;
@@ -44,14 +45,18 @@ class PupilController extends Controller
                 'access' => [
                     'class' => AccessControl::class,
                     'rules' => [
+                        // Удаление - по настройкам организации
                         [
                             'allow' => true,
-                            'roles' => [
-                                SystemRoles::SUPER,
-                                OrganizationRoles::ADMIN,
-                                OrganizationRoles::DIRECTOR,
-                                OrganizationRoles::GENERAL_DIRECTOR,
-                            ]
+                            'actions' => ['delete'],
+                            'matchCallback' => function ($rule, $action) {
+                                return RoleChecker::canDeletePupils();
+                            }
+                        ],
+                        // Остальные действия - для админов и выше
+                        [
+                            'allow' => true,
+                            'roles' => RoleChecker::getRolesForAccess('admin'),
                         ],
                         [
                             'allow' => false,

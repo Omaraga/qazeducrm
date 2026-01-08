@@ -4,6 +4,7 @@ namespace app\models;
 
 use app\helpers\Lists;
 use app\models\enum\StatusEnum;
+use app\models\relations\EducationGroup;
 use app\models\relations\TeacherGroup;
 use app\services\SubscriptionLimitService;
 use Yii;
@@ -171,5 +172,27 @@ class Group extends ActiveRecord
      */
     public function getNameFull(){
         return $this->code.' - '.$this->name;
+    }
+
+    /**
+     * Связь с записями учеников в группе
+     * @return \yii\db\ActiveQuery
+     */
+    public function getEducationGroups()
+    {
+        return $this->hasMany(EducationGroup::class, ['group_id' => 'id'])
+            ->andWhere(['education_group.is_deleted' => 0]);
+    }
+
+    /**
+     * Количество учеников в группе
+     * @return int
+     */
+    public function getPupilsCount(): int
+    {
+        return (int) EducationGroup::find()
+            ->where(['group_id' => $this->id])
+            ->andWhere(['is_deleted' => 0])
+            ->count();
     }
 }

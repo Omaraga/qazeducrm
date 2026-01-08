@@ -486,4 +486,96 @@ class ScheduleTemplateService
             'days' => self::$daysOfWeek,
         ];
     }
+
+    /**
+     * Создать шаблон из существующего расписания
+     *
+     * Получает все занятия за указанный период и создает на их основе шаблон
+     *
+     * @param string $name Название шаблона
+     * @param string $description Описание шаблона
+     * @param string $dateStart Начало периода (YYYY-MM-DD)
+     * @param string $dateEnd Конец периода (YYYY-MM-DD)
+     * @return array
+     */
+    public static function createFromSchedule(string $name, string $description, string $dateStart, string $dateEnd): array
+    {
+        $orgId = Organizations::getCurrentOrganizationId();
+
+        // Получаем занятия за указанный период
+        $lessons = Lesson::find()
+            ->where(['organization_id' => $orgId])
+            ->andWhere(['is_deleted' => 0])
+            ->andWhere(['>=', 'date', $dateStart])
+            ->andWhere(['<=', 'date', $dateEnd])
+            ->orderBy(['date' => SORT_ASC, 'start_time' => SORT_ASC])
+            ->all();
+
+        if (empty($lessons)) {
+            return [
+                'success' => false,
+                'message' => 'В указанном периоде нет занятий'
+            ];
+        }
+
+        // Создаем шаблон
+        $template = new ScheduleTemplate();
+        $template->name = $name;
+        $template->description = $description;
+        $template->is_default = 0;
+        $template->is_active = 1;
+        $template->organization_id = $orgId;
+
+        if (!$template->save()) {
+            return [
+                'success' => false,
+                'message' => 'Ошибка создания шаблона',
+                'errors' => $template->getErrors()
+            ];
+        }
+
+        // Создаем занятия в шаблоне
+        $createdCount = 0;
+        $uniqueLessons = []; // Для отслеживания уникальных комбинаций
+
+        foreach ($lessons as $lesson) {
+            // Определяем день недели (1 = Пн, 7 = Вс)
+            $dayOfWeek = (int)date('N', strtotime($lesson->date));
+
+            // Создаем уникальный ключ для комбинации
+            $key = sprintf('%d-%s-%s-%d-%d',
+                $dayOfWeek,
+                $lesson->start_time,
+                $lesson->end_time,
+                $lesson->group_id,
+                $lesson->teacher_id
+            );
+
+            // Пропускаем дубликаты (одинаковые занятия в разные дни недели)
+            if (isset($uniqueLessons[$key])) {
+                continue;
+            }
+            $uniqueLessons[$key] = true;
+
+            $typicalSchedule = new TypicalSchedule();
+            $typicalSchedule->template_id = $template->id;
+            $typicalSchedule->week = $dayOfWeek;
+            $typicalSchedule->start_time = $lesson->start_time;
+            $typicalSchedule->end_time = $lesson->end_time;
+            $typicalSchedule->group_id = $lesson->group_id;
+            $typicalSchedule->teacher_id = $lesson->teacher_id;
+            $typicalSchedule->room_id = $lesson->room_id;
+            $typicalSchedule->organization_id = $orgId;
+
+            if ($typicalSchedule->save()) {
+                $createdCount++;
+            }
+        }
+
+        return [
+            'success' => true,
+            'message' => sprintf('Шаблон создан (%d занятий)', $createdCount),
+            'id' => $template->id
+        ];
+    }
 }

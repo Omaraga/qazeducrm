@@ -1,2 +1,26 @@
+# Robots.txt for Qazaq Education CRM
+# https://qazedu.kz
+
 User-agent: *
-Disallow:
+Allow: /
+
+# Disallow admin and CRM sections
+Disallow: /crm/
+Disallow: /superadmin/
+Disallow: /gii/
+Disallow: /debug/
+
+# Disallow assets that shouldn't be indexed
+Disallow: /assets/
+Disallow: /*.php$
+
+# Allow public static files
+Allow: /css/
+Allow: /js/
+Allow: /images/
+
+# Sitemap location
+Sitemap: https://qazedu.kz/sitemap.xml
+
+# Crawl-delay (optional, for polite crawlers)
+Crawl-delay: 1

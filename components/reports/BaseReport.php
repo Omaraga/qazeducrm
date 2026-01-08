@@ -3,6 +3,7 @@
 namespace app\components\reports;
 
 use app\helpers\OrganizationRoles;
+use app\helpers\RoleChecker;
 use app\helpers\SystemRoles;
 use app\models\Organizations;
 use Yii;
@@ -104,13 +105,16 @@ abstract class BaseReport implements ReportInterface
 
     /**
      * Сформировать ключ кэша
+     * Включает user_id для разграничения данных по ролям
      */
     protected function getCacheKey(string $suffix): string
     {
+        $userId = Yii::$app->user->id ?? 0;
         return sprintf(
-            'report:%s:%d:%s',
+            'report:%s:%d:%d:%s',
             $this->getId(),
             $this->organizationId,
+            $userId,
             $suffix
         );
     }
@@ -179,20 +183,18 @@ abstract class BaseReport implements ReportInterface
      */
     public function checkAccess(): bool
     {
-        $user = Yii::$app->user;
-
         // SUPER пользователи имеют доступ ко всем отчетам
-        if ($user->can(SystemRoles::SUPER)) {
+        if (RoleChecker::isSuper()) {
             return true;
         }
 
-        foreach ($this->getAllowedRoles() as $role) {
-            if ($user->can($role)) {
-                return true;
-            }
+        // Получаем текущую роль из организации
+        $currentRole = RoleChecker::getCurrentRole();
+        if (!$currentRole) {
+            return false;
         }
 
-        return false;
+        return in_array($currentRole, $this->getAllowedRoles());
     }
 
     /**

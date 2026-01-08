@@ -82,6 +82,13 @@ function scheduleCalendar(config) {
         currentTime: new Date(),
         timeLineTimer: null,
 
+        // Save as template
+        saveTemplateForm: {
+            name: '',
+            description: ''
+        },
+        savingTemplate: false,
+
         // URLs (передаются из PHP)
         urls: config.urls || {},
 
@@ -1276,6 +1283,90 @@ function scheduleCalendar(config) {
                 selectElement.disabled = false;
             } catch (error) {
                 console.error('Error loading teachers:', error);
+            }
+        },
+
+        // ========== SAVE AS TEMPLATE ==========
+        openSaveAsTemplateModal() {
+            // Получаем начало и конец текущей недели
+            const weekStart = this.getWeekStart(this.currentDate);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+
+            // Формируем название по умолчанию
+            const startStr = weekStart.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+            const endStr = weekEnd.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+
+            this.saveTemplateForm = {
+                name: `Расписание ${startStr} - ${endStr}`,
+                description: ''
+            };
+            this.$dispatch('open-modal', 'save-template-modal');
+        },
+
+        getWeekRangeText() {
+            const weekStart = this.getWeekStart(this.currentDate);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            const startStr = weekStart.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+            const endStr = weekEnd.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+            return `${startStr} — ${endStr}`;
+        },
+
+        getWeekEventsCount() {
+            const weekStart = this.getWeekStart(this.currentDate);
+            let count = 0;
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(weekStart);
+                d.setDate(d.getDate() + i);
+                const dateStr = this.formatDate(d);
+                const dayEvents = this._eventsByDate[dateStr] || [];
+                count += dayEvents.length;
+            }
+            return count;
+        },
+
+        async saveAsTemplate() {
+            if (!this.saveTemplateForm.name) {
+                QazToast.error('Введите название шаблона');
+                return;
+            }
+
+            const weekEventsCount = this.getWeekEventsCount();
+            if (weekEventsCount === 0) {
+                QazToast.error('В текущей неделе нет занятий для сохранения');
+                return;
+            }
+
+            this.savingTemplate = true;
+            try {
+                const weekStart = this.getWeekStart(this.currentDate);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+
+                const response = await QazFetch.post(this.urls.createTemplateFromSchedule, {
+                    name: this.saveTemplateForm.name,
+                    description: this.saveTemplateForm.description,
+                    date_start: this.formatDate(weekStart),
+                    date_end: this.formatDate(weekEnd)
+                });
+
+                if (response.success) {
+                    QazToast.success(response.message || 'Шаблон создан');
+                    this.$dispatch('close-modal', 'save-template-modal');
+                    if (response.redirect) {
+                        setTimeout(() => {
+                            window.location.href = response.redirect;
+                        }, 1000);
+                    }
+                } else {
+                    QazToast.error(response.message || 'Ошибка создания шаблона');
+                }
+            } catch (error) {
+                console.error('Error saving template:', error);
+                QazToast.error('Ошибка сети');
+            } finally {
+                this.savingTemplate = false;
             }
         }
     }

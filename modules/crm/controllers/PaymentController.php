@@ -43,15 +43,21 @@ class PaymentController extends Controller
                 'access' => [
                     'class' => AccessControl::class,
                     'rules' => [
-                        // Удаление и редактирование - только для директоров
+                        // Редактирование - директора + админы с правами
                         [
                             'allow' => true,
-                            'actions' => ['update', 'delete'],
-                            'roles' => [
-                                SystemRoles::SUPER,
-                                OrganizationRoles::DIRECTOR,
-                                OrganizationRoles::GENERAL_DIRECTOR,
-                            ]
+                            'actions' => ['update'],
+                            'matchCallback' => function ($rule, $action) {
+                                return RoleChecker::canEditPayments();
+                            }
+                        ],
+                        // Удаление - директора + админы с правами
+                        [
+                            'allow' => true,
+                            'actions' => ['delete'],
+                            'matchCallback' => function ($rule, $action) {
+                                return RoleChecker::canDeletePayments();
+                            }
                         ],
                         // Одобрение/отклонение запросов - только для директоров
                         [
@@ -63,24 +69,26 @@ class PaymentController extends Controller
                                 OrganizationRoles::GENERAL_DIRECTOR,
                             ]
                         ],
-                        // Запросы на изменение/удаление - только для админов
+                        // Запросы на изменение/удаление - для админов без прямых прав
                         [
                             'allow' => true,
-                            'actions' => ['request-delete', 'request-update', 'my-requests'],
-                            'roles' => [
-                                OrganizationRoles::ADMIN,
-                            ]
+                            'actions' => ['request-delete', 'my-requests'],
+                            'matchCallback' => function ($rule, $action) {
+                                return RoleChecker::needsPaymentDeleteRequest();
+                            }
+                        ],
+                        [
+                            'allow' => true,
+                            'actions' => ['request-update', 'my-requests'],
+                            'matchCallback' => function ($rule, $action) {
+                                return RoleChecker::needsPaymentChangeRequest();
+                            }
                         ],
                         // Остальные действия - для всех админов и выше
                         [
                             'allow' => true,
                             'actions' => ['index', 'view', 'create', 'receipt'],
-                            'roles' => [
-                                SystemRoles::SUPER,
-                                OrganizationRoles::ADMIN,
-                                OrganizationRoles::DIRECTOR,
-                                OrganizationRoles::GENERAL_DIRECTOR,
-                            ]
+                            'roles' => RoleChecker::getRolesForAccess('admin'),
                         ],
                         [
                             'allow' => false,

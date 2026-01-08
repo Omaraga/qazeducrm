@@ -9,205 +9,84 @@ use yii\helpers\Url;
 $this->title = 'Тарифы';
 ?>
 
-<style>
-/* Hero */
-.pricing-hero {
-    background: var(--bg-light);
-    padding: 5rem 0 4rem;
-    text-align: center;
-}
-.pricing-hero h1 {
-    color: var(--text-primary);
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-}
-.pricing-hero p {
-    color: var(--text-muted);
-    font-size: 1.1rem;
-}
-
-/* Pricing Content */
-.pricing-content {
-    padding: 4rem 0;
-    background: var(--bg-white);
-}
-.plan-card {
-    background: var(--bg-white);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 2rem;
-    height: 100%;
-    transition: all var(--transition);
-    position: relative;
-}
-.plan-card:hover {
-    box-shadow: var(--shadow-lg);
-}
-.plan-card.popular {
-    border: 2px solid var(--primary);
-    box-shadow: var(--shadow-xl);
-    transform: scale(1.02);
-}
-.plan-badge {
-    position: absolute;
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--primary);
-    color: var(--text-white);
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.35rem 1rem;
-    border-radius: var(--radius-full);
-}
-.plan-name {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 0.5rem;
-}
-.plan-desc {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    margin-bottom: 1.5rem;
-}
-.plan-price {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: var(--primary);
-    margin-bottom: 0.25rem;
-}
-.plan-price span {
-    font-size: 1rem;
-    font-weight: 400;
-    color: var(--text-muted);
-}
-.plan-trial {
-    color: var(--success);
-    font-size: 0.875rem;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-.plan-limits {
-    background: var(--bg-light);
-    border-radius: var(--radius);
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-}
-.plan-limit {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.5rem 0;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-}
-.plan-limit:not(:last-child) {
-    border-bottom: 1px solid var(--border);
-}
-.plan-limit strong {
-    color: var(--text-primary);
-}
-.plan-features {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 1.5rem;
-}
-.plan-features li {
-    padding: 0.5rem 0;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-.plan-features li i.fa-check { color: var(--success); }
-.plan-features li i.fa-times { color: var(--border-dark); }
-
-/* FAQ */
-.faq-section {
-    padding: 4rem 0;
-    background: var(--bg-light);
-}
-.faq-item {
-    background: var(--bg-white);
-    border-radius: var(--radius-md);
-    margin-bottom: 1rem;
-    border: 1px solid var(--border);
-    overflow: hidden;
-}
-.faq-question {
-    padding: 1.25rem 1.5rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: color var(--transition-fast);
-}
-.faq-question:hover { color: var(--primary); }
-.faq-answer {
-    padding: 0 1.5rem 1.25rem;
-    color: var(--text-muted);
-    display: none;
-}
-.faq-item.active .faq-answer { display: block; }
-.faq-item.active .faq-question i { transform: rotate(180deg); }
-</style>
-
 <!-- Hero -->
-<section class="pricing-hero">
-    <div class="container">
-        <h1>Выберите подходящий тариф</h1>
-        <p>Начните бесплатно, масштабируйтесь по мере роста вашего центра</p>
+<section class="bg-gray-50 py-20 text-center">
+    <div class="container mx-auto px-4">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">Выберите подходящий тариф</h1>
+        <p class="text-xl text-gray-500">Начните бесплатно, масштабируйтесь по мере роста вашего центра</p>
     </div>
 </section>
 
 <!-- Pricing Cards -->
-<section class="pricing-content">
-    <div class="container">
-        <div class="row g-4 justify-content-center">
+<section class="py-16 bg-white">
+    <div class="container mx-auto px-4">
+        <div class="grid md:grid-cols-2 lg:grid-cols-<?= min(count($plans), 4) ?> gap-6 max-w-6xl mx-auto">
             <?php foreach ($plans as $index => $plan): ?>
-            <div class="col-md-6 col-lg-3">
-                <div class="plan-card <?= $index === 1 ? 'popular' : '' ?>">
-                    <?php if ($index === 1): ?>
-                    <div class="plan-badge">Популярный</div>
+            <div class="relative bg-white border-2 <?= $index === 1 ? 'border-orange-500 shadow-xl scale-105' : 'border-gray-100' ?> rounded-2xl p-8 transition-all hover:shadow-lg">
+                <?php if ($index === 1): ?>
+                <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs font-semibold px-4 py-1 rounded-full">Популярный</span>
+                <?php endif; ?>
+
+                <div class="text-center">
+                    <div class="text-xl font-bold text-gray-900 mb-2"><?= Html::encode($plan->name) ?></div>
+                    <div class="text-gray-500 text-sm mb-6"><?= Html::encode($plan->description) ?></div>
+                    <div class="text-4xl font-extrabold text-orange-500 mb-1">
+                        <?= $plan->getFormattedPriceMonthly() ?>
+                    </div>
+                    <?php if ($plan->price_monthly > 0): ?>
+                    <div class="text-sm text-gray-500 mb-4">в месяц</div>
+                    <?php else: ?>
+                    <div class="text-sm text-gray-500 mb-4">&nbsp;</div>
                     <?php endif; ?>
-
-                    <div class="text-center">
-                        <div class="plan-name"><?= Html::encode($plan->name) ?></div>
-                        <div class="plan-desc"><?= Html::encode($plan->description) ?></div>
-                        <div class="plan-price">
-                            <?= $plan->getFormattedPriceMonthly() ?>
-                            <?php if ($plan->price_monthly > 0): ?><span>/мес</span><?php endif; ?>
-                        </div>
-                        <div class="plan-trial">
-                            <i class="fas fa-gift"></i> <?= $plan->trial_days ?> дней бесплатно
-                        </div>
+                    <div class="flex items-center justify-center gap-2 text-green-600 text-sm mb-6">
+                        <i class="fas fa-gift"></i>
+                        <span><?= $plan->trial_days ?> дней бесплатно</span>
                     </div>
-
-                    <div class="plan-limits">
-                        <div class="plan-limit"><span>Ученики</span><strong><?= $plan->max_pupils ?: '∞' ?></strong></div>
-                        <div class="plan-limit"><span>Преподаватели</span><strong><?= $plan->max_teachers ?: '∞' ?></strong></div>
-                        <div class="plan-limit"><span>Группы</span><strong><?= $plan->max_groups ?: '∞' ?></strong></div>
-                    </div>
-
-                    <ul class="plan-features">
-                        <li><i class="fas <?= $plan->hasFeature('crm_basic') ? 'fa-check' : 'fa-times' ?>"></i> Базовый CRM</li>
-                        <li><i class="fas <?= $plan->hasFeature('sms') ? 'fa-check' : 'fa-times' ?>"></i> SMS уведомления</li>
-                        <li><i class="fas <?= $plan->hasFeature('reports') ? 'fa-check' : 'fa-times' ?>"></i> Отчёты</li>
-                        <li><i class="fas <?= $plan->hasFeature('api') ? 'fa-check' : 'fa-times' ?>"></i> API</li>
-                        <li><i class="fas <?= $plan->hasFeature('priority_support') ? 'fa-check' : 'fa-times' ?>"></i> Приоритетная поддержка</li>
-                    </ul>
-
-                    <a href="<?= Url::to(['/register']) ?>" class="btn <?= $index === 1 ? 'btn-primary' : 'btn-outline-primary' ?> btn-block">
-                        Начать бесплатно
-                    </a>
                 </div>
+
+                <!-- Limits -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div class="flex justify-between py-2 border-b border-gray-200">
+                        <span class="text-gray-600 text-sm">Ученики</span>
+                        <strong class="text-gray-900"><?= $plan->max_pupils ?: '∞' ?></strong>
+                    </div>
+                    <div class="flex justify-between py-2 border-b border-gray-200">
+                        <span class="text-gray-600 text-sm">Преподаватели</span>
+                        <strong class="text-gray-900"><?= $plan->max_teachers ?: '∞' ?></strong>
+                    </div>
+                    <div class="flex justify-between py-2">
+                        <span class="text-gray-600 text-sm">Группы</span>
+                        <strong class="text-gray-900"><?= $plan->max_groups ?: '∞' ?></strong>
+                    </div>
+                </div>
+
+                <!-- Features -->
+                <ul class="space-y-3 mb-6">
+                    <li class="flex items-center gap-3 text-sm">
+                        <i class="fas <?= $plan->hasFeature('crm_basic') ? 'fa-check text-green-500' : 'fa-times text-gray-300' ?>"></i>
+                        <span class="text-gray-600">Базовый CRM</span>
+                    </li>
+                    <li class="flex items-center gap-3 text-sm">
+                        <i class="fas <?= $plan->hasFeature('sms') ? 'fa-check text-green-500' : 'fa-times text-gray-300' ?>"></i>
+                        <span class="text-gray-600">SMS уведомления</span>
+                    </li>
+                    <li class="flex items-center gap-3 text-sm">
+                        <i class="fas <?= $plan->hasFeature('reports') ? 'fa-check text-green-500' : 'fa-times text-gray-300' ?>"></i>
+                        <span class="text-gray-600">Отчёты</span>
+                    </li>
+                    <li class="flex items-center gap-3 text-sm">
+                        <i class="fas <?= $plan->hasFeature('api') ? 'fa-check text-green-500' : 'fa-times text-gray-300' ?>"></i>
+                        <span class="text-gray-600">API</span>
+                    </li>
+                    <li class="flex items-center gap-3 text-sm">
+                        <i class="fas <?= $plan->hasFeature('priority_support') ? 'fa-check text-green-500' : 'fa-times text-gray-300' ?>"></i>
+                        <span class="text-gray-600">Приоритетная поддержка</span>
+                    </li>
+                </ul>
+
+                <a href="<?= Url::to(['/register']) ?>" class="block w-full py-3 rounded-lg font-semibold text-center transition-all <?= $index === 1 ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white' ?>">
+                    Начать бесплатно
+                </a>
             </div>
             <?php endforeach; ?>
         </div>
@@ -215,42 +94,63 @@ $this->title = 'Тарифы';
 </section>
 
 <!-- FAQ -->
-<section class="faq-section">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="section-title">Часто задаваемые вопросы</h2>
+<section class="py-16 bg-gray-50">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900">Часто задаваемые вопросы</h2>
         </div>
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="faq-item active">
-                    <div class="faq-question">Могу ли я сменить тариф? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">Да, вы можете изменить тариф в любой момент. При переходе на более дорогой тариф изменения вступят в силу сразу.</div>
+        <div class="max-w-3xl mx-auto space-y-4" x-data="{ openFaq: 0 }">
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <button @click="openFaq = openFaq === 1 ? 0 : 1" class="w-full px-6 py-4 text-left font-semibold text-gray-900 flex justify-between items-center hover:text-orange-500 transition-colors">
+                    Могу ли я сменить тариф?
+                    <i class="fas fa-chevron-down transition-transform" :class="openFaq === 1 ? 'rotate-180' : ''"></i>
+                </button>
+                <div x-show="openFaq === 1" x-collapse class="px-6 pb-4 text-gray-500">
+                    Да, вы можете изменить тариф в любой момент. При переходе на более дорогой тариф изменения вступят в силу сразу.
                 </div>
-                <div class="faq-item">
-                    <div class="faq-question">Как работает пробный период? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">После регистрации вы получаете полный доступ ко всем функциям на период пробного периода. Карта не требуется.</div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <button @click="openFaq = openFaq === 2 ? 0 : 2" class="w-full px-6 py-4 text-left font-semibold text-gray-900 flex justify-between items-center hover:text-orange-500 transition-colors">
+                    Как работает пробный период?
+                    <i class="fas fa-chevron-down transition-transform" :class="openFaq === 2 ? 'rotate-180' : ''"></i>
+                </button>
+                <div x-show="openFaq === 2" x-collapse class="px-6 pb-4 text-gray-500">
+                    После регистрации вы получаете полный доступ ко всем функциям на период пробного периода. Карта не требуется.
                 </div>
-                <div class="faq-item">
-                    <div class="faq-question">Какие способы оплаты? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">Мы принимаем Kaspi, банковские карты, банковский перевод для юридических лиц.</div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <button @click="openFaq = openFaq === 3 ? 0 : 3" class="w-full px-6 py-4 text-left font-semibold text-gray-900 flex justify-between items-center hover:text-orange-500 transition-colors">
+                    Какие способы оплаты?
+                    <i class="fas fa-chevron-down transition-transform" :class="openFaq === 3 ? 'rotate-180' : ''"></i>
+                </button>
+                <div x-show="openFaq === 3" x-collapse class="px-6 pb-4 text-gray-500">
+                    Мы принимаем Kaspi, банковские карты, банковский перевод для юридических лиц.
                 </div>
-                <div class="faq-item">
-                    <div class="faq-question">Есть ли скидка за год? <i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer">Да, при оплате за год вы экономите 2 месяца — это 17% экономии.</div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <button @click="openFaq = openFaq === 4 ? 0 : 4" class="w-full px-6 py-4 text-left font-semibold text-gray-900 flex justify-between items-center hover:text-orange-500 transition-colors">
+                    Есть ли скидка за год?
+                    <i class="fas fa-chevron-down transition-transform" :class="openFaq === 4 ? 'rotate-180' : ''"></i>
+                </button>
+                <div x-show="openFaq === 4" x-collapse class="px-6 pb-4 text-gray-500">
+                    Да, при оплате за год вы экономите 2 месяца — это 17% экономии.
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<script>
-document.querySelectorAll('.faq-question').forEach(function(item) {
-    item.addEventListener('click', function() {
-        var parent = this.parentElement;
-        document.querySelectorAll('.faq-item').forEach(function(faq) {
-            if (faq !== parent) faq.classList.remove('active');
-        });
-        parent.classList.toggle('active');
-    });
-});
-</script>
+<!-- CTA -->
+<section class="py-16 bg-gradient-to-r from-gray-900 to-gray-800 text-center">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-white mb-4">Остались вопросы?</h2>
+        <p class="text-xl text-white/70 mb-8">Свяжитесь с нами, мы поможем выбрать подходящий тариф</p>
+        <a href="<?= Url::to(['/contact']) ?>" class="inline-flex items-center gap-2 px-8 py-4 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-all">
+            Связаться с нами
+            <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</section>

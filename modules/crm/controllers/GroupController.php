@@ -42,6 +42,14 @@ class GroupController extends Controller
                 'access' => [
                     'class' => AccessControl::class,
                     'rules' => [
+                        // Удаление - по настройкам организации
+                        [
+                            'allow' => true,
+                            'actions' => ['delete'],
+                            'matchCallback' => function ($rule, $action) {
+                                return RoleChecker::canDeleteGroups();
+                            }
+                        ],
                         // Учитель может просматривать свои группы и учеников
                         [
                             'allow' => true,
@@ -53,12 +61,7 @@ class GroupController extends Controller
                         // Полный доступ для админов и выше
                         [
                             'allow' => true,
-                            'roles' => [
-                                SystemRoles::SUPER,
-                                OrganizationRoles::ADMIN,
-                                OrganizationRoles::DIRECTOR,
-                                OrganizationRoles::GENERAL_DIRECTOR,
-                            ]
+                            'roles' => RoleChecker::getRolesForAccess('admin'),
                         ],
                         [
                             'allow' => false,
@@ -146,8 +149,8 @@ class GroupController extends Controller
         $query = Group::find()
             ->innerJoin('teacher_group', 'teacher_group.target_id = group.id AND teacher_group.is_deleted != 1')
             ->where(['teacher_group.related_id' => $teacherId])
-            ->byOrganization()
-            ->notDeleted()
+            ->andWhere(['group.organization_id' => \app\models\Organizations::getCurrentOrganizationId()])
+            ->andWhere(['group.is_deleted' => 0])
             ->orderBy(['group.name' => SORT_ASC]);
 
         $dataProvider = new ActiveDataProvider([

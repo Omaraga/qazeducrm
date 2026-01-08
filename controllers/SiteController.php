@@ -88,19 +88,47 @@ class SiteController extends Controller
     public function actionLogin()
     {
         if (!Yii::$app->user->isGuest) {
-            return $this->redirect(['/crm']);
+            return $this->redirectAfterLogin();
         }
 
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            // После успешного логина - в CRM
-            return $this->redirect(['/crm']);
+            return $this->redirectAfterLogin();
         }
 
         $model->password = '';
         return $this->render('login', [
             'model' => $model,
         ]);
+    }
+
+    /**
+     * Редирект после успешного логина в зависимости от роли
+     */
+    protected function redirectAfterLogin()
+    {
+        // Superadmin -> в админку
+        if (Yii::$app->user->can('SUPER')) {
+            return $this->redirect(['/superadmin']);
+        }
+
+        // Обычный пользователь -> в CRM с организацией
+        $user = Yii::$app->user->identity;
+        $organizations = $user->userOrganizations ?? [];
+
+        if (!empty($organizations)) {
+            // Берём активную организацию или первую доступную
+            $orgId = $user->active_organization_id;
+            if (!$orgId) {
+                $orgId = $organizations[0]->target_id ?? null;
+            }
+            if ($orgId) {
+                return $this->redirect(['/' . $orgId . '/default/index']);
+            }
+        }
+
+        // Fallback - главная CRM (выберет организацию)
+        return $this->redirect(['/crm']);
     }
 
     /**

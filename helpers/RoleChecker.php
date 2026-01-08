@@ -41,9 +41,12 @@ class RoleChecker
      */
     public static function isDirector(): bool
     {
-        return self::isSuper()
-            || Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR)
-            || Yii::$app->user->can(OrganizationRoles::DIRECTOR);
+        if (self::isSuper()) {
+            return true;
+        }
+
+        $role = self::getCurrentRole();
+        return in_array($role, [OrganizationRoles::GENERAL_DIRECTOR, OrganizationRoles::DIRECTOR]);
     }
 
     /**
@@ -87,7 +90,8 @@ class RoleChecker
      */
     public static function isTeacher(): bool
     {
-        return self::isTeacherOnly() || Yii::$app->user->can(OrganizationRoles::TEACHER);
+        $role = self::getCurrentRole();
+        return $role === OrganizationRoles::TEACHER || self::isAdminOrHigher();
     }
 
     /**
@@ -97,7 +101,12 @@ class RoleChecker
      */
     public static function isAdminOrHigher(): bool
     {
-        return self::isDirector() || Yii::$app->user->can(OrganizationRoles::ADMIN);
+        if (self::isDirector()) {
+            return true;
+        }
+
+        $role = self::getCurrentRole();
+        return $role === OrganizationRoles::ADMIN;
     }
 
     /**
@@ -539,5 +548,25 @@ class RoleChecker
         }
 
         return self::canAdminDeleteGroups();
+    }
+
+    // ===== АЛИАСЫ ДЛЯ СОВМЕСТИМОСТИ =====
+
+    /**
+     * Alias для canEditPayments - Admin может редактировать напрямую
+     * @return bool
+     */
+    public static function canAdminDirectEdit(): bool
+    {
+        return self::canEditPayments();
+    }
+
+    /**
+     * Alias для canDeletePayments - Admin может удалять напрямую
+     * @return bool
+     */
+    public static function canAdminDirectDelete(): bool
+    {
+        return self::canDeletePayments();
     }
 }

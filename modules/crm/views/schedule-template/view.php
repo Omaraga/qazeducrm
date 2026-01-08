@@ -32,37 +32,7 @@ $config = [
 ];
 ?>
 
-<div x-data="scheduleTemplateView(<?= Html::encode(Json::encode($config)) ?>)" class="space-y-6">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <div class="flex items-center gap-3">
-                <a href="<?= OrganizationUrl::to(['schedule-template/index']) ?>" class="text-gray-400 hover:text-gray-600">
-                    <?= Icon::svg('arrow-left', ['class' => 'w-5 h-5']) ?>
-                </a>
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <?php if ($model->is_default): ?>
-                            <span class="text-yellow-500" title="Шаблон по умолчанию">
-                                <?= Icon::svg('star-filled', ['class' => 'w-5 h-5']) ?>
-                            </span>
-                        <?php endif; ?>
-                        <?= Html::encode($model->name) ?>
-                    </h1>
-                    <?php if ($model->description): ?>
-                        <p class="text-gray-500 mt-1"><?= Html::encode($model->description) ?></p>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-        <div class="flex gap-3">
-            <button type="button" @click="$dispatch('open-modal', 'edit-template-modal')" class="btn btn-secondary">
-                <?= Icon::svg('pencil', ['class' => 'w-4 h-4 mr-2']) ?>
-                Редактировать
-            </button>
-        </div>
-    </div>
-
+<div x-data="scheduleTemplateView(<?= Html::encode(Json::encode($config)) ?>)" class="space-y-3">
     <!-- Tabs -->
     <div class="card">
         <div class="border-b border-gray-200">
@@ -86,44 +56,91 @@ $config = [
 
         <!-- Tab: Typical Schedule Calendar -->
         <div x-show="activeTab === 'calendar'" class="p-0">
-            <!-- Calendar Controls -->
-            <div class="flex flex-wrap items-center justify-between gap-4 p-4 border-b border-gray-200 bg-gray-50">
-                <!-- View Mode Switcher -->
-                <div class="flex items-center gap-4">
-                    <div class="view-mode-toggle">
+            <!-- Compact Calendar Header -->
+            <div class="px-2 py-2 bg-white border-b border-gray-100">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <!-- Left: Back + Template name + Edit -->
+                    <div class="flex items-center gap-2 order-2 sm:order-1">
+                        <a href="<?= OrganizationUrl::to(['schedule-template/index']) ?>"
+                           class="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 cursor-pointer"
+                           title="К списку шаблонов">
+                            <?= Icon::svg('arrow-left', ['class' => 'w-4 h-4']) ?>
+                        </a>
+                        <div class="flex items-center gap-1.5">
+                            <?php if ($model->is_default): ?>
+                                <span class="text-yellow-500" title="Шаблон по умолчанию">
+                                    <?= Icon::svg('star-filled', ['class' => 'w-4 h-4']) ?>
+                                </span>
+                            <?php endif; ?>
+                            <h1 class="text-sm font-medium text-gray-900"><?= Html::encode($model->name) ?></h1>
+                        </div>
                         <button type="button"
-                                class="view-mode-btn"
-                                :class="{ 'active': calendarView === 'day' }"
-                                @click="calendarView = 'day'">
-                            День
+                                @click="$dispatch('open-modal', 'edit-template-modal')"
+                                class="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600"
+                                title="Редактировать шаблон">
+                            <?= Icon::svg('pencil', ['class' => 'w-3.5 h-3.5']) ?>
                         </button>
+                        <span class="text-gray-300 hidden sm:inline">|</span>
                         <button type="button"
-                                class="view-mode-btn"
-                                :class="{ 'active': calendarView === 'week' }"
-                                @click="calendarView = 'week'">
-                            Неделя
+                                @click="openAddLessonModal()"
+                                class="px-2 py-1 text-xs rounded bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700 flex items-center gap-1">
+                            <?= Icon::svg('plus', ['class' => 'w-3 h-3']) ?>
+                            <span class="hidden sm:inline">Добавить</span>
                         </button>
                     </div>
 
-                    <button type="button"
-                            @click="openAddLessonModal()"
-                            class="btn btn-primary btn-sm">
-                        <?= Icon::svg('plus', ['class' => 'w-4 h-4 mr-1']) ?>
-                        Добавить занятие
-                    </button>
-                </div>
-
-                <!-- Day Navigation (only in day view) -->
-                <div x-show="calendarView === 'day'" class="flex items-center gap-2">
-                    <button type="button" @click="prevDay()" class="btn btn-sm btn-icon btn-secondary">
-                        <?= Icon::svg('chevron-left', ['class' => 'w-4 h-4']) ?>
-                    </button>
-                    <div class="px-4 py-2 bg-white border border-gray-200 rounded-lg min-w-[180px] text-center">
-                        <span class="font-medium text-gray-900" x-text="daysOfWeekFull[selectedDay - 1]"></span>
+                    <!-- Center: Day navigation (only in day view) -->
+                    <div x-show="calendarView === 'day'" class="flex items-center justify-center gap-1 order-1 sm:order-2">
+                        <button type="button" @click="prevDay()"
+                                class="p-2 sm:p-1 rounded hover:bg-gray-100 cursor-pointer text-gray-600">
+                            <?= Icon::svg('chevron-left', ['class' => 'w-4 h-4']) ?>
+                        </button>
+                        <span class="text-sm font-medium min-w-[100px] text-center" x-text="daysOfWeekFull[selectedDay - 1]"></span>
+                        <button type="button" @click="nextDay()"
+                                class="p-2 sm:p-1 rounded hover:bg-gray-100 cursor-pointer text-gray-600">
+                            <?= Icon::svg('chevron-right', ['class' => 'w-4 h-4']) ?>
+                        </button>
                     </div>
-                    <button type="button" @click="nextDay()" class="btn btn-sm btn-icon btn-secondary">
-                        <?= Icon::svg('chevron-right', ['class' => 'w-4 h-4']) ?>
-                    </button>
+                    <!-- Center: Week label (only in week view) -->
+                    <div x-show="calendarView === 'week'" class="flex items-center justify-center order-1 sm:order-2">
+                        <span class="text-sm font-medium text-gray-700">Типовая неделя</span>
+                    </div>
+
+                    <!-- Right: View mode toggle -->
+                    <div class="flex items-center gap-2 order-3">
+                        <!-- Day view mode: timeline/rooms -->
+                        <div x-show="calendarView === 'day' && rooms.length > 0" class="view-mode-toggle hidden sm:flex">
+                            <button type="button"
+                                    class="view-mode-btn"
+                                    :class="{ 'active': dayViewMode === 'timeline' }"
+                                    @click="dayViewMode = 'timeline'"
+                                    title="По времени">
+                                <?= Icon::svg('clock', ['class' => 'w-4 h-4']) ?>
+                            </button>
+                            <button type="button"
+                                    class="view-mode-btn"
+                                    :class="{ 'active': dayViewMode === 'rooms' }"
+                                    @click="dayViewMode = 'rooms'"
+                                    title="По кабинетам">
+                                <?= Icon::svg('building-office', ['class' => 'w-4 h-4']) ?>
+                            </button>
+                        </div>
+                        <!-- Day/Week toggle -->
+                        <div class="view-mode-toggle">
+                            <button type="button"
+                                    class="view-mode-btn text-xs"
+                                    :class="{ 'active': calendarView === 'day' }"
+                                    @click="calendarView = 'day'">
+                                День
+                            </button>
+                            <button type="button"
+                                    class="view-mode-btn text-xs"
+                                    :class="{ 'active': calendarView === 'week' }"
+                                    @click="calendarView = 'week'">
+                                Неделя
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -141,8 +158,13 @@ $config = [
                         <div class="calendar-grid calendar-grid-week">
                             <div class="calendar-time-col"></div>
                             <template x-for="(day, index) in daysOfWeek" :key="index">
-                                <div class="calendar-header-day">
+                                <div class="calendar-header-day cursor-pointer hover:bg-gray-100 transition-colors"
+                                     @click="goToDay(index + 1)"
+                                     title="Показать день">
                                     <div class="calendar-header-day-name" x-text="day"></div>
+                                    <div class="text-[10px] text-gray-400 mt-0.5"
+                                         x-show="getEventsForDay(index + 1).length > 0"
+                                         x-text="getEventsForDay(index + 1).length + ' зан.'"></div>
                                 </div>
                             </template>
                         </div>
@@ -158,7 +180,7 @@ $config = [
                                             <template x-for="event in getEventsForDayHour(dayIndex + 1, hour)" :key="event.id">
                                                 <div class="calendar-event cursor-pointer"
                                                      :style="{ backgroundColor: event.color }"
-                                                     :title="event.group_code + '\n' + event.teacher_fio + '\n' + event.start_time + ' - ' + event.end_time"
+                                                     :title="getEventTooltip(event)"
                                                      @click.stop="openEditLessonModal(event)">
                                                     <div class="calendar-event-title" x-text="event.group_code"></div>
                                                     <div class="calendar-event-time" x-text="event.start_time"></div>
@@ -172,8 +194,8 @@ $config = [
                     </div>
                 </template>
 
-                <!-- Day View -->
-                <template x-if="calendarView === 'day'">
+                <!-- Day View: Timeline Mode -->
+                <template x-if="calendarView === 'day' && effectiveDayViewMode === 'timeline'">
                     <div class="calendar-grid calendar-grid-day">
                         <!-- Header -->
                         <div class="calendar-time-col"></div>
@@ -190,7 +212,7 @@ $config = [
                                     <template x-for="event in getEventsForDayHour(selectedDay, hour)" :key="event.id">
                                         <div class="calendar-day-event cursor-pointer"
                                              :style="{ backgroundColor: event.color }"
-                                             :title="event.group_code + ' - ' + event.teacher_fio"
+                                             :title="getEventTooltip(event)"
                                              @click.stop="openEditLessonModal(event)">
                                             <div class="calendar-day-event-title" x-text="event.group_code"></div>
                                             <div class="calendar-day-event-time" x-text="event.start_time + ' - ' + event.end_time"></div>
@@ -203,6 +225,45 @@ $config = [
                                 </div>
                             </div>
                         </template>
+                    </div>
+                </template>
+
+                <!-- Day View: Rooms Mode -->
+                <template x-if="calendarView === 'day' && effectiveDayViewMode === 'rooms'">
+                    <div>
+                        <!-- Header row with rooms -->
+                        <div class="calendar-grid" :style="{ gridTemplateColumns: 'auto repeat(' + rooms.length + ', 1fr)' }">
+                            <div class="calendar-time-col"></div>
+                            <template x-for="room in rooms" :key="room.id">
+                                <div class="calendar-header-day" :style="{ borderLeftColor: room.color }">
+                                    <div class="calendar-header-day-name" x-text="room.code || room.name"></div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Time slots with rooms -->
+                        <div class="overflow-y-auto" style="max-height: 600px;">
+                            <template x-for="hour in hoursRange" :key="hour">
+                                <div class="calendar-grid" :style="{ gridTemplateColumns: 'auto repeat(' + rooms.length + ', 1fr)' }">
+                                    <div class="calendar-time-col" x-text="hour + ':00'"></div>
+                                    <template x-for="room in rooms" :key="'room-' + room.id + '-' + hour">
+                                        <div class="calendar-time-slot cursor-pointer hover:bg-gray-50"
+                                             :style="{ borderLeftColor: room.color }"
+                                             @click="openAddLessonModal(selectedDay, hour, room.id)">
+                                            <template x-for="event in getEventsForDayHourRoom(selectedDay, hour, room.id)" :key="event.id">
+                                                <div class="calendar-event cursor-pointer"
+                                                     :style="{ backgroundColor: event.color }"
+                                                     :title="getEventTooltip(event)"
+                                                     @click.stop="openEditLessonModal(event)">
+                                                    <div class="calendar-event-title" x-text="event.group_code"></div>
+                                                    <div class="calendar-event-time" x-text="event.start_time"></div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </template>
 
@@ -219,20 +280,11 @@ $config = [
             </div>
 
             <!-- Day Summary (only in day view) -->
-            <div x-show="calendarView === 'day' && getEventsForDay(selectedDay).length > 0" class="p-4 bg-gray-50 border-t border-gray-200">
-                <div class="flex items-center gap-6 text-sm text-gray-600">
-                    <span>
-                        <?= Icon::svg('academic-cap', ['class' => 'inline-block w-4 h-4 mr-1']) ?>
-                        Занятий: <strong x-text="getEventsForDay(selectedDay).length"></strong>
-                    </span>
-                    <span>
-                        <?= Icon::svg('clock', ['class' => 'inline-block w-4 h-4 mr-1']) ?>
-                        Первое: <strong x-text="getFirstEventTime(selectedDay)"></strong>
-                    </span>
-                    <span>
-                        <?= Icon::svg('clock', ['class' => 'inline-block w-4 h-4 mr-1']) ?>
-                        Последнее: <strong x-text="getLastEventTime(selectedDay)"></strong>
-                    </span>
+            <div x-show="calendarView === 'day' && getEventsForDay(selectedDay).length > 0" class="px-3 py-2 bg-gray-50 border-t border-gray-100">
+                <div class="flex items-center gap-4 text-xs text-gray-500">
+                    <span>Занятий: <strong class="text-gray-700" x-text="getEventsForDay(selectedDay).length"></strong></span>
+                    <span>Первое: <strong class="text-gray-700" x-text="getFirstEventTime(selectedDay)"></strong></span>
+                    <span>Последнее: <strong class="text-gray-700" x-text="getLastEventTime(selectedDay)"></strong></span>
                 </div>
             </div>
         </div>
@@ -274,6 +326,18 @@ $config = [
 
             <!-- STEP 1: Period & Days Configuration -->
             <div x-show="wizardStep === 1" class="p-6 space-y-6">
+                <!-- Hint -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex gap-3">
+                        <?= Icon::svg('light-bulb', ['class' => 'w-5 h-5 text-blue-500 flex-shrink-0']) ?>
+                        <div class="text-sm">
+                            <p class="text-blue-900 font-medium mb-1">Как это работает?</p>
+                            <p class="text-blue-700">Выберите период, и система создаст занятия на каждый день согласно шаблону.
+                            Вы сможете просмотреть и отредактировать список перед созданием.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Period Selection -->
                 <div>
                     <div class="flex items-center gap-2 mb-3">
@@ -372,11 +436,13 @@ $config = [
                                                   x-text="getTemplateDayCount(index + 1) + ' зан.'"></span>
                                         </td>
                                         <td class="px-4 py-3">
-                                            <select x-model="dayMapping[index + 1].targetDay"
+                                            <select x-model.number="dayMapping[index + 1].targetDay"
                                                     :disabled="!dayMapping[index + 1].enabled"
                                                     class="form-select text-sm py-1.5 w-40">
                                                 <template x-for="(tgtDay, tgtIndex) in daysOfWeekFull" :key="'tgt-' + tgtIndex">
-                                                    <option :value="tgtIndex + 1" x-text="tgtDay"></option>
+                                                    <option :value="tgtIndex + 1"
+                                                            :selected="dayMapping[index + 1].targetDay === (tgtIndex + 1)"
+                                                            x-text="tgtDay"></option>
                                                 </template>
                                             </select>
                                         </td>
@@ -789,7 +855,21 @@ function scheduleTemplateView(config) {
 
         // Calendar view
         calendarView: 'week',
+        dayViewMode: 'rooms', // 'timeline' | 'rooms' - default to rooms if available
         selectedDay: 1,
+
+        // Rooms from formData
+        get rooms() {
+            return this.formData.rooms || [];
+        },
+
+        // Effective day view mode (fallback to timeline if no rooms)
+        get effectiveDayViewMode() {
+            if (this.dayViewMode === 'rooms' && this.rooms.length === 0) {
+                return 'timeline';
+            }
+            return this.dayViewMode;
+        },
 
         daysOfWeek: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
         daysOfWeekFull: ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'],
@@ -935,6 +1015,12 @@ function scheduleTemplateView(config) {
             this.selectedDay = this.selectedDay < 7 ? this.selectedDay + 1 : 1;
         },
 
+        // Go to specific day (switch to day view)
+        goToDay(dayNum) {
+            this.selectedDay = dayNum;
+            this.calendarView = 'day';
+        },
+
         // Event helpers
         getEventsForDay(weekDay) {
             return this.events.filter(e => e.week === weekDay);
@@ -943,6 +1029,15 @@ function scheduleTemplateView(config) {
         getEventsForDayHour(weekDay, hour) {
             return this.events.filter(e => {
                 if (e.week !== weekDay) return false;
+                const [h] = e.start_time.split(':').map(Number);
+                return h === hour;
+            });
+        },
+
+        getEventsForDayHourRoom(weekDay, hour, roomId) {
+            return this.events.filter(e => {
+                if (e.week !== weekDay) return false;
+                if (e.room_id !== roomId) return false;
                 const [h] = e.start_time.split(':').map(Number);
                 return h === hour;
             });
@@ -962,8 +1057,24 @@ function scheduleTemplateView(config) {
             return sorted[0].end_time;
         },
 
+        // Tooltip for event
+        getEventTooltip(event) {
+            const parts = [
+                event.group_code,
+                '⏰ ' + event.start_time + ' - ' + event.end_time,
+                '👤 ' + event.teacher_fio
+            ];
+            if (event.room_name) {
+                parts.push('🚪 ' + event.room_name);
+            }
+            if (event.subject_name) {
+                parts.push('📚 ' + event.subject_name);
+            }
+            return parts.join('\n');
+        },
+
         // Lesson modal
-        openAddLessonModal(weekDay = null, hour = null) {
+        openAddLessonModal(weekDay = null, hour = null, roomId = null) {
             this.timeError = '';
             this.lessonForm = {
                 id: null,
@@ -972,7 +1083,7 @@ function scheduleTemplateView(config) {
                 end_time: hour ? (hour < 9 ? '0' + (hour + 1) : hour + 1) + ':00' : '',
                 group_id: '',
                 teacher_id: '',
-                room_id: ''
+                room_id: roomId || ''
             };
             this.$dispatch('open-modal', 'lesson-modal');
         },

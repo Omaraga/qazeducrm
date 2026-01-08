@@ -94,7 +94,30 @@
       "Bash(node -c:*)",
       "Bash(CSRF=\"BhYpj-xeUi4CQOn52rHzu6JN1gQrflbKxBSTIB4knvFkJHq-jjBiSVYGnMud_Krx9wqsTGorZLOzYP8YZGDTmw==\")",
       "Bash(CSRF=\"_ZEJSF_os4COy9bPRt0Jwl39dnoHLEI_ywDmNqc3yGbE2VZxDpjq8cmIpfYArlO6B8QOIzJHDHDyVLZQ126MBA==\")",
-      "Bash(/c/xampp8/mysql/bin/mysql:*)"
+      "Bash(/c/xampp8/mysql/bin/mysql:*)",
+      "Bash(CSRF=\"FBBq8g0PBDKE9ozm6j1_-bAYyEFKVBYMORmapvR9pd0gcjKEZ0tDBtXB5peSWRWY6kuKNAM3R3kBVvjTvx7WiA==\")",
+      "Bash(CSRF=\"GxDDfJ1URwBz_n4fnRKi7Y5Za-JSYoIAq7N1T6hqlO5VWogE1SYdcCnGEUXOWNih6mgFhwIptlT_hhcuzl7EpA==\")",
+      "Bash(CSRF=\"ykHZsfoOqnwQRXG1T-o6uXyTg2z6zo5J5ony_CuB8LWYdrf2mTvPBnETKNkuo02BGfL1JaP_9xyzpKaqQuC38g==\")",
+      "Bash(CSRF=\"-o0b_-QL1qKCuKTTXZMRXppoQL2h8f2CXM94_fm5LGXD61-bllSR2s3s9f4a4nsP_yQl69Kzl9EfhTqLkvMbEw==\")",
+      "Bash(CSRF=\"Q2xnsYQE3j0L0i8xVUhJKoud1dn6jrwi9xJkFWNT1LEvFCD25WmXdFimRlxiEBZHyuqYr6PP03acIwF8JWKFyw==\")",
+      "Bash(CSRF=\"z7He60tz_tVAgS58O1ZDo2oc1MZNFgfqgewtxZLpuv2n9ImBAge5nzfjTQ0DexbaCGyfqDknSqHUo06G2drjog==\")",
+      "Bash(CSRF=\"osD4emLLnk0A5QAJzjg8adzx3caEaPm85XHtCM2Q9uju97Y4JJrVIGigZmaqe1QgpNy3jfEAsOqcSbRKqsCCug==\")",
+      "Bash(CSRF=\"TbR266-SpWDIERWyUOVMq1-UgifciX0CHmKEJ4T3bLEv7h3G2_D3DIElVPoGkxz0FcbtUY28FHBvANJTx5wj_A==\":*)",
+      "Bash(CSRF=\"3fTPJVYi0n13dLo0f-PAKkrc4kLvFJIt-c28mKTUhPytvZxKAWfiOjsO-HVOpqNFJbSgBtxh_ULKq8zIxqPjjg==\")",
+      "Bash(CSRF=\"hgrJ70YJFR975o8aWFEK4H0wHXg46-P3dAs7x15lqA6-RKKoDEpxcjiX7lEtK0-3KgNbIVCEqI9NX3qvGTPvew==\":*)",
+      "Bash(start http://localhost/qazeducrm/web/)",
+      "Bash(CSRF=\"AA1eQcx9ISdnSEq3Nv3MPUIjlcsl6tSuGTz5we4RAV5HQycZiTdHFV4jJoRHuJ1YABf0vmS4jpZvcJepw0BgEg==\")",
+      "Bash(CSRF=\"ysHS3rxZ_dYUxZAeGreBhF81GR8CDvbEuYZQ7xlcaBDy7Lma8QOEjliX4FJ9gOjUPXZKWGF3xqHqzB2HcWpRZg==\")",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_resize",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_press_key",
+      "mcp__playwright__browser_run_code",
+      "mcp__playwright__browser_close",
+      "mcp__playwright__browser_evaluate"
     ]
   }
 }

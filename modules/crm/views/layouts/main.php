@@ -56,7 +56,10 @@ $menuConfig = [
             ['label' => 'Группы', 'icon' => 'group', 'url' => ['/crm/group/index'], 'controller' => 'group', 'visible' => $isAdminOrHigher],
             ['label' => 'Шаблоны расписания', 'icon' => 'template', 'url' => ['/crm/schedule-template/index'], 'controller' => 'schedule-template', 'visible' => $isAdminOrHigher],
             ['label' => 'Платежи', 'icon' => 'payment', 'url' => ['/crm/payment/index'], 'controller' => 'payment', 'visible' => $hasFinanceAccess],
-            ['label' => 'Зарплаты', 'icon' => 'wallet', 'url' => ['/crm/salary/index'], 'controller' => 'salary'],
+            // Зарплаты - для админов и выше (полный список)
+            ['label' => 'Зарплаты', 'icon' => 'wallet', 'url' => ['/crm/salary/index'], 'controller' => 'salary', 'visible' => $isAdminOrHigher],
+            // Моя зарплата - только для учителя (тот же index, но фильтруется автоматически)
+            ['label' => 'Моя зарплата', 'icon' => 'wallet', 'url' => ['/crm/salary/index'], 'controller' => 'salary', 'visible' => $isTeacherOnly && RoleChecker::canTeacherViewOwnSalary()],
 
             ['label' => 'SMS', 'icon' => 'sms', 'url' => ['/crm/sms/index'], 'controller' => 'sms', 'visible' => $isAdminOrHigher],
             [
@@ -285,9 +288,12 @@ endforeach;
             <div class="text-gray-900 text-sm font-medium truncate"><?= Html::encode($user->fio ?? $user->username ?? 'User') ?></div>
             <div class="text-gray-500 text-xs truncate"><?= Html::encode($user->email ?? '') ?></div>
         </div>
-        <a href="<?= Url::to(['/logout']) ?>" class="text-gray-400 hover:text-danger-600 p-1.5 rounded-md hover:bg-gray-100 transition-colors" data-method="post" title="Выйти">
-            <?= Icon::show('logout') ?>
-        </a>
+        <form action="<?= Url::to(['/logout']) ?>" method="post" class="inline">
+            <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
+            <button type="submit" class="text-gray-400 hover:text-danger-600 p-1.5 rounded-md hover:bg-gray-100 transition-colors" title="Выйти">
+                <?= Icon::show('logout') ?>
+            </button>
+        </form>
     </div>
 </aside>
 

@@ -16,6 +16,7 @@ $this->title = 'Dashboard';
 // Определяем тип дашборда
 $isTeacherDashboard = $stats['is_teacher_dashboard'] ?? false;
 $isAdminDashboard = $stats['is_admin_dashboard'] ?? false;
+$hasFinanceAccess = RoleChecker::hasFinanceAccess();
 
 // Данные для графика (только для полного дашборда)
 $weekPaymentsJson = json_encode($stats['week_payments'] ?? []);

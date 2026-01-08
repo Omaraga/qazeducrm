@@ -5,348 +5,229 @@
 /** @var array $plans */
 
 use yii\helpers\Html;
-use yii\bootstrap4\ActiveForm;
+use yii\helpers\Url;
+use yii\widgets\ActiveForm;
 
 $this->title = 'Регистрация';
 ?>
 
-<style>
-.reg-container {
-    max-width: 540px;
-    margin: 0 auto;
-}
-.reg-steps {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 32px;
-}
-.reg-step {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--border);
-    transition: all var(--transition);
-}
-.reg-step.active {
-    background: var(--primary);
-    width: 32px;
-    border-radius: var(--radius-sm);
-}
-.reg-step.done {
-    background: var(--success);
-}
-.step-title {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    margin-bottom: 4px;
-}
-.step-heading {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 24px;
-}
-.form-group label {
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-bottom: 6px;
-}
-.form-control {
-    padding: 10px 14px;
-    border-radius: var(--radius);
-    border: 1px solid var(--border-dark);
-}
-.form-control:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(254, 141, 0, 0.15);
-}
-.hint-block {
-    font-size: 0.8rem;
-    color: var(--text-light);
-    margin-top: 4px;
-}
-.btn-next, .btn-submit {
-    padding: 12px 24px;
-    font-weight: 500;
-    border-radius: var(--radius);
-}
-.btn-back {
-    padding: 12px 24px;
-    font-weight: 500;
-    border-radius: var(--radius);
-    background: var(--bg-subtle);
-    border: none;
-    color: var(--text-secondary);
-}
-.btn-back:hover {
-    background: var(--border);
-    color: var(--text-primary);
-}
-.plan-option {
-    border: 2px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 20px;
-    cursor: pointer;
-    transition: all var(--transition);
-    margin-bottom: 12px;
-    background: var(--bg-white);
-}
-.plan-option:hover {
-    border-color: var(--primary);
-    background: var(--primary-lighter);
-}
-.plan-option.selected {
-    border-color: var(--primary);
-    background: var(--primary-light);
-}
-.plan-option input[type="radio"] {
-    display: none;
-}
-.plan-name {
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: var(--text-primary);
-}
-.plan-price {
-    font-weight: 700;
-    font-size: 1.25rem;
-    color: var(--primary);
-}
-.plan-trial {
-    font-size: 0.875rem;
-    color: var(--success);
-}
-.plan-limits {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin-top: 8px;
-}
-.terms-check {
-    font-size: 0.9rem;
-}
-.terms-check a {
-    color: var(--primary);
-}
-.terms-check a:hover {
-    color: var(--primary-hover);
-}
-.field-error .form-control {
-    border-color: var(--error);
-}
-.field-error .invalid-feedback {
-    display: block;
-    color: var(--error);
-    font-size: 0.8rem;
-    margin-top: 4px;
-}
-</style>
+<div class="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4 bg-gray-50">
+    <div class="w-full max-w-xl">
+        <!-- Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 md:p-10">
+            <!-- Steps indicator -->
+            <div class="flex justify-center gap-2 mb-8">
+                <div class="reg-step w-8 h-2 rounded-full bg-orange-500 transition-all" data-step="1"></div>
+                <div class="reg-step w-2 h-2 rounded-full bg-gray-200 transition-all" data-step="2"></div>
+                <div class="reg-step w-2 h-2 rounded-full bg-gray-200 transition-all" data-step="3"></div>
+            </div>
 
-<div class="reg-container">
-    <div class="guest-card p-4 p-md-5">
-        <div class="reg-steps">
-            <div class="reg-step active" data-step="1"></div>
-            <div class="reg-step" data-step="2"></div>
-            <div class="reg-step" data-step="3"></div>
-        </div>
+            <?php $form = ActiveForm::begin([
+                'id' => 'reg-form',
+                'enableClientValidation' => false,
+                'enableAjaxValidation' => false,
+                'fieldConfig' => [
+                    'template' => "<div class=\"mb-4\">{label}{input}{hint}{error}</div>",
+                    'labelOptions' => ['class' => 'block text-sm font-medium text-gray-700 mb-2'],
+                    'inputOptions' => ['class' => 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors outline-none'],
+                    'errorOptions' => ['class' => 'mt-1 text-sm text-red-500'],
+                    'hintOptions' => ['class' => 'mt-1 text-xs text-gray-400'],
+                ],
+            ]); ?>
 
-        <?php $form = ActiveForm::begin([
-            'id' => 'reg-form',
-            'enableClientValidation' => false,
-            'enableAjaxValidation' => false,
-        ]); ?>
-
-        <?php if ($model->hasErrors()): ?>
-        <div class="alert alert-danger mb-4">
-            <strong>Ошибка регистрации:</strong>
-            <ul class="mb-0 mt-2">
-                <?php foreach ($model->getErrors() as $attribute => $errors): ?>
-                    <?php foreach ($errors as $error): ?>
-                        <li><?= Html::encode($error) ?></li>
+            <?php if ($model->hasErrors()): ?>
+            <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
+                <div class="font-semibold mb-2">Ошибка регистрации:</div>
+                <ul class="list-disc list-inside text-sm">
+                    <?php foreach ($model->getErrors() as $attribute => $errors): ?>
+                        <?php foreach ($errors as $error): ?>
+                            <li><?= Html::encode($error) ?></li>
+                        <?php endforeach; ?>
                     <?php endforeach; ?>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-        <?php endif; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
 
-        <!-- Шаг 1: Организация -->
-        <div class="step-content" data-step="1">
-            <div class="step-title">Шаг 1 из 3</div>
-            <div class="step-heading">Данные организации</div>
+            <!-- Step 1: Organization -->
+            <div class="step-content" data-step="1">
+                <div class="text-center mb-6">
+                    <div class="text-sm text-gray-400 mb-1">Шаг 1 из 3</div>
+                    <h2 class="text-xl font-bold text-gray-900">Данные организации</h2>
+                </div>
 
-            <?= $form->field($model, 'org_name')->textInput([
-                'placeholder' => 'Введите название',
-                'autofocus' => true,
-            ])->label('Название учебного центра *') ?>
+                <?= $form->field($model, 'org_name')->textInput([
+                    'placeholder' => 'Введите название',
+                    'autofocus' => true,
+                ])->label('Название учебного центра *') ?>
 
-            <div class="row">
-                <div class="col-md-6">
+                <div class="grid md:grid-cols-2 gap-4">
                     <?= $form->field($model, 'org_email')->textInput([
                         'type' => 'email',
                         'placeholder' => 'info@example.kz',
                     ])->label('Email организации *') ?>
-                </div>
-                <div class="col-md-6">
+
                     <?= $form->field($model, 'org_phone')->textInput([
                         'placeholder' => '+7 777 123 4567',
                     ])->label('Телефон *') ?>
                 </div>
-            </div>
 
-            <div class="row">
-                <div class="col-md-6">
+                <div class="grid md:grid-cols-2 gap-4">
                     <?= $form->field($model, 'org_bin')->textInput([
                         'placeholder' => '123456789012',
                         'maxlength' => 12,
                     ])->label('БИН')->hint('Необязательно') ?>
-                </div>
-                <div class="col-md-6">
+
                     <?= $form->field($model, 'org_address')->textInput([
                         'placeholder' => 'г. Алматы',
                     ])->label('Город/Адрес')->hint('Необязательно') ?>
                 </div>
+
+                <div class="flex justify-end mt-6">
+                    <button type="button" class="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-all" onclick="goToStep(2)">
+                        Далее
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
             </div>
 
-            <div class="d-flex justify-content-end mt-4">
-                <button type="button" class="btn btn-primary btn-next" onclick="goToStep(2)">
-                    Далее
-                </button>
-            </div>
-        </div>
+            <!-- Step 2: Admin -->
+            <div class="step-content hidden" data-step="2">
+                <div class="text-center mb-6">
+                    <div class="text-sm text-gray-400 mb-1">Шаг 2 из 3</div>
+                    <h2 class="text-xl font-bold text-gray-900">Данные администратора</h2>
+                </div>
 
-        <!-- Шаг 2: Администратор -->
-        <div class="step-content" data-step="2" style="display:none;">
-            <div class="step-title">Шаг 2 из 3</div>
-            <div class="step-heading">Данные администратора</div>
-
-            <div class="row">
-                <div class="col-md-6">
+                <div class="grid md:grid-cols-2 gap-4">
                     <?= $form->field($model, 'admin_last_name')->textInput([
                         'placeholder' => 'Иванов',
                     ])->label('Фамилия *') ?>
-                </div>
-                <div class="col-md-6">
+
                     <?= $form->field($model, 'admin_first_name')->textInput([
                         'placeholder' => 'Иван',
                     ])->label('Имя *') ?>
                 </div>
-            </div>
 
-            <div class="row">
-                <div class="col-md-6">
+                <div class="grid md:grid-cols-2 gap-4">
                     <?= $form->field($model, 'admin_email')->textInput([
                         'type' => 'email',
                         'placeholder' => 'admin@example.kz',
                     ])->label('Email для входа *') ?>
-                </div>
-                <div class="col-md-6">
+
                     <?= $form->field($model, 'admin_phone')->textInput([
                         'placeholder' => '+7 777 123 4567',
                     ])->label('Телефон')->hint('Необязательно') ?>
                 </div>
-            </div>
 
-            <div class="row">
-                <div class="col-md-6">
+                <div class="grid md:grid-cols-2 gap-4">
                     <?= $form->field($model, 'admin_password')->passwordInput([
                         'placeholder' => 'Минимум 8 символов',
                     ])->label('Пароль *') ?>
-                </div>
-                <div class="col-md-6">
+
                     <?= $form->field($model, 'admin_password_repeat')->passwordInput([
                         'placeholder' => 'Повторите пароль',
                     ])->label('Подтверждение *') ?>
                 </div>
+
+                <div class="flex justify-between mt-6">
+                    <button type="button" class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-all" onclick="goToStep(1)">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Назад
+                    </button>
+                    <button type="button" class="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-all" onclick="goToStep(3)">
+                        Далее
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
             </div>
 
-            <div class="d-flex justify-content-between mt-4">
-                <button type="button" class="btn btn-back" onclick="goToStep(1)">
-                    Назад
-                </button>
-                <button type="button" class="btn btn-primary btn-next" onclick="goToStep(3)">
-                    Далее
-                </button>
-            </div>
-        </div>
+            <!-- Step 3: Plan -->
+            <div class="step-content hidden" data-step="3">
+                <div class="text-center mb-6">
+                    <div class="text-sm text-gray-400 mb-1">Шаг 3 из 3</div>
+                    <h2 class="text-xl font-bold text-gray-900">Выберите тариф</h2>
+                </div>
 
-        <!-- Шаг 3: Тариф -->
-        <div class="step-content" data-step="3" style="display:none;">
-            <div class="step-title">Шаг 3 из 3</div>
-            <div class="step-heading">Выберите тариф</div>
-
-            <div class="plans-list">
-                <?php foreach ($plans as $planId => $plan): ?>
-                <label class="plan-option <?= $model->plan_id == $planId ? 'selected' : '' ?>" data-plan="<?= $planId ?>">
-                    <input type="radio" name="OrganizationRegistrationForm[plan_id]" value="<?= $planId ?>" <?= $model->plan_id == $planId ? 'checked' : '' ?>>
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="plan-name"><?= Html::encode($plan['label']) ?></div>
-                            <div class="plan-trial"><?= $plan['trial_days'] ?> дней бесплатно</div>
-                            <div class="plan-limits">
-                                <?= $plan['limits']['pupils'] ?> учеников &bull;
-                                <?= $plan['limits']['teachers'] ?> учителей &bull;
-                                <?= $plan['limits']['groups'] ?> групп
+                <div class="space-y-3">
+                    <?php foreach ($plans as $planId => $plan): ?>
+                    <label class="plan-option block border-2 rounded-xl p-5 cursor-pointer transition-all <?= $model->plan_id == $planId ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300' ?>" data-plan="<?= $planId ?>">
+                        <input type="radio" name="OrganizationRegistrationForm[plan_id]" value="<?= $planId ?>" class="hidden" <?= $model->plan_id == $planId ? 'checked' : '' ?>>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-bold text-gray-900"><?= Html::encode($plan['label']) ?></div>
+                                <div class="text-sm text-green-600 mt-1">
+                                    <i class="fas fa-gift mr-1"></i>
+                                    <?= $plan['trial_days'] ?> дней бесплатно
+                                </div>
+                                <div class="text-xs text-gray-500 mt-2">
+                                    <?= $plan['limits']['pupils'] ?> учеников &bull;
+                                    <?= $plan['limits']['teachers'] ?> учителей &bull;
+                                    <?= $plan['limits']['groups'] ?> групп
+                                </div>
                             </div>
+                            <div class="text-xl font-bold text-orange-500"><?= $plan['price'] ?></div>
                         </div>
-                        <div class="plan-price"><?= $plan['price'] ?></div>
-                    </div>
-                </label>
-                <?php endforeach; ?>
-            </div>
-
-            <div class="terms-check mt-4">
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="agree-terms" name="OrganizationRegistrationForm[agree_terms]" value="1">
-                    <label class="custom-control-label" for="agree-terms">
-                        Я принимаю <a href="#" target="_blank">условия использования</a>
                     </label>
+                    <?php endforeach; ?>
                 </div>
-                <div class="invalid-feedback" id="terms-error" style="display:none;">
-                    Необходимо принять условия использования
+
+                <!-- Terms -->
+                <div class="mt-6">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" id="agree-terms" name="OrganizationRegistrationForm[agree_terms]" value="1" class="mt-1 w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500">
+                        <span class="text-sm text-gray-600">
+                            Я принимаю <a href="#" class="text-orange-500 hover:text-orange-600 font-medium">условия использования</a>
+                        </span>
+                    </label>
+                    <div id="terms-error" class="hidden mt-1 text-sm text-red-500">
+                        Необходимо принять условия использования
+                    </div>
+                </div>
+
+                <div class="flex justify-between mt-6">
+                    <button type="button" class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-all" onclick="goToStep(2)">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Назад
+                    </button>
+                    <?= Html::submitButton('<span>Зарегистрироваться</span>', [
+                        'class' => 'px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition-all shadow-lg shadow-orange-500/30',
+                        'id' => 'submit-btn',
+                    ]) ?>
                 </div>
             </div>
 
-            <div class="d-flex justify-content-between mt-4">
-                <button type="button" class="btn btn-back" onclick="goToStep(2)">
-                    Назад
-                </button>
-                <?= Html::submitButton('Зарегистрироваться', [
-                    'class' => 'btn btn-primary btn-submit',
-                    'id' => 'submit-btn',
-                ]) ?>
-            </div>
+            <?php ActiveForm::end(); ?>
         </div>
 
-        <?php ActiveForm::end(); ?>
+        <!-- Login link -->
+        <p class="text-center mt-6 text-gray-600">
+            Уже есть аккаунт?
+            <a href="<?= Url::to(['/login']) ?>" class="text-orange-500 hover:text-orange-600 font-semibold transition-colors">Войти</a>
+        </p>
     </div>
-
-    <p class="text-center mt-4 text-muted">
-        Уже есть аккаунт? <a href="<?= \yii\helpers\Url::to(['/login']) ?>">Войти</a>
-    </p>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var currentStep = 1;
-
-    // Выбор тарифа
+    // Plan selection
     document.querySelectorAll('.plan-option').forEach(function(el) {
         el.addEventListener('click', function() {
             document.querySelectorAll('.plan-option').forEach(function(p) {
-                p.classList.remove('selected');
+                p.classList.remove('border-orange-500', 'bg-orange-50');
+                p.classList.add('border-gray-200');
             });
-            this.classList.add('selected');
+            this.classList.remove('border-gray-200');
+            this.classList.add('border-orange-500', 'bg-orange-50');
             this.querySelector('input[type="radio"]').checked = true;
         });
     });
 
-    // Автовыбор первого тарифа
+    // Auto-select first plan
     var firstPlan = document.querySelector('.plan-option');
-    if (firstPlan && !document.querySelector('.plan-option.selected')) {
+    if (firstPlan && !document.querySelector('.plan-option.border-orange-500')) {
         firstPlan.click();
     }
 
-    // Валидация при отправке
+    // Form submit validation
     document.getElementById('reg-form').addEventListener('submit', function(e) {
         var termsCheckbox = document.getElementById('agree-terms');
         var termsError = document.getElementById('terms-error');
@@ -354,26 +235,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!termsCheckbox.checked) {
             e.preventDefault();
-            termsError.style.display = 'block';
+            termsError.classList.remove('hidden');
             return false;
         }
-        termsError.style.display = 'none';
+        termsError.classList.add('hidden');
 
-        // Показать индикатор загрузки
+        // Show loading
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm mr-2"></span>Регистрация...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Регистрация...';
     });
 
     document.getElementById('agree-terms').addEventListener('change', function() {
-        document.getElementById('terms-error').style.display = 'none';
+        document.getElementById('terms-error').classList.add('hidden');
     });
 });
 
 function goToStep(step) {
-    var currentStepEl = document.querySelector('.step-content[style=""]') || document.querySelector('.step-content:not([style*="none"])');
+    var currentStepEl = document.querySelector('.step-content:not(.hidden)');
     var currentStep = currentStepEl ? parseInt(currentStepEl.dataset.step) : 1;
 
-    // Валидация текущего шага перед переходом вперёд
+    // Validate before going forward
     if (step > currentStep) {
         var errors = validateStep(currentStep);
         if (errors.length > 0) {
@@ -381,22 +262,25 @@ function goToStep(step) {
         }
     }
 
-    // Скрыть все шаги
+    // Hide all steps
     document.querySelectorAll('.step-content').forEach(function(el) {
-        el.style.display = 'none';
+        el.classList.add('hidden');
     });
 
-    // Показать нужный шаг
-    document.querySelector('.step-content[data-step="' + step + '"]').style.display = 'block';
+    // Show target step
+    document.querySelector('.step-content[data-step="' + step + '"]').classList.remove('hidden');
 
-    // Обновить индикаторы
+    // Update indicators
     document.querySelectorAll('.reg-step').forEach(function(el) {
         var s = parseInt(el.dataset.step);
-        el.classList.remove('active', 'done');
+        el.classList.remove('w-8', 'bg-orange-500', 'bg-green-500');
+        el.classList.add('w-2', 'bg-gray-200');
         if (s < step) {
-            el.classList.add('done');
+            el.classList.remove('bg-gray-200');
+            el.classList.add('bg-green-500');
         } else if (s === step) {
-            el.classList.add('active');
+            el.classList.remove('w-2', 'bg-gray-200');
+            el.classList.add('w-8', 'bg-orange-500');
         }
     });
 }
@@ -466,24 +350,23 @@ function validateStep(step) {
 }
 
 function showError(input, message) {
-    var group = input.closest('.form-group');
-    group.classList.add('field-error');
-    var feedback = group.querySelector('.invalid-feedback');
+    input.classList.add('border-red-500');
+    var wrapper = input.closest('.mb-4');
+    var feedback = wrapper.querySelector('.text-red-500');
     if (!feedback) {
         feedback = document.createElement('div');
-        feedback.className = 'invalid-feedback';
+        feedback.className = 'mt-1 text-sm text-red-500';
         input.parentNode.appendChild(feedback);
     }
     feedback.textContent = message;
-    feedback.style.display = 'block';
 }
 
 function clearErrors() {
-    document.querySelectorAll('.field-error').forEach(function(el) {
-        el.classList.remove('field-error');
+    document.querySelectorAll('.border-red-500').forEach(function(el) {
+        el.classList.remove('border-red-500');
     });
-    document.querySelectorAll('.invalid-feedback').forEach(function(el) {
-        el.style.display = 'none';
+    document.querySelectorAll('.mb-4 .text-red-500').forEach(function(el) {
+        el.textContent = '';
     });
 }
 

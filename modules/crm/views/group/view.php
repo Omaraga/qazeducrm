@@ -1,12 +1,15 @@
 <?php
 
 use app\helpers\OrganizationUrl;
+use app\helpers\RoleChecker;
 use app\widgets\tailwind\GroupTabs;
 use app\widgets\tailwind\Icon;
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
 /** @var app\models\Group $model */
+
+$canDelete = RoleChecker::canDeleteGroups();
 
 $this->title = $model->code . '-' . $model->name;
 $this->params['breadcrumbs'][] = ['label' => 'Группы', 'url' => OrganizationUrl::to(['index'])];
@@ -30,14 +33,16 @@ $this->params['breadcrumbs'][] = $this->title;
                 <?= Icon::show('edit', 'sm') ?>
                 Редактировать
             </a>
-            <?= Html::a(Icon::show('trash', 'sm') . ' Удалить',
-                OrganizationUrl::to(['group/delete', 'id' => $model->id]), [
-                'class' => 'btn btn-danger',
-                'data' => [
-                    'confirm' => 'Вы действительно хотите удалить группу?',
-                    'method' => 'post',
-                ],
-            ]) ?>
+            <?php if ($canDelete): ?>
+                <?= Html::a(Icon::show('trash', 'sm') . ' Удалить',
+                    OrganizationUrl::to(['group/delete', 'id' => $model->id]), [
+                    'class' => 'btn btn-danger',
+                    'data' => [
+                        'confirm' => 'Вы действительно хотите удалить группу?',
+                        'method' => 'post',
+                    ],
+                ]) ?>
+            <?php endif; ?>
         </div>
     </div>
 

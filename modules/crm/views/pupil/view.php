@@ -1,12 +1,16 @@
 <?php
 
 use app\helpers\OrganizationUrl;
+use app\helpers\RoleChecker;
 use app\widgets\tailwind\Icon;
 use app\widgets\tailwind\PupilTabs;
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
 /** @var app\models\Pupil $model */
+
+$canDelete = RoleChecker::canDeletePupils();
+$canViewBalance = RoleChecker::canViewPupilBalance();
 
 $this->title = $model->fio;
 $this->params['breadcrumbs'][] = ['label' => 'Ученики', 'url' => ['index']];
@@ -30,19 +34,23 @@ $this->params['breadcrumbs'][] = $this->title;
                 OrganizationUrl::to(['pupil/update', 'id' => $model->id]), [
                 'class' => 'btn btn-primary',
             ]) ?>
-            <?= Html::a(Icon::show('trash', 'sm') . ' Удалить',
-                OrganizationUrl::to(['pupil/delete', 'id' => $model->id]), [
-                'class' => 'btn btn-danger',
-                'data' => [
-                    'confirm' => 'Вы действительно хотите удалить ученика?',
-                    'method' => 'post',
-                ],
-            ]) ?>
+            <?php if ($canDelete): ?>
+                <?= Html::a(Icon::show('trash', 'sm') . ' Удалить',
+                    OrganizationUrl::to(['pupil/delete', 'id' => $model->id]), [
+                    'class' => 'btn btn-danger',
+                    'data' => [
+                        'confirm' => 'Вы действительно хотите удалить ученика?',
+                        'method' => 'post',
+                    ],
+                ]) ?>
+            <?php endif; ?>
         </div>
     </div>
 
     <!-- Balance -->
-    <?= $this->render('balance', ['model' => $model]) ?>
+    <?php if ($canViewBalance): ?>
+        <?= $this->render('balance', ['model' => $model]) ?>
+    <?php endif; ?>
 
     <!-- Tabs -->
     <?= PupilTabs::widget(['model' => $model, 'activeTab' => 'view']) ?>

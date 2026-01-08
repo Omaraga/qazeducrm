@@ -4,6 +4,7 @@ namespace app\modules\crm\controllers;
 
 use app\helpers\ActivityLogger;
 use app\helpers\OrganizationRoles;
+use app\helpers\RoleChecker;
 use app\helpers\SystemRoles;
 use app\models\Lids;
 use app\models\LidHistory;
@@ -47,14 +48,18 @@ class LidsController extends CrmBaseController
                 'access' => [
                     'class' => AccessControl::class,
                     'rules' => [
+                        // Удаление - по настройкам организации
                         [
                             'allow' => true,
-                            'roles' => [
-                                SystemRoles::SUPER,
-                                OrganizationRoles::ADMIN,
-                                OrganizationRoles::DIRECTOR,
-                                OrganizationRoles::GENERAL_DIRECTOR,
-                            ]
+                            'actions' => ['delete'],
+                            'matchCallback' => function ($rule, $action) {
+                                return RoleChecker::canDeleteLids();
+                            }
+                        ],
+                        // Остальные действия - для админов и выше
+                        [
+                            'allow' => true,
+                            'roles' => RoleChecker::getRolesForAccess('admin'),
                         ],
                         [
                             'allow' => false,

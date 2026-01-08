@@ -3,462 +3,450 @@
 /** @var yii\web\View $this */
 /** @var app\models\SaasPlan[] $plans */
 
+use app\helpers\SettingsHelper;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
 $this->title = 'CRM для учебных центров';
+$stats = SettingsHelper::getLandingStats();
 ?>
 
-<style>
-/* ========================================
-   HERO SECTION
-   ======================================== */
-.hero {
-    background: linear-gradient(135deg, var(--bg-white) 0%, var(--bg-light) 100%);
-    padding: 7rem 0 5rem;
-    position: relative;
-    overflow: hidden;
-}
-.hero::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 70%;
-    height: 200%;
-    background: radial-gradient(circle, var(--primary-light) 0%, transparent 70%);
-    opacity: 0.5;
-}
-.hero-content {
-    position: relative;
-    z-index: 1;
-}
-.hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: var(--primary-light);
-    color: var(--primary);
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-full);
-    font-size: 0.875rem;
-    font-weight: 500;
-    margin-bottom: 1.5rem;
-}
-.hero-badge i {
-    font-size: 0.75rem;
-}
-.hero-title {
-    font-size: 3.25rem;
-    font-weight: 800;
-    color: var(--text-primary);
-    line-height: 1.15;
-    margin-bottom: 1.5rem;
-}
-.hero-title span {
-    color: var(--primary);
-}
-.hero-subtitle {
-    font-size: 1.25rem;
-    color: var(--text-muted);
-    margin-bottom: 2rem;
-    max-width: 520px;
-    line-height: 1.6;
-}
-.hero-buttons {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 3rem;
-}
-.hero-buttons .btn {
-    padding: 0.875rem 1.75rem;
-    font-size: 1rem;
-}
-.hero-stats {
-    display: flex;
-    gap: 3rem;
-    padding-top: 2rem;
-    border-top: 1px solid var(--border);
-}
-.hero-stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-.hero-stat-label {
-    color: var(--text-muted);
-    font-size: 0.875rem;
-}
-
-/* ========================================
-   FEATURES SECTION
-   ======================================== */
-.features-section {
-    padding: 6rem 0;
-    background: var(--bg-white);
-}
-.feature-card {
-    background: var(--bg-white);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 2rem;
-    height: 100%;
-    transition: all var(--transition);
-}
-.feature-card:hover {
-    box-shadow: var(--shadow-lg);
-    border-color: transparent;
-    transform: translateY(-4px);
-}
-.feature-icon {
-    width: 56px;
-    height: 56px;
-    background: var(--primary-light);
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1.25rem;
-}
-.feature-icon i {
-    font-size: 1.5rem;
-    color: var(--primary);
-}
-.feature-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 0.75rem;
-}
-.feature-desc {
-    color: var(--text-muted);
-    font-size: 0.95rem;
-    line-height: 1.6;
-    margin: 0;
-}
-
-/* ========================================
-   PRICING SECTION
-   ======================================== */
-.pricing-section {
-    padding: 6rem 0;
-    background: var(--bg-light);
-}
-.plan-card {
-    background: var(--bg-white);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 2rem;
-    height: 100%;
-    transition: all var(--transition);
-    position: relative;
-}
-.plan-card:hover {
-    box-shadow: var(--shadow-lg);
-}
-.plan-card.popular {
-    border: 2px solid var(--primary);
-    box-shadow: var(--shadow-xl);
-}
-.plan-badge {
-    position: absolute;
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--primary);
-    color: var(--text-white);
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.35rem 1rem;
-    border-radius: var(--radius-full);
-}
-.plan-name {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 0.5rem;
-}
-.plan-price {
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--primary);
-    margin-bottom: 0.25rem;
-}
-.plan-price span {
-    font-size: 1rem;
-    font-weight: 400;
-    color: var(--text-muted);
-}
-.plan-trial {
-    color: var(--success);
-    font-size: 0.875rem;
-    margin-bottom: 1.5rem;
-}
-.plan-features {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 1.5rem;
-}
-.plan-features li {
-    padding: 0.5rem 0;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-.plan-features li i {
-    color: var(--success);
-    font-size: 0.85rem;
-}
-
-/* ========================================
-   CTA SECTION
-   ======================================== */
-.cta-section {
-    padding: 5rem 0;
-    background: var(--bg-white);
-    text-align: center;
-}
-.cta-card {
-    background: var(--dark);
-    border-radius: var(--radius-xl);
-    padding: 4rem;
-    position: relative;
-    overflow: hidden;
-}
-.cta-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 40%;
-    height: 100%;
-    background: radial-gradient(circle at 100% 0%, var(--primary) 0%, transparent 50%);
-    opacity: 0.15;
-}
-.cta-content {
-    position: relative;
-    z-index: 1;
-}
-.cta-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-white);
-    margin-bottom: 1rem;
-}
-.cta-subtitle {
-    color: var(--dark-text-muted);
-    font-size: 1.1rem;
-    margin-bottom: 2rem;
-}
-
-/* ========================================
-   RESPONSIVE
-   ======================================== */
-@media (max-width: 768px) {
-    .hero {
-        padding: 5rem 0 3rem;
-    }
-    .hero-title {
-        font-size: 2.25rem;
-    }
-    .hero-stats {
-        gap: 2rem;
-    }
-    .hero-stat-value {
-        font-size: 1.5rem;
-    }
-    .cta-card {
-        padding: 2.5rem 1.5rem;
-    }
-}
-</style>
-
 <!-- Hero Section -->
-<section class="hero">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-7">
-                <div class="hero-content">
-                    <div class="hero-badge">
-                        <i class="fas fa-bolt"></i>
-                        Попробуйте бесплатно 14 дней
+<section class="relative bg-white overflow-hidden">
+    <!-- Background gradient -->
+    <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-bl from-gray-100 to-transparent pointer-events-none"></div>
+
+    <div class="container mx-auto px-4 py-20 lg:py-28 relative">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+                <!-- Badge -->
+                <div class="inline-flex items-center gap-2 bg-gray-100 text-orange-600 px-4 py-2 rounded-full text-sm font-semibold mb-6 border border-gray-200">
+                    <i class="fas fa-bolt"></i>
+                    <span>Запуск за 15 минут</span>
+                </div>
+
+                <h1 class="text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-6">
+                    CRM для <span class="text-orange-500">учебных центров</span>
+                </h1>
+
+                <p class="text-lg text-gray-600 mb-8 max-w-lg leading-relaxed">
+                    Ученики, группы, расписание, платежи, лиды — всё в одной системе.
+                    Освободите время для развития бизнеса.
+                </p>
+
+                <div class="flex flex-wrap gap-4 mb-10">
+                    <a href="<?= Url::to(['/register']) ?>" class="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold transition-all hover:shadow-lg">
+                        Попробовать бесплатно <i class="fas fa-arrow-right"></i>
+                    </a>
+                    <a href="<?= Url::to(['/features']) ?>" class="inline-flex items-center gap-2 border-2 border-gray-200 hover:border-orange-500 text-gray-700 hover:text-orange-500 px-6 py-3 rounded-lg font-medium transition-all">
+                        Возможности
+                    </a>
+                </div>
+
+                <!-- Stats -->
+                <div class="flex flex-wrap gap-4 md:gap-8 pt-8 border-t border-gray-200">
+                    <?php foreach ($stats as $stat): ?>
+                    <div>
+                        <div class="text-xl md:text-2xl lg:text-3xl font-extrabold text-orange-500"><?= Html::encode($stat['value']) ?></div>
+                        <div class="text-xs md:text-sm text-gray-500"><?= Html::encode($stat['label']) ?></div>
                     </div>
-                    <h1 class="hero-title">
-                        Управляйте учебным центром <span>эффективно</span>
-                    </h1>
-                    <p class="hero-subtitle">
-                        Автоматизируйте учёт учеников, расписание, платежи и отчётность. Всё в одной системе, созданной для учебных центров Казахстана.
-                    </p>
-                    <div class="hero-buttons">
-                        <a href="<?= Url::to(['/register']) ?>" class="btn btn-primary btn-lg">
-                            Начать бесплатно <i class="fas fa-arrow-right ml-2"></i>
-                        </a>
-                        <a href="<?= Url::to(['/features']) ?>" class="btn btn-light btn-lg">
-                            Узнать больше
-                        </a>
-                    </div>
-                    <div class="hero-stats">
-                        <div class="hero-stat">
-                            <div class="hero-stat-value">200+</div>
-                            <div class="hero-stat-label">Учебных центров</div>
-                        </div>
-                        <div class="hero-stat">
-                            <div class="hero-stat-value">15K+</div>
-                            <div class="hero-stat-label">Учеников</div>
-                        </div>
-                        <div class="hero-stat">
-                            <div class="hero-stat-value">99%</div>
-                            <div class="hero-stat-label">Довольных клиентов</div>
-                        </div>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
-            <div class="col-lg-5 d-none d-lg-block">
-                <!-- Illustration placeholder -->
+
+            <!-- Dashboard Screenshot -->
+            <div class="mt-8 lg:mt-0">
+                <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 overflow-hidden">
+                    <img src="<?= Yii::$app->request->baseUrl ?>/images/screenshots/crm-dashboard.png"
+                         alt="Dashboard CRM - учебный центр"
+                         class="rounded-xl w-full h-auto"
+                         loading="lazy">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Trusted By -->
+<section class="bg-gray-50 py-10 border-y border-gray-100">
+    <div class="container mx-auto px-4 text-center">
+        <p class="text-sm text-gray-400 uppercase tracking-wider mb-6">Нам доверяют учебные центры</p>
+        <div class="flex flex-wrap items-center justify-center gap-8 lg:gap-12 opacity-60">
+            <span class="text-xl font-bold text-gray-500">StudyLab</span>
+            <span class="text-xl font-bold text-gray-500">EduPro</span>
+            <span class="text-xl font-bold text-gray-500">SmartKids</span>
+            <span class="text-xl font-bold text-gray-500">LangSchool</span>
+            <span class="text-xl font-bold text-gray-500">TechAcademy</span>
+        </div>
+    </div>
+</section>
+
+<!-- Problems Section -->
+<section class="py-20 bg-white">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <span class="inline-block bg-gray-100 text-orange-600 px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wide mb-4">Проблемы</span>
+            <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Знакомые ситуации?</h2>
+            <p class="text-lg text-gray-600 max-w-xl mx-auto">Эти проблемы решает Qazaq Education CRM</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white border border-gray-100 rounded-xl p-6 hover:border-red-300 hover:shadow-lg transition-all group">
+                <div class="w-12 h-12 bg-red-100 text-red-500 rounded-lg flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-file-excel"></i>
+                </div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Excel-хаос</h4>
+                <p class="text-gray-600 text-sm leading-relaxed">Десятки таблиц, которые путаются и теряются. Данные дублируются и устаревают.</p>
+            </div>
+
+            <div class="bg-white border border-gray-100 rounded-xl p-6 hover:border-red-300 hover:shadow-lg transition-all group">
+                <div class="w-12 h-12 bg-red-100 text-red-500 rounded-lg flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Деньги уходят</h4>
+                <p class="text-gray-600 text-sm leading-relaxed">Непонятно кто должен, сколько заработали, куда тратятся деньги.</p>
+            </div>
+
+            <div class="bg-white border border-gray-100 rounded-xl p-6 hover:border-red-300 hover:shadow-lg transition-all group">
+                <div class="w-12 h-12 bg-red-100 text-red-500 rounded-lg flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-user-slash"></i>
+                </div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Лиды теряются</h4>
+                <p class="text-gray-600 text-sm leading-relaxed">Заявки забываются, не перезваниваем вовремя, клиенты уходят к конкурентам.</p>
+            </div>
+
+            <div class="bg-white border border-gray-100 rounded-xl p-6 hover:border-red-300 hover:shadow-lg transition-all group">
+                <div class="w-12 h-12 bg-red-100 text-red-500 rounded-lg flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-calendar-times"></i>
+                </div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Расписание — ад</h4>
+                <p class="text-gray-600 text-sm leading-relaxed">Конфликты, накладки, преподаватель не знает когда урок.</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- Features Section -->
-<section class="features-section">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="section-title">Всё для управления учебным центром</h2>
-            <p class="section-subtitle">Забудьте о таблицах Excel и бумажных журналах</p>
+<section class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <span class="inline-block bg-gray-100 text-orange-600 px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wide mb-4">Возможности</span>
+            <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Всё что нужно для работы</h2>
+            <p class="text-lg text-gray-600 max-w-xl mx-auto">Полный набор инструментов для управления учебным центром</p>
         </div>
 
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-user-graduate"></i>
-                    </div>
-                    <h3 class="feature-title">Учёт учеников</h3>
-                    <p class="feature-desc">Полная база учеников с контактами, историей обучения и платежей. Поиск и фильтрация в один клик.</p>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-white border border-gray-100 rounded-xl p-6 hover:border-orange-300 hover:shadow-lg hover:-translate-y-1 transition-all">
+                <div class="w-12 h-12 bg-blue-100 text-blue-500 rounded-lg flex items-center justify-center text-xl mb-4">
+                    <i class="fas fa-users"></i>
                 </div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">База учеников</h4>
+                <p class="text-gray-600 text-sm leading-relaxed">Полная информация о каждом ученике: контакты, история, платежи, посещаемость.</p>
             </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <h3 class="feature-title">Расписание</h3>
-                    <p class="feature-desc">Удобное расписание занятий по группам и преподавателям. Отметка посещаемости в пару кликов.</p>
+
+            <div class="bg-white border border-gray-100 rounded-xl p-6 hover:border-orange-300 hover:shadow-lg hover:-translate-y-1 transition-all">
+                <div class="w-12 h-12 bg-green-100 text-green-500 rounded-lg flex items-center justify-center text-xl mb-4">
+                    <i class="fas fa-layer-group"></i>
                 </div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Группы</h4>
+                <p class="text-gray-600 text-sm leading-relaxed">Создавайте группы, назначайте преподавателей, управляйте составом.</p>
             </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
-                    <h3 class="feature-title">Финансы</h3>
-                    <p class="feature-desc">Приём платежей, контроль задолженностей, автоматические напоминания. Интеграция с Kaspi.</p>
+
+            <div class="bg-white border border-gray-100 rounded-xl p-6 hover:border-orange-300 hover:shadow-lg hover:-translate-y-1 transition-all">
+                <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-lg flex items-center justify-center text-xl mb-4">
+                    <i class="fas fa-calendar-alt"></i>
                 </div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Расписание</h4>
+                <p class="text-gray-600 text-sm leading-relaxed">Визуальный календарь с drag & drop. Шаблоны и проверка конфликтов.</p>
             </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <h3 class="feature-title">Группы</h3>
-                    <p class="feature-desc">Создание групп по уровням и направлениям. Гибкое управление составом и расписанием.</p>
+
+            <div class="bg-white border border-gray-100 rounded-xl p-6 hover:border-orange-300 hover:shadow-lg hover:-translate-y-1 transition-all">
+                <div class="w-12 h-12 bg-purple-100 text-purple-500 rounded-lg flex items-center justify-center text-xl mb-4">
+                    <i class="fas fa-funnel-dollar"></i>
                 </div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">CRM и Лиды</h4>
+                <p class="text-gray-600 text-sm leading-relaxed">Kanban-доска, воронка продаж, скрипты, автоматические напоминания.</p>
             </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h3 class="feature-title">Отчёты</h3>
-                    <p class="feature-desc">Наглядные отчёты по посещаемости, финансам и эффективности. Принимайте решения на основе данных.</p>
+
+            <div class="bg-white border border-gray-100 rounded-xl p-6 hover:border-orange-300 hover:shadow-lg hover:-translate-y-1 transition-all">
+                <div class="w-12 h-12 bg-cyan-100 text-cyan-500 rounded-lg flex items-center justify-center text-xl mb-4">
+                    <i class="fas fa-credit-card"></i>
                 </div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Платежи</h4>
+                <p class="text-gray-600 text-sm leading-relaxed">Приём оплат, контроль долгов, печать квитанций, история транзакций.</p>
             </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
-                    <h3 class="feature-title">SMS уведомления</h3>
-                    <p class="feature-desc">Автоматические SMS напоминания о занятиях и платежах. Экономьте время администраторов.</p>
+
+            <div class="bg-white border border-gray-100 rounded-xl p-6 hover:border-orange-300 hover:shadow-lg hover:-translate-y-1 transition-all">
+                <div class="w-12 h-12 bg-pink-100 text-pink-500 rounded-lg flex items-center justify-center text-xl mb-4">
+                    <i class="fas fa-chart-pie"></i>
                 </div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Отчёты</h4>
+                <p class="text-gray-600 text-sm leading-relaxed">10+ видов отчётов: финансы, продажи, посещаемость, эффективность.</p>
             </div>
         </div>
 
-        <div class="text-center mt-5">
-            <a href="<?= Url::to(['/features']) ?>" class="btn btn-outline-primary btn-lg">
-                Все возможности <i class="fas fa-arrow-right ml-2"></i>
+        <div class="text-center mt-10">
+            <a href="<?= Url::to(['/features']) ?>" class="inline-flex items-center gap-2 border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-6 py-3 rounded-lg font-semibold transition-all">
+                Все возможности <i class="fas fa-arrow-right"></i>
             </a>
         </div>
     </div>
 </section>
 
-<!-- Pricing Preview -->
-<section class="pricing-section">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="section-title">Прозрачные тарифы</h2>
-            <p class="section-subtitle">Начните бесплатно, масштабируйтесь по мере роста</p>
+<!-- CRM Highlight -->
+<section class="py-20 bg-white">
+    <div class="container mx-auto px-4">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+                <span class="inline-block bg-gray-100 text-orange-600 px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wide mb-4">CRM</span>
+                <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Превращайте лидов в учеников</h2>
+                <p class="text-lg text-gray-600 mb-8 leading-relaxed">
+                    Полноценная CRM-система для работы с заявками. Kanban-доска, скрипты продаж,
+                    автоматические напоминания — всё для увеличения конверсии.
+                </p>
+
+                <ul class="space-y-4">
+                    <li class="flex items-start gap-3">
+                        <i class="fas fa-check text-green-500 mt-1"></i>
+                        <span class="text-gray-700"><strong class="text-gray-900">Kanban-доска</strong> — перетаскивайте лидов между этапами</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fas fa-check text-green-500 mt-1"></i>
+                        <span class="text-gray-700"><strong class="text-gray-900">Скрипты продаж</strong> — готовые сценарии для менеджеров</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fas fa-check text-green-500 mt-1"></i>
+                        <span class="text-gray-700"><strong class="text-gray-900">Напоминания</strong> — система не даст забыть о звонке</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fas fa-check text-green-500 mt-1"></i>
+                        <span class="text-gray-700"><strong class="text-gray-900">Аналитика воронки</strong> — конверсия на каждом этапе</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fas fa-check text-green-500 mt-1"></i>
+                        <span class="text-gray-700"><strong class="text-gray-900">Конвертация в 1 клик</strong> — превращайте лида в ученика</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Kanban Screenshot -->
+            <div class="bg-white border border-gray-200 rounded-xl p-2 shadow-xl overflow-hidden">
+                <img src="<?= Yii::$app->request->baseUrl ?>/images/screenshots/crm-kanban.png"
+                     alt="CRM Kanban доска - воронка продаж"
+                     class="rounded-lg w-full h-auto"
+                     loading="lazy">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Access Control -->
+<section class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <span class="inline-block bg-gray-100 text-orange-600 px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wide mb-4">Безопасность</span>
+            <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Гибкие права доступа</h2>
+            <p class="text-lg text-gray-600">Каждый сотрудник видит только то, что ему нужно</p>
         </div>
 
-        <div class="row g-4 justify-content-center">
-            <?php foreach ($plans as $index => $plan): ?>
-            <div class="col-md-6 col-lg-4">
-                <div class="plan-card <?= $index === 1 ? 'popular' : '' ?>">
-                    <?php if ($index === 1): ?>
-                    <div class="plan-badge">Популярный</div>
-                    <?php endif; ?>
-                    <div class="plan-name"><?= Html::encode($plan->name) ?></div>
-                    <div class="plan-price">
-                        <?= $plan->getFormattedPriceMonthly() ?>
-                        <?php if ($plan->price_monthly > 0): ?>
-                        <span>/мес</span>
-                        <?php endif; ?>
-                    </div>
-                    <div class="plan-trial">
-                        <i class="fas fa-gift mr-1"></i> <?= $plan->trial_days ?> дней бесплатно
-                    </div>
-                    <ul class="plan-features">
-                        <li><i class="fas fa-check"></i> <?= $plan->max_pupils ?: '∞' ?> учеников</li>
-                        <li><i class="fas fa-check"></i> <?= $plan->max_teachers ?: '∞' ?> преподавателей</li>
-                        <li><i class="fas fa-check"></i> <?= $plan->max_groups ?: '∞' ?> групп</li>
-                        <?php if ($plan->hasFeature('sms')): ?>
-                        <li><i class="fas fa-check"></i> SMS уведомления</li>
-                        <?php endif; ?>
-                        <?php if ($plan->hasFeature('reports')): ?>
-                        <li><i class="fas fa-check"></i> Расширенные отчёты</li>
-                        <?php endif; ?>
-                    </ul>
-                    <a href="<?= Url::to(['/register']) ?>" class="btn <?= $index === 1 ? 'btn-primary' : 'btn-outline-primary' ?> btn-block">
-                        Начать бесплатно
-                    </a>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6">
+            <div class="bg-white border border-gray-100 rounded-xl p-5 text-center hover:border-orange-300 hover:shadow-md transition-all">
+                <div class="w-14 h-14 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-3">
+                    <i class="fas fa-crown"></i>
                 </div>
+                <h5 class="font-bold text-gray-900 mb-1">Директор</h5>
+                <p class="text-xs text-gray-500">Полный доступ ко всем функциям</p>
+            </div>
+
+            <div class="bg-white border border-gray-100 rounded-xl p-5 text-center hover:border-orange-300 hover:shadow-md transition-all">
+                <div class="w-14 h-14 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-3">
+                    <i class="fas fa-user-cog"></i>
+                </div>
+                <h5 class="font-bold text-gray-900 mb-1">Админ</h5>
+                <p class="text-xs text-gray-500">Ученики, группы, расписание</p>
+            </div>
+
+            <div class="bg-white border border-gray-100 rounded-xl p-5 text-center hover:border-orange-300 hover:shadow-md transition-all">
+                <div class="w-14 h-14 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-3">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <h5 class="font-bold text-gray-900 mb-1">Менеджер</h5>
+                <p class="text-xs text-gray-500">Лиды, звонки, продажи</p>
+            </div>
+
+            <div class="bg-white border border-gray-100 rounded-xl p-5 text-center hover:border-orange-300 hover:shadow-md transition-all">
+                <div class="w-14 h-14 bg-purple-100 text-purple-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-3">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <h5 class="font-bold text-gray-900 mb-1">Учитель</h5>
+                <p class="text-xs text-gray-500">Свои группы и расписание</p>
+            </div>
+
+            <div class="bg-white border border-gray-100 rounded-xl p-5 text-center hover:border-orange-300 hover:shadow-md transition-all col-span-2 md:col-span-1">
+                <div class="w-14 h-14 bg-yellow-100 text-yellow-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-3">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <h5 class="font-bold text-gray-900 mb-1">Бухгалтер</h5>
+                <p class="text-xs text-gray-500">Платежи и отчёты</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="py-20 bg-white">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <span class="inline-block bg-gray-100 text-orange-600 px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wide mb-4">Отзывы</span>
+            <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Что говорят клиенты</h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="bg-white border border-gray-100 rounded-xl p-6">
+                <div class="flex gap-1 text-yellow-400 mb-4">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                </div>
+                <p class="text-gray-700 leading-relaxed mb-6 italic">
+                    "Наконец-то избавились от Excel! Теперь всё в одном месте, ничего не теряется.
+                    Конверсия выросла на 40% благодаря CRM-модулю."
+                </p>
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center font-bold">АК</div>
+                    <div>
+                        <h5 class="font-semibold text-gray-900">Айгуль К.</h5>
+                        <p class="text-sm text-gray-500">Директор StudyLab</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-gray-100 rounded-xl p-6">
+                <div class="flex gap-1 text-yellow-400 mb-4">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                </div>
+                <p class="text-gray-700 leading-relaxed mb-6 italic">
+                    "Расписание — просто огонь! Drag & drop, проверка конфликтов. Раньше тратили
+                    час на составление, теперь 10 минут."
+                </p>
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center font-bold">МТ</div>
+                    <div>
+                        <h5 class="font-semibold text-gray-900">Марат Т.</h5>
+                        <p class="text-sm text-gray-500">Основатель EduPro</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-gray-100 rounded-xl p-6">
+                <div class="flex gap-1 text-yellow-400 mb-4">
+                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                </div>
+                <p class="text-gray-700 leading-relaxed mb-6 italic">
+                    "Отчёты помогают видеть реальную картину. Поняли где теряем деньги и оптимизировали
+                    расходы на 25%."
+                </p>
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center font-bold">ДС</div>
+                    <div>
+                        <h5 class="font-semibold text-gray-900">Динара С.</h5>
+                        <p class="text-sm text-gray-500">CEO SmartKids</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why Us -->
+<section class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <span class="inline-block bg-gray-100 text-orange-600 px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wide mb-4">Преимущества</span>
+            <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900">Почему выбирают нас</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="text-center p-6">
+                <div class="w-16 h-16 bg-orange-100 text-orange-500 rounded-xl flex items-center justify-center text-2xl mx-auto mb-4">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Быстрый старт</h4>
+                <p class="text-gray-600 text-sm">Регистрация за 2 минуты. Начните работать сразу, без настройки.</p>
+            </div>
+
+            <div class="text-center p-6">
+                <div class="w-16 h-16 bg-orange-100 text-orange-500 rounded-xl flex items-center justify-center text-2xl mx-auto mb-4">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Поддержка 24/7</h4>
+                <p class="text-gray-600 text-sm">Отвечаем в Telegram и WhatsApp. Помогаем с настройкой.</p>
+            </div>
+
+            <div class="text-center p-6">
+                <div class="w-16 h-16 bg-orange-100 text-orange-500 rounded-xl flex items-center justify-center text-2xl mx-auto mb-4">
+                    <i class="fas fa-sync"></i>
+                </div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Обновления</h4>
+                <p class="text-gray-600 text-sm">Регулярно добавляем новые функции по запросам клиентов.</p>
+            </div>
+
+            <div class="text-center p-6">
+                <div class="w-16 h-16 bg-orange-100 text-orange-500 rounded-xl flex items-center justify-center text-2xl mx-auto mb-4">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h4 class="text-lg font-bold text-gray-900 mb-2">Безопасность</h4>
+                <p class="text-gray-600 text-sm">Данные защищены, ежедневные бэкапы, SSL-шифрование.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing -->
+<?php if (!empty($plans)): ?>
+<section class="py-20 bg-white">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-12">
+            <span class="inline-block bg-gray-100 text-orange-600 px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wide mb-4">Тарифы</span>
+            <h2 class="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-4">Простые и понятные цены</h2>
+            <p class="text-lg text-gray-600">14 дней бесплатно на любом тарифе</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <?php foreach ($plans as $i => $plan): ?>
+            <div class="relative bg-white border-2 <?= $i === 1 ? 'border-orange-500 shadow-xl' : 'border-gray-100' ?> rounded-2xl p-8 text-center hover:border-orange-300 transition-all">
+                <?php if ($i === 1): ?>
+                <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs font-semibold px-4 py-1 rounded-full">Популярный</span>
+                <?php endif; ?>
+                <div class="text-xl font-bold text-gray-900 mb-2"><?= Html::encode($plan->name) ?></div>
+                <div class="text-4xl font-extrabold text-orange-500 mb-1"><?= $plan->price_monthly > 0 ? number_format($plan->price_monthly, 0, '', ' ') . ' ₸' : 'Бесплатно' ?></div>
+                <div class="text-sm text-gray-500 mb-6"><?= $plan->price_monthly > 0 ? 'в месяц' : '' ?></div>
+                <ul class="text-left space-y-3 mb-6">
+                    <li class="flex items-center gap-2 text-gray-700"><i class="fas fa-check text-green-500"></i> До <?= $plan->max_pupils ?: '∞' ?> учеников</li>
+                    <li class="flex items-center gap-2 text-gray-700"><i class="fas fa-check text-green-500"></i> До <?= $plan->max_teachers ?: '∞' ?> учителей</li>
+                    <li class="flex items-center gap-2 text-gray-700"><i class="fas fa-check text-green-500"></i> Все функции CRM</li>
+                    <li class="flex items-center gap-2 text-gray-700"><i class="fas fa-check text-green-500"></i> Техподдержка</li>
+                </ul>
+                <a href="<?= Url::to(['/register']) ?>" class="block w-full py-3 rounded-lg font-semibold transition-all <?= $i === 1 ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white' ?>">
+                    Попробовать бесплатно
+                </a>
             </div>
             <?php endforeach; ?>
         </div>
-
-        <div class="text-center mt-4">
-            <a href="<?= Url::to(['/pricing']) ?>" class="text-muted">
-                Сравнить все тарифы <i class="fas fa-arrow-right ml-1"></i>
-            </a>
-        </div>
     </div>
 </section>
+<?php endif; ?>
 
-<!-- CTA Section -->
-<section class="cta-section">
-    <div class="container">
-        <div class="cta-card">
-            <div class="cta-content">
-                <h2 class="cta-title">Готовы автоматизировать ваш учебный центр?</h2>
-                <p class="cta-subtitle">Присоединяйтесь к сотням учебных центров Казахстана</p>
-                <a href="<?= Url::to(['/register']) ?>" class="btn btn-primary btn-lg">
-                    Попробовать бесплатно <i class="fas fa-arrow-right ml-2"></i>
-                </a>
-            </div>
+<!-- CTA -->
+<section class="py-20 bg-gradient-to-r from-gray-900 to-gray-800 text-center">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl lg:text-4xl font-extrabold text-white mb-4">Готовы упростить управление?</h2>
+        <p class="text-lg text-gray-400 mb-8 max-w-md mx-auto">Начните бесплатный период прямо сейчас. Без привязки карты.</p>
+        <a href="<?= Url::to(['/register']) ?>" class="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all hover:shadow-lg">
+            Начать бесплатно <i class="fas fa-arrow-right"></i>
+        </a>
+        <div class="flex flex-wrap justify-center gap-6 mt-8">
+            <span class="flex items-center gap-2 text-gray-400"><i class="fas fa-check text-green-500"></i> 14 дней бесплатно</span>
+            <span class="flex items-center gap-2 text-gray-400"><i class="fas fa-check text-green-500"></i> Без привязки карты</span>
+            <span class="flex items-center gap-2 text-gray-400"><i class="fas fa-check text-green-500"></i> Полный функционал</span>
         </div>
     </div>
 </section>

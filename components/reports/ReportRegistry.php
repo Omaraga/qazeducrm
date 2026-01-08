@@ -3,6 +3,7 @@
 namespace app\components\reports;
 
 use app\helpers\OrganizationRoles;
+use app\helpers\RoleChecker;
 use app\helpers\SystemRoles;
 use Yii;
 
@@ -49,7 +50,7 @@ class ReportRegistry
             'label' => 'Ученики',
             'icon' => 'users',
             'description' => 'Посещаемость, набор, отток',
-            'roles' => [SystemRoles::SUPER, OrganizationRoles::GENERAL_DIRECTOR, OrganizationRoles::DIRECTOR, OrganizationRoles::ADMIN],
+            'roles' => [SystemRoles::SUPER, OrganizationRoles::GENERAL_DIRECTOR, OrganizationRoles::DIRECTOR, OrganizationRoles::ADMIN, OrganizationRoles::TEACHER],
         ],
         self::CATEGORY_TEACHERS => [
             'label' => 'Учителя',
@@ -151,19 +152,20 @@ class ReportRegistry
      */
     public static function getAccessibleCategories(): array
     {
-        $user = Yii::$app->user;
         $result = [];
 
-        foreach (self::CATEGORIES as $categoryId => $category) {
-            $hasAccess = false;
-            foreach ($category['roles'] as $role) {
-                if ($user->can($role)) {
-                    $hasAccess = true;
-                    break;
-                }
-            }
+        // SUPER имеет доступ ко всем категориям
+        if (RoleChecker::isSuper()) {
+            return self::CATEGORIES;
+        }
 
-            if ($hasAccess) {
+        $currentRole = RoleChecker::getCurrentRole();
+        if (!$currentRole) {
+            return $result;
+        }
+
+        foreach (self::CATEGORIES as $categoryId => $category) {
+            if (in_array($currentRole, $category['roles'])) {
                 $result[$categoryId] = $category;
             }
         }

@@ -1,6 +1,7 @@
 <?php
 
 use app\helpers\OrganizationUrl;
+use app\helpers\RoleChecker;
 use app\models\LidHistory;
 use app\models\Lids;
 use app\widgets\tailwind\Icon;
@@ -10,6 +11,8 @@ use yii\helpers\Html;
 /** @var yii\web\View $this */
 /** @var app\models\Lids $model */
 /** @var app\models\LidHistory[] $histories */
+
+$canDelete = RoleChecker::canDeleteLids();
 
 $this->title = $model->fio ?: 'Лид #' . $model->id;
 $this->params['breadcrumbs'][] = ['label' => 'Лиды', 'url' => OrganizationUrl::to(['index'])];
@@ -52,14 +55,16 @@ $contactName = $model->getContactName();
                 <?= Icon::show('pencil', 'sm') ?>
                 Редактировать
             </a>
-            <?= Html::a(Icon::show('trash', 'sm') . ' Удалить',
-                OrganizationUrl::to(['lids/delete', 'id' => $model->id]), [
-                'class' => 'btn btn-danger',
-                'data' => [
-                    'confirm' => 'Вы действительно хотите удалить лид?',
-                    'method' => 'post',
-                ],
-            ]) ?>
+            <?php if ($canDelete): ?>
+                <?= Html::a(Icon::show('trash', 'sm') . ' Удалить',
+                    OrganizationUrl::to(['lids/delete', 'id' => $model->id]), [
+                    'class' => 'btn btn-danger',
+                    'data' => [
+                        'confirm' => 'Вы действительно хотите удалить лид?',
+                        'method' => 'post',
+                    ],
+                ]) ?>
+            <?php endif; ?>
         </div>
     </div>
 

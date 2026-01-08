@@ -44,9 +44,9 @@
     --dark: #1A1A2E;
     --dark-light: #2D2D44;
     --dark-lighter: #3D3D5C;
-    --dark-text: rgba(255, 255, 255, 0.9);
-    --dark-text-muted: rgba(255, 255, 255, 0.6);
-    --dark-border: rgba(255, 255, 255, 0.1);
+    --dark-text: rgba(255, 255, 255, 0.95);
+    --dark-text-muted: rgba(255, 255, 255, 0.75);  /* Improved contrast */
+    --dark-border: rgba(255, 255, 255, 0.12);
 
     /* ========================================
        STATUS COLORS
@@ -312,3 +312,60 @@ a:hover {
 .bg-white { background-color: var(--bg-white) !important; }
 
 .border-primary { border-color: var(--primary) !important; }
+
+/* ========================================
+   LANDING PAGE ACCESSIBILITY IMPROVEMENTS
+   ======================================== */
+
+/* Improved focus states */
+:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Skip to content link */
+.skip-to-content {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--primary);
+    color: var(--text-white);
+    padding: 8px 16px;
+    z-index: 10000;
+    text-decoration: none;
+}
+
+.skip-to-content:focus {
+    top: 0;
+}
+
+/* Improved landing nav contrast */
+.landing-nav .nav-link {
+    color: var(--dark-text-muted);
+}
+
+.landing-nav .nav-link:hover,
+.landing-nav .nav-link:focus {
+    color: var(--text-white);
+}
+
+/* Improved footer contrast */
+.landing-footer a {
+    color: var(--dark-text-muted);
+}
+
+.landing-footer a:hover,
+.landing-footer a:focus {
+    color: var(--primary);
+}
+
+/* Reduced motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

@@ -3,6 +3,7 @@
 namespace app\modules\crm\controllers;
 
 use app\helpers\OrganizationRoles;
+use app\helpers\RoleChecker;
 use app\helpers\SystemRoles;
 use app\models\Organizations;
 use app\models\services\TeacherService;
@@ -49,21 +50,42 @@ class SalaryController extends Controller
                             OrganizationRoles::GENERAL_DIRECTOR,
                         ]
                     ],
-                    // Учителя: только просмотр своих зарплат
+                    // Учителя: просмотр своих зарплат (по настройкам организации)
                     [
                         'allow' => true,
                         'actions' => ['index', 'view'],
-                        'roles' => [OrganizationRoles::TEACHER],
+                        'matchCallback' => function ($rule, $action) {
+                            // Директора всегда имеют доступ
+                            if (RoleChecker::isDirector()) {
+                                return true;
+                            }
+                            // Админы - по настройке организации
+                            if (RoleChecker::isAdminOnly()) {
+                                return RoleChecker::canAdminViewSalary();
+                            }
+                            // Учителя - по настройке организации
+                            if (RoleChecker::isTeacherOnly()) {
+                                return RoleChecker::canTeacherViewOwnSalary();
+                            }
+                            return false;
+                        }
                     ],
-                    // Админы и директора: полный доступ (кроме approve/pay/delete для админов)
+                    // Директора: полный доступ к остальным действиям
                     [
                         'allow' => true,
                         'roles' => [
                             SystemRoles::SUPER,
-                            OrganizationRoles::ADMIN,
                             OrganizationRoles::DIRECTOR,
                             OrganizationRoles::GENERAL_DIRECTOR,
                         ]
+                    ],
+                    // Админы: доступ к управлению ставками (по настройке)
+                    [
+                        'allow' => true,
+                        'actions' => ['rates', 'create-rate', 'update-rate', 'delete-rate'],
+                        'matchCallback' => function ($rule, $action) {
+                            return RoleChecker::canAdminViewSalary();
+                        }
                     ],
                     // Гости: запрет
                     [
@@ -84,11 +106,7 @@ class SalaryController extends Controller
 
         // Для учителей показываем только их зарплаты
         $params = Yii::$app->request->queryParams;
-        if (Yii::$app->user->can(OrganizationRoles::TEACHER)
-            && !Yii::$app->user->can(OrganizationRoles::ADMIN)
-            && !Yii::$app->user->can(OrganizationRoles::DIRECTOR)
-            && !Yii::$app->user->can(OrganizationRoles::GENERAL_DIRECTOR)
-        ) {
+        if (RoleChecker::isTeacherOnly()) {
             $params['TeacherSalarySearch']['teacher_id'] = Yii::$app->user->id;
         }
 

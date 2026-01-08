@@ -27,6 +27,7 @@ $config = [
         'teachers' => OrganizationUrl::to(['schedule/teachers']),
         'settings' => OrganizationUrl::to(['schedule/settings']),
         'saveSettings' => OrganizationUrl::to(['schedule/save-settings']),
+        'createTemplateFromSchedule' => OrganizationUrl::to(['schedule-template/create-from-schedule']),
     ],
     'initialData' => $initialData ?? null,
 ];
@@ -179,10 +180,33 @@ $config = [
                             <?= Icon::show('plus', 'xs') ?>
                             Добавить
                         </button>
-                        <a href="<?= OrganizationUrl::to(['/crm/schedule-template']) ?>" class="inline-flex items-center gap-1 px-3 py-2 sm:px-2 sm:py-1 text-xs rounded border border-gray-300 hover:bg-gray-50 active:bg-gray-100 cursor-pointer" title="Шаблоны">
-                            <?= Icon::show('template', 'xs') ?>
-                            <span class="hidden sm:inline">Шаблон</span>
-                        </a>
+                        <!-- Template dropdown -->
+                        <div class="relative" x-data="{ dropdownOpen: false }">
+                            <button type="button"
+                                    @click="dropdownOpen = !dropdownOpen"
+                                    class="inline-flex items-center gap-1 px-3 py-2 sm:px-2 sm:py-1 text-xs rounded border border-gray-300 hover:bg-gray-50 active:bg-gray-100 cursor-pointer"
+                                    title="Шаблоны">
+                                <?= Icon::show('template', 'xs') ?>
+                                <span class="hidden sm:inline">Шаблон</span>
+                                <?= Icon::show('chevron-down', 'xs') ?>
+                            </button>
+                            <div x-show="dropdownOpen"
+                                 @click.away="dropdownOpen = false"
+                                 x-transition
+                                 class="absolute left-0 sm:right-0 sm:left-auto mt-1 min-w-max bg-white rounded-lg shadow-lg border border-gray-200 z-50 py-1">
+                                <a href="<?= OrganizationUrl::to(['/crm/schedule-template']) ?>"
+                                   class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-700 hover:bg-gray-50 whitespace-nowrap">
+                                    <?= Icon::show('template', 'xs', 'text-gray-400') ?>
+                                    Все шаблоны
+                                </a>
+                                <button type="button"
+                                        @click="openSaveAsTemplateModal(); dropdownOpen = false"
+                                        class="w-full flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-700 hover:bg-gray-50 border-t border-gray-100 whitespace-nowrap">
+                                    <?= Icon::show('plus', 'xs', 'text-gray-400') ?>
+                                    Сохранить как шаблон
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <!-- View mode on mobile (right side of row 1) -->
                     <div class="flex items-center gap-1 sm:hidden">
@@ -588,6 +612,63 @@ $config = [
             </button>
         </div>
     </div>
+    <?php Modal::end(); ?>
+
+    <!-- Save as Template Modal -->
+    <?php Modal::begin([
+        'id' => 'save-template-modal',
+        'title' => 'Сохранить как шаблон',
+        'size' => 'md',
+    ]); ?>
+    <form @submit.prevent="saveAsTemplate()">
+        <div class="space-y-4">
+            <!-- Info -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div class="flex gap-2 text-sm">
+                    <?= Icon::show('information-circle', 'sm', 'text-blue-500 flex-shrink-0') ?>
+                    <p class="text-blue-700">Будут сохранены все занятия текущей недели как шаблон для повторного использования.</p>
+                </div>
+            </div>
+
+            <div>
+                <label class="form-label">Название шаблона</label>
+                <input type="text"
+                       x-model="saveTemplateForm.name"
+                       class="form-input"
+                       required
+                       placeholder="Например: Основное расписание">
+            </div>
+            <div>
+                <label class="form-label">Описание <span class="text-gray-400">(необязательно)</span></label>
+                <textarea x-model="saveTemplateForm.description"
+                          class="form-input"
+                          rows="2"
+                          placeholder="Краткое описание шаблона"></textarea>
+            </div>
+
+            <!-- Week info -->
+            <div class="bg-gray-50 rounded-lg p-3">
+                <div class="text-sm text-gray-600">
+                    <span class="font-medium">Период:</span>
+                    <span x-text="getWeekRangeText()"></span>
+                </div>
+                <div class="text-sm text-gray-600 mt-1">
+                    <span class="font-medium">Занятий в неделе:</span>
+                    <span x-text="getWeekEventsCount()"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer mt-6">
+            <button type="button" @click="$dispatch('close-modal', 'save-template-modal')" class="btn btn-secondary">
+                Отмена
+            </button>
+            <button type="submit" class="btn btn-primary" :disabled="savingTemplate">
+                <span x-show="savingTemplate" class="spinner spinner-sm mr-2"></span>
+                Создать шаблон
+            </button>
+        </div>
+    </form>
     <?php Modal::end(); ?>
 
     <!-- Onboarding Modal -->

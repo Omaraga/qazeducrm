@@ -173,8 +173,16 @@ class ScheduleController extends Controller
         $model = new Lesson();
 
         if ($model->load(\Yii::$app->request->post())) {
-            // Для учителя - проверка и назначение
+            // Для учителя - проверка прав и назначение
             if (RoleChecker::isTeacherOnly()) {
+                // Проверяем настройку организации - может ли учитель создавать занятия
+                if (!RoleChecker::canTeacherCreateLessons()) {
+                    return [
+                        'success' => false,
+                        'message' => 'У вас нет прав на создание занятий',
+                    ];
+                }
+
                 $teacherId = RoleChecker::getCurrentTeacherId();
 
                 // Проверяем, что группа принадлежит учителю
@@ -258,8 +266,8 @@ class ScheduleController extends Controller
         try {
             $model = $this->findModel($id);
 
-            // Проверка доступа учителя
-            if (!$this->checkTeacherLessonAccess($model)) {
+            // Проверка доступа на удаление (учитывает настройки организации)
+            if (!$this->checkTeacherLessonDeleteAccess($model)) {
                 return ['success' => false, 'message' => 'У вас нет прав на удаление этого занятия'];
             }
 
@@ -518,11 +526,43 @@ class ScheduleController extends Controller
      * @param Lesson $lesson
      * @return bool
      */
+    /**
+     * Проверка доступа учителя на редактирование занятия
+     * @param Lesson $lesson
+     * @return bool
+     */
     protected function checkTeacherLessonAccess(Lesson $lesson): bool
     {
         // Не учитель - доступ разрешен
         if (!RoleChecker::isTeacherOnly()) {
             return true;
+        }
+
+        // Проверяем настройку организации - может ли учитель редактировать занятия
+        if (!RoleChecker::canTeacherEditLessons()) {
+            return false;
+        }
+
+        // Учитель - проверяем, что это его занятие
+        $teacherId = RoleChecker::getCurrentTeacherId();
+        return $lesson->teacher_id === $teacherId;
+    }
+
+    /**
+     * Проверка доступа учителя на удаление занятия
+     * @param Lesson $lesson
+     * @return bool
+     */
+    protected function checkTeacherLessonDeleteAccess(Lesson $lesson): bool
+    {
+        // Не учитель - доступ разрешен
+        if (!RoleChecker::isTeacherOnly()) {
+            return true;
+        }
+
+        // Проверяем настройку организации - может ли учитель удалять занятия
+        if (!RoleChecker::canTeacherDeleteLessons()) {
+            return false;
         }
 
         // Учитель - проверяем, что это его занятие
