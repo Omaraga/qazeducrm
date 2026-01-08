@@ -90,7 +90,7 @@ $canonicalUrl = Yii::$app->request->absoluteUrl;
             <div class="flex items-center gap-4">
                 <?php if ($isGuest): ?>
                     <a href="<?= Url::to(['/login']) ?>" class="hidden sm:block text-gray-600 hover:text-orange-500 font-medium text-sm transition-colors">Войти</a>
-                    <a href="<?= Url::to(['/register']) ?>" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition-all shadow-sm hover:shadow-md">
+                    <a href="<?= Url::to(['/register']) ?>" class="hidden sm:inline-flex bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition-all shadow-sm hover:shadow-md">
                         Попробовать бесплатно
                     </a>
                 <?php else: ?>
