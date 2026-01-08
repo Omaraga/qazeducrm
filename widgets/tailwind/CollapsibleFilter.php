@@ -75,6 +75,11 @@ class CollapsibleFilter extends Widget
     public $cardClass = 'card';
 
     /**
+     * @var bool компактный режим (меньше отступы и шрифты)
+     */
+    public $compact = false;
+
+    /**
      * {@inheritdoc}
      */
     public function init()
@@ -126,8 +131,10 @@ class CollapsibleFilter extends Widget
 
         // Left side: icon + title + badge
         $html .= '<div class="flex items-center gap-2">';
-        $html .= '<span class="text-gray-400">' . Icon::show($this->icon, 'sm') . '</span>';
-        $html .= '<h3 class="text-lg font-semibold text-gray-900">' . Html::encode($this->title) . '</h3>';
+        $iconSize = $this->compact ? 'xs' : 'sm';
+        $titleClass = $this->compact ? 'text-sm font-medium text-gray-900' : 'text-lg font-semibold text-gray-900';
+        $html .= '<span class="text-gray-400">' . Icon::show($this->icon, $iconSize) . '</span>';
+        $html .= '<h3 class="' . $titleClass . '">' . Html::encode($this->title) . '</h3>';
 
         if ($this->badge !== null && $this->badge > 0) {
             $html .= StatusBadge::count($this->badge, ['color' => 'primary']);
@@ -145,7 +152,8 @@ class CollapsibleFilter extends Widget
 
         // Body
         $html .= '<div x-show="open" x-collapse>';
-        $html .= '<div class="card-body border-t border-gray-100">';
+        $bodyClass = $this->compact ? 'px-4 py-2 border-t border-gray-100' : 'card-body border-t border-gray-100';
+        $html .= '<div class="' . $bodyClass . '">';
         $html .= $this->content;
         $html .= '</div>';
         $html .= '</div>';

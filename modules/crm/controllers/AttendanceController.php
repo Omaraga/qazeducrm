@@ -4,12 +4,14 @@ namespace app\modules\crm\controllers;
 
 use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
+use app\helpers\RoleChecker;
 use app\helpers\SystemRoles;
 use app\models\forms\AttendancesForm;
 use app\models\Lesson;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
+use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 
 /**
@@ -56,9 +58,21 @@ class AttendanceController extends Controller
         return $this->render('index');
     }
 
+    /**
+     * Посещаемость урока
+     * Учитель может работать только со своими занятиями
+     *
+     * @param int $id
+     * @return string|\yii\web\Response
+     * @throws NotFoundHttpException|ForbiddenHttpException
+     */
     public function actionLesson($id)
     {
         $lesson = $this->findLesson($id);
+
+        // Проверка доступа учителя - может работать только со своими занятиями
+        $this->checkTeacherAccess($lesson);
+
         $model = new AttendancesForm();
 
         if ($this->request->isPost) {
@@ -71,6 +85,27 @@ class AttendanceController extends Controller
             'lesson' => $lesson,
             'model' => $model
         ]);
+    }
+
+    /**
+     * Проверка доступа учителя к занятию
+     * Учитель может работать только со своими занятиями
+     *
+     * @param Lesson $lesson
+     * @throws ForbiddenHttpException
+     */
+    protected function checkTeacherAccess(Lesson $lesson): void
+    {
+        // Не учитель - доступ разрешен
+        if (!RoleChecker::isTeacherOnly()) {
+            return;
+        }
+
+        // Учитель - проверяем, что это его занятие
+        $teacherId = RoleChecker::getCurrentTeacherId();
+        if ($lesson->teacher_id !== $teacherId) {
+            throw new ForbiddenHttpException('Вы не являетесь преподавателем этого занятия');
+        }
     }
 
     /**

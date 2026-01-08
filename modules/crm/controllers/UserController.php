@@ -3,6 +3,7 @@
 namespace app\modules\crm\controllers;
 
 use app\helpers\OrganizationRoles;
+use app\helpers\RoleChecker;
 use app\helpers\SystemRoles;
 use app\models\forms\TeacherForm;
 use app\models\search\UserSearch;
@@ -12,6 +13,7 @@ use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
+use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 
 /**
@@ -36,6 +38,17 @@ class UserController extends Controller
                 'access' => [
                     'class' => AccessControl::class,
                     'rules' => [
+                        // Сброс пароля - только для директоров и выше
+                        [
+                            'allow' => true,
+                            'actions' => ['reset-password'],
+                            'roles' => [
+                                SystemRoles::SUPER,
+                                OrganizationRoles::DIRECTOR,
+                                OrganizationRoles::GENERAL_DIRECTOR,
+                            ]
+                        ],
+                        // Остальные действия - для всех админов и выше
                         [
                             'allow' => true,
                             'roles' => [
@@ -145,6 +158,55 @@ class UserController extends Controller
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);
+    }
+
+    /**
+     * Сброс пароля сотрудника
+     * Доступно только для SUPER, GENERAL_DIRECTOR, DIRECTOR
+     * Нельзя сбросить пароль SUPER админу
+     *
+     * @param int $id
+     * @return string|\yii\web\Response
+     * @throws NotFoundHttpException|ForbiddenHttpException
+     */
+    public function actionResetPassword($id)
+    {
+        $model = $this->findModel($id);
+
+        // Нельзя сбросить пароль SUPER админу
+        if (Yii::$app->authManager->checkAccess($model->id, SystemRoles::SUPER)) {
+            throw new ForbiddenHttpException('Нельзя сбросить пароль суперадминистратору');
+        }
+
+        // Нельзя сбросить пароль самому себе через эту форму
+        if ($model->id === Yii::$app->user->id) {
+            throw new ForbiddenHttpException('Используйте профиль для изменения своего пароля');
+        }
+
+        if ($this->request->isPost) {
+            $newPassword = $this->request->post('new_password');
+            $confirmPassword = $this->request->post('confirm_password');
+
+            if (empty($newPassword)) {
+                Yii::$app->session->setFlash('error', 'Введите новый пароль');
+            } elseif (strlen($newPassword) < 6) {
+                Yii::$app->session->setFlash('error', 'Пароль должен быть не менее 6 символов');
+            } elseif ($newPassword !== $confirmPassword) {
+                Yii::$app->session->setFlash('error', 'Пароли не совпадают');
+            } else {
+                $model->setPassword($newPassword);
+                if ($model->save(false)) {
+                    Yii::$app->session->setFlash('success', 'Пароль успешно изменён');
+                    return $this->redirect(['view', 'id' => $model->id]);
+                } else {
+                    Yii::$app->session->setFlash('error', 'Ошибка при сохранении пароля');
+                }
+            }
+        }
+
+        return $this->render('reset-password', [
+            'model' => $model,
+        ]);
     }
 
     /**

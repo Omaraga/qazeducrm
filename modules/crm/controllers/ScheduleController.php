@@ -4,14 +4,17 @@ namespace app\modules\crm\controllers;
 
 use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
+use app\helpers\RoleChecker;
 use app\helpers\SystemRoles;
 use app\models\Lesson;
 use app\models\Organizations;
+use app\models\relations\TeacherGroup;
 use app\models\Room;
 use app\models\services\ScheduleConflictService;
 use app\models\services\ScheduleService;
 use yii\filters\AccessControl;
 use yii\web\Controller;
+use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
@@ -157,6 +160,7 @@ class ScheduleController extends Controller
 
     /**
      * AJAX: Создать урок (модальная форма)
+     * Для учителя: может создавать только для своих групп, автоматически назначается учителем
      */
     public function actionAjaxCreate()
     {
@@ -168,12 +172,35 @@ class ScheduleController extends Controller
 
         $model = new Lesson();
 
-        if ($model->load(\Yii::$app->request->post()) && $model->save()) {
-            return [
-                'success' => true,
-                'message' => 'Занятие успешно создано',
-                'id' => $model->id,
-            ];
+        if ($model->load(\Yii::$app->request->post())) {
+            // Для учителя - проверка и назначение
+            if (RoleChecker::isTeacherOnly()) {
+                $teacherId = RoleChecker::getCurrentTeacherId();
+
+                // Проверяем, что группа принадлежит учителю
+                $isTeacherOfGroup = TeacherGroup::find()
+                    ->where(['target_id' => $model->group_id, 'related_id' => $teacherId])
+                    ->notDeleted()
+                    ->exists();
+
+                if (!$isTeacherOfGroup) {
+                    return [
+                        'success' => false,
+                        'message' => 'Вы можете создавать занятия только для своих групп',
+                    ];
+                }
+
+                // Автоматически назначаем учителя
+                $model->teacher_id = $teacherId;
+            }
+
+            if ($model->save()) {
+                return [
+                    'success' => true,
+                    'message' => 'Занятие успешно создано',
+                    'id' => $model->id,
+                ];
+            }
         }
 
         return [
@@ -185,6 +212,7 @@ class ScheduleController extends Controller
 
     /**
      * AJAX: Обновить урок (модальная форма)
+     * Для учителя: может редактировать только свои занятия
      */
     public function actionAjaxUpdate($id)
     {
@@ -195,6 +223,11 @@ class ScheduleController extends Controller
         }
 
         $model = $this->findModel($id);
+
+        // Проверка доступа учителя
+        if (!$this->checkTeacherLessonAccess($model)) {
+            return ['success' => false, 'message' => 'У вас нет прав на редактирование этого занятия'];
+        }
 
         if ($model->load(\Yii::$app->request->post()) && $model->save()) {
             return [
@@ -212,6 +245,7 @@ class ScheduleController extends Controller
 
     /**
      * AJAX: Удалить урок
+     * Для учителя: может удалять только свои занятия
      */
     public function actionAjaxDelete($id)
     {
@@ -222,7 +256,14 @@ class ScheduleController extends Controller
         }
 
         try {
-            $this->findModel($id)->delete();
+            $model = $this->findModel($id);
+
+            // Проверка доступа учителя
+            if (!$this->checkTeacherLessonAccess($model)) {
+                return ['success' => false, 'message' => 'У вас нет прав на удаление этого занятия'];
+            }
+
+            $model->delete();
             return ['success' => true, 'message' => 'Занятие удалено'];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => 'Ошибка при удалении'];
@@ -232,6 +273,7 @@ class ScheduleController extends Controller
     /**
      * AJAX: Переместить урок (drag & drop)
      * POST: id, newDate, newStartTime
+     * Для учителя: может перемещать только свои занятия
      */
     public function actionMove()
     {
@@ -247,6 +289,12 @@ class ScheduleController extends Controller
 
         if (!$id || !$newDate || !$newStartTime) {
             return ['success' => false, 'message' => 'Недостаточно данных'];
+        }
+
+        // Проверка доступа учителя
+        $model = $this->findModel($id);
+        if (!$this->checkTeacherLessonAccess($model)) {
+            return ['success' => false, 'message' => 'У вас нет прав на перемещение этого занятия'];
         }
 
         if (ScheduleService::moveLesson($id, $newDate, $newStartTime)) {
@@ -461,6 +509,25 @@ class ScheduleController extends Controller
         }
 
         return ['success' => false, 'message' => 'Ошибка сохранения'];
+    }
+
+    /**
+     * Проверка доступа учителя к занятию
+     * Учитель может работать только со своими занятиями
+     *
+     * @param Lesson $lesson
+     * @return bool
+     */
+    protected function checkTeacherLessonAccess(Lesson $lesson): bool
+    {
+        // Не учитель - доступ разрешен
+        if (!RoleChecker::isTeacherOnly()) {
+            return true;
+        }
+
+        // Учитель - проверяем, что это его занятие
+        $teacherId = RoleChecker::getCurrentTeacherId();
+        return $lesson->teacher_id === $teacherId;
     }
 
     /**

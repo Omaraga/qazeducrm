@@ -43,13 +43,14 @@ class DefaultController extends Controller
 
     /**
      * Dashboard - главная страница CRM
+     * Отображает разные данные в зависимости от роли пользователя
      */
     public function actionIndex()
     {
         $this->view->title = 'Dashboard';
 
         $service = new DashboardService();
-        $stats = $service->getStatistics();
+        $stats = $service->getStatisticsForRole();
 
         return $this->render('index-tailwind', [
             'stats' => $stats,

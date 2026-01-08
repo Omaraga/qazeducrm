@@ -3,6 +3,7 @@
 namespace app\models\services;
 
 use app\helpers\DateHelper;
+use app\helpers\RoleChecker;
 use app\models\enum\StatusEnum;
 use app\models\Group;
 use app\models\Lesson;
@@ -10,6 +11,7 @@ use app\models\Lids;
 use app\models\Organizations;
 use app\models\Payment;
 use app\models\Pupil;
+use app\models\relations\TeacherGroup;
 use Yii;
 
 /**
@@ -212,5 +214,172 @@ class DashboardService
         }
 
         return $labels;
+    }
+
+    /**
+     * Получить статистику в зависимости от роли пользователя
+     * - Директор: полная статистика
+     * - Админ: без финансовых данных
+     * - Учитель: только свои данные
+     */
+    public function getStatisticsForRole(): array
+    {
+        if (RoleChecker::isTeacherOnly()) {
+            return $this->getTeacherDashboard();
+        }
+
+        if (!RoleChecker::hasFinanceAccess()) {
+            return $this->getAdminDashboard();
+        }
+
+        return $this->getStatistics();
+    }
+
+    /**
+     * Дашборд для учителя (только свои данные)
+     */
+    public function getTeacherDashboard(): array
+    {
+        $teacherId = RoleChecker::getCurrentTeacherId();
+
+        return [
+            // Счетчики учителя
+            'my_groups' => $this->getTeacherGroupsCount($teacherId),
+            'my_lessons_today' => $this->getTeacherTodayLessonsCount($teacherId),
+            'my_students' => $this->getTeacherStudentsCount($teacherId),
+
+            // Занятия учителя на сегодня
+            'today_lessons' => $this->getTeacherTodayLessons($teacherId, 10),
+
+            // Группы учителя
+            'my_groups_list' => $this->getTeacherGroupsList($teacherId, 5),
+
+            // Флаг - это дашборд учителя
+            'is_teacher_dashboard' => true,
+        ];
+    }
+
+    /**
+     * Дашборд для админа (без финансов)
+     */
+    public function getAdminDashboard(): array
+    {
+        return [
+            // Основные счётчики (без revenue)
+            'pupils' => $this->getPupilsCount(),
+            'groups' => $this->getActiveGroupsCount(),
+            'lessons_today' => $this->getTodayLessonsCount(),
+            'new_lids' => $this->getNewLidsCount(),
+
+            // Списки (без платежей)
+            'today_lessons' => $this->getTodayLessons(5),
+
+            // Флаг - это дашборд админа
+            'is_admin_dashboard' => true,
+        ];
+    }
+
+    /**
+     * Количество групп учителя
+     */
+    public function getTeacherGroupsCount(int $teacherId): int
+    {
+        return (int) TeacherGroup::find()
+            ->andWhere(['related_id' => $teacherId])
+            ->joinWith('group')
+            ->andWhere(['group.organization_id' => $this->organizationId])
+            ->andWhere(['group.status' => StatusEnum::STATUS_ACTIVE])
+            ->count();
+    }
+
+    /**
+     * Количество занятий учителя сегодня
+     */
+    public function getTeacherTodayLessonsCount(int $teacherId): int
+    {
+        return (int) Lesson::find()
+            ->andWhere(['organization_id' => $this->organizationId])
+            ->andWhere(['teacher_id' => $teacherId])
+            ->andWhere(['date' => $this->today])
+            ->count();
+    }
+
+    /**
+     * Количество учеников в группах учителя
+     */
+    public function getTeacherStudentsCount(int $teacherId): int
+    {
+        // Получаем ID групп учителя
+        $groupIds = TeacherGroup::find()
+            ->select('target_id')
+            ->andWhere(['related_id' => $teacherId])
+            ->column();
+
+        if (empty($groupIds)) {
+            return 0;
+        }
+
+        // Считаем уникальных учеников в этих группах через EducationGroup
+        return (int) \app\models\relations\EducationGroup::find()
+            ->select('pupil_id')
+            ->distinct()
+            ->andWhere(['group_id' => $groupIds])
+            ->count();
+    }
+
+    /**
+     * Занятия учителя сегодня
+     */
+    public function getTeacherTodayLessons(int $teacherId, int $limit = 5): array
+    {
+        $lessons = Lesson::find()
+            ->joinWith(['group'])
+            ->andWhere(['lesson.organization_id' => $this->organizationId])
+            ->andWhere(['lesson.teacher_id' => $teacherId])
+            ->andWhere(['lesson.date' => $this->today])
+            ->orderBy(['lesson.start_time' => SORT_ASC])
+            ->limit($limit)
+            ->all();
+
+        $result = [];
+        foreach ($lessons as $lesson) {
+            $result[] = [
+                'id' => $lesson->id,
+                'time' => $lesson->start_time ? Yii::$app->formatter->asTime($lesson->start_time, 'short') : '--:--',
+                'end_time' => $lesson->end_time ? Yii::$app->formatter->asTime($lesson->end_time, 'short') : '--:--',
+                'group' => $lesson->group ? $lesson->group->name : 'Группа',
+                'group_id' => $lesson->group_id,
+                'status' => $lesson->status,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Список групп учителя
+     */
+    public function getTeacherGroupsList(int $teacherId, int $limit = 5): array
+    {
+        $teacherGroups = TeacherGroup::find()
+            ->joinWith('group')
+            ->andWhere(['teacher_group.related_id' => $teacherId])
+            ->andWhere(['group.organization_id' => $this->organizationId])
+            ->andWhere(['group.status' => StatusEnum::STATUS_ACTIVE])
+            ->limit($limit)
+            ->all();
+
+        $result = [];
+        foreach ($teacherGroups as $tg) {
+            if ($tg->group) {
+                $result[] = [
+                    'id' => $tg->group->id,
+                    'name' => $tg->group->name,
+                    'students_count' => $tg->group->getPupilsCount(),
+                ];
+            }
+        }
+
+        return $result;
     }
 }

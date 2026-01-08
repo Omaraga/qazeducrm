@@ -3,6 +3,7 @@
 namespace app\models\services;
 
 use app\helpers\OrganizationUrl;
+use app\helpers\RoleChecker;
 use app\models\Group;
 use app\models\Lesson;
 use app\models\Organizations;
@@ -176,12 +177,20 @@ class ScheduleService
             ->andWhere(['<=', 'lesson.date', $end])
             ->orderBy('lesson.date ASC, lesson.start_time ASC');
 
-        // Применяем фильтры
-        if (!empty($groupIds)) {
-            $query->andWhere(['lesson.group_id' => $groupIds]);
-        }
-        if (!empty($teacherIds)) {
-            $query->andWhere(['lesson.teacher_id' => $teacherIds]);
+        // Для учителя - показываем только его занятия
+        if (RoleChecker::isTeacherOnly()) {
+            $teacherId = RoleChecker::getCurrentTeacherId();
+            if ($teacherId) {
+                $query->andWhere(['lesson.teacher_id' => $teacherId]);
+            }
+        } else {
+            // Применяем фильтры (только для не-учителей или в дополнение)
+            if (!empty($groupIds)) {
+                $query->andWhere(['lesson.group_id' => $groupIds]);
+            }
+            if (!empty($teacherIds)) {
+                $query->andWhere(['lesson.teacher_id' => $teacherIds]);
+            }
         }
 
         $events = $query->all();
@@ -218,12 +227,41 @@ class ScheduleService
     /**
      * Получить группы с занятиями для фильтра
      * ОПТИМИЗИРОВАНО: один запрос с EXISTS вместо двух отдельных
+     * Для учителя - возвращает только его группы
      *
      * @return array [{id, code, name, color}]
      */
     public static function getGroupsForFilter(): array
     {
         $orgId = Organizations::getCurrentOrganizationId();
+
+        // Для учителя - возвращаем только его группы
+        if (RoleChecker::isTeacherOnly()) {
+            $teacherId = RoleChecker::getCurrentTeacherId();
+            if (!$teacherId) {
+                return [];
+            }
+
+            // Получаем группы учителя
+            $groups = Group::find()
+                ->select(['group.id', 'group.code', 'group.name', 'group.color'])
+                ->innerJoin('teacher_group', 'teacher_group.target_id = group.id AND teacher_group.is_deleted != 1')
+                ->where(['group.organization_id' => $orgId])
+                ->andWhere(['!=', 'group.is_deleted', 1])
+                ->andWhere(['teacher_group.related_id' => $teacherId])
+                ->orderBy('group.code ASC')
+                ->asArray()
+                ->all();
+
+            return array_map(function ($group) {
+                return [
+                    'id' => (int)$group['id'],
+                    'code' => $group['code'],
+                    'name' => $group['name'],
+                    'color' => $group['color'] ?: '#3b82f6',
+                ];
+            }, $groups);
+        }
 
         // Один запрос с EXISTS subquery вместо двух отдельных запросов
         $groups = Group::find()
@@ -256,11 +294,31 @@ class ScheduleService
     /**
      * Получить всех учителей для фильтра
      * ОПТИМИЗИРОВАНО: используем asArray() вместо загрузки полных моделей
+     * Для учителя - возвращает только себя
      *
      * @return array [{id, fio}]
      */
     public static function getTeachersForFilter(): array
     {
+        // Для учителя - возвращаем только его самого
+        if (RoleChecker::isTeacherOnly()) {
+            $teacherId = RoleChecker::getCurrentTeacherId();
+            if (!$teacherId) {
+                return [];
+            }
+
+            $teacher = User::find()
+                ->select(['id', 'fio'])
+                ->where(['id' => $teacherId])
+                ->asArray()
+                ->one();
+
+            return $teacher ? [[
+                'id' => (int)$teacher['id'],
+                'fio' => $teacher['fio'],
+            ]] : [];
+        }
+
         $teachers = User::find()
             ->select(['user.id', 'user.fio'])
             ->innerJoinWith(['currentUserOrganizations' => function ($q) {

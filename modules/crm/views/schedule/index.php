@@ -32,165 +32,204 @@ $config = [
 ];
 ?>
 
-<div x-data="scheduleCalendar(<?= Html::encode(Json::encode($config)) ?>)" class="space-y-6">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900"><?= Html::encode($this->title) ?></h1>
-            <p class="text-gray-500 mt-1">Управление занятиями</p>
-        </div>
-        <div class="flex gap-3">
-            <a href="<?= OrganizationUrl::to(['/crm/schedule-template']) ?>" class="btn btn-outline" title="Управление шаблонами расписания">
-                <?= Icon::show('template') ?>
-                Шаблоны
-            </a>
-            <button type="button" @click="openCreateModal(currentDateStr, 9)" class="btn btn-primary" title="Создать новое занятие">
-                <?= Icon::show('plus') ?>
-                Добавить занятие
-            </button>
-        </div>
-    </div>
+<div x-data="scheduleCalendar(<?= Html::encode(Json::encode($config)) ?>)" class="space-y-3">
+    <!-- Filters + Mini Calendar Combined -->
+    <?php CollapsibleFilter::begin(['title' => 'Фильтры', 'compact' => true]) ?>
+    <div class="flex flex-col lg:flex-row gap-4">
+        <!-- Mini Calendar (left column) -->
+        <div class="lg:w-52 flex-shrink-0">
+            <!-- Mini calendar header -->
+            <div class="flex items-center justify-between mb-2">
+                <button type="button" @click="miniCalendarPrev()" class="p-1 hover:bg-gray-100 rounded">
+                    <?= Icon::show('chevron-left', 'sm') ?>
+                </button>
+                <span class="text-xs font-medium text-gray-600" x-text="miniCalendarTitle"></span>
+                <button type="button" @click="miniCalendarNext()" class="p-1 hover:bg-gray-100 rounded">
+                    <?= Icon::show('chevron-right', 'sm') ?>
+                </button>
+            </div>
 
-    <!-- Filters -->
-    <?php CollapsibleFilter::begin(['title' => 'Фильтры']) ?>
-    <div class="space-y-4">
-        <!-- Groups filter -->
-        <div>
-            <label class="form-label mb-2">Группы</label>
-            <div class="flex flex-wrap gap-2">
-                <template x-for="group in filteredGroups" :key="group.id">
-                    <button type="button"
-                            class="filter-chip"
-                            :class="{ 'active': isGroupSelected(group.id) }"
-                            @click="toggleGroupFilter(group.id)">
-                        <span class="filter-chip-color" :style="{ backgroundColor: group.color }"></span>
-                        <span x-text="group.code"></span>
-                    </button>
+            <!-- Mini calendar grid -->
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; text-align: center; font-size: 11px;">
+                <!-- Day headers -->
+                <div class="py-0.5 text-gray-400 font-medium text-[10px]">Пн</div>
+                <div class="py-0.5 text-gray-400 font-medium text-[10px]">Вт</div>
+                <div class="py-0.5 text-gray-400 font-medium text-[10px]">Ср</div>
+                <div class="py-0.5 text-gray-400 font-medium text-[10px]">Чт</div>
+                <div class="py-0.5 text-gray-400 font-medium text-[10px]">Пт</div>
+                <div class="py-0.5 text-gray-400 font-medium text-[10px]">Сб</div>
+                <div class="py-0.5 text-gray-400 font-medium text-[10px]">Вс</div>
+
+                <!-- Date cells -->
+                <template x-for="day in miniCalendarDays" :key="day.dateStr">
+                    <div class="relative" style="padding: 1px 0;">
+                        <button type="button"
+                                @click="goToDay(day.date)"
+                                class="rounded-full transition-colors"
+                                style="width: 24px; height: 24px; font-size: 11px;"
+                                :class="{
+                                    'bg-primary-500 text-white font-medium': day.dateStr === currentDateStr,
+                                    'bg-primary-100 text-primary-700': day.isToday && day.dateStr !== currentDateStr,
+                                    'text-gray-300': !day.isCurrentMonth,
+                                    'text-gray-700 hover:bg-gray-100': day.isCurrentMonth && day.dateStr !== currentDateStr && !day.isToday
+                                }"
+                                x-text="day.dayNum">
+                        </button>
+                        <div x-show="miniCalendarHasEvents(day.dateStr)"
+                             class="absolute rounded-full"
+                             style="bottom: -1px; left: 50%; transform: translateX(-50%); width: 3px; height: 3px;"
+                             :class="day.dateStr === currentDateStr ? 'bg-white' : 'bg-primary-400'"></div>
+                    </div>
                 </template>
-                <template x-if="filteredGroups.length === 0">
-                    <span class="text-sm text-gray-500">Нет групп</span>
-                </template>
+            </div>
+
+            <!-- Quick buttons -->
+            <div class="mt-2 flex gap-1">
+                <button type="button" @click="goToToday()" class="flex-1 rounded border border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-600" style="font-size: 10px; padding: 3px 6px;">
+                    Сегодня
+                </button>
+                <button type="button" @click="goToWeekStart()" class="flex-1 rounded border border-gray-200 hover:bg-gray-50 text-gray-500" style="font-size: 10px; padding: 3px 6px;">
+                    Нач. нед.
+                </button>
             </div>
         </div>
 
-        <!-- Teachers filter -->
-        <div>
-            <label class="form-label mb-2">Преподаватели</label>
-            <div class="flex flex-wrap gap-2">
-                <template x-for="teacher in filteredTeachers" :key="teacher.id">
-                    <button type="button"
-                            class="filter-chip"
-                            :class="{ 'active': isTeacherSelected(teacher.id) }"
-                            @click="toggleTeacherFilter(teacher.id)">
-                        <span x-text="teacher.fio"></span>
-                    </button>
-                </template>
-                <template x-if="filteredTeachers.length === 0">
-                    <span class="text-sm text-gray-500">Нет преподавателей</span>
-                </template>
-            </div>
-        </div>
+        <!-- Divider -->
+        <div class="hidden lg:block w-px bg-gray-200"></div>
 
-        <!-- Rooms filter -->
-        <div x-show="filterOptions.rooms.length > 0">
-            <label class="form-label mb-2">Кабинеты</label>
-            <div class="flex flex-wrap gap-2">
-                <template x-for="room in filterOptions.rooms" :key="room.id">
-                    <button type="button"
-                            class="filter-chip"
-                            :class="{ 'active': isRoomSelected(room.id) }"
-                            @click="toggleRoomFilter(room.id)">
-                        <span class="filter-chip-color" :style="{ backgroundColor: room.color }"></span>
-                        <span x-text="room.code ? room.code + ' - ' + room.name : room.name"></span>
-                    </button>
-                </template>
+        <!-- Filters (right column) -->
+        <div class="flex-1 space-y-3">
+            <!-- Groups filter -->
+            <div>
+                <label class="text-xs font-medium text-gray-500 mb-1 block">Группы</label>
+                <div class="flex flex-wrap gap-1.5">
+                    <template x-for="group in filteredGroups" :key="group.id">
+                        <button type="button"
+                                class="filter-chip text-xs py-1 px-2"
+                                :class="{ 'active': isGroupSelected(group.id) }"
+                                @click="toggleGroupFilter(group.id)">
+                            <span class="filter-chip-color" style="width: 8px; height: 8px;" :style="{ backgroundColor: group.color }"></span>
+                            <span x-text="group.code"></span>
+                        </button>
+                    </template>
+                    <template x-if="filteredGroups.length === 0">
+                        <span class="text-xs text-gray-400">Нет групп</span>
+                    </template>
+                </div>
             </div>
-        </div>
 
-        <!-- Clear filters -->
-        <div x-show="activeFiltersCount > 0">
-            <button type="button" @click="clearFilters()" class="btn btn-sm btn-secondary">
-                Сбросить фильтры
-            </button>
+            <!-- Teachers filter -->
+            <div>
+                <label class="text-xs font-medium text-gray-500 mb-1 block">Преподаватели</label>
+                <div class="flex flex-wrap gap-1.5">
+                    <template x-for="teacher in filteredTeachers" :key="teacher.id">
+                        <button type="button"
+                                class="filter-chip text-xs py-1 px-2"
+                                :class="{ 'active': isTeacherSelected(teacher.id) }"
+                                @click="toggleTeacherFilter(teacher.id)">
+                            <span x-text="teacher.fio"></span>
+                        </button>
+                    </template>
+                    <template x-if="filteredTeachers.length === 0">
+                        <span class="text-xs text-gray-400">Нет преподавателей</span>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Rooms filter -->
+            <div x-show="filterOptions.rooms.length > 0">
+                <label class="text-xs font-medium text-gray-500 mb-1 block">Кабинеты</label>
+                <div class="flex flex-wrap gap-1.5">
+                    <template x-for="room in filterOptions.rooms" :key="room.id">
+                        <button type="button"
+                                class="filter-chip text-xs py-1 px-2"
+                                :class="{ 'active': isRoomSelected(room.id) }"
+                                @click="toggleRoomFilter(room.id)">
+                            <span class="filter-chip-color" style="width: 8px; height: 8px;" :style="{ backgroundColor: room.color }"></span>
+                            <span x-text="room.code || room.name"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Clear filters -->
+            <div x-show="activeFiltersCount > 0" class="pt-1">
+                <button type="button" @click="clearFilters()" class="text-xs text-gray-500 hover:text-gray-700">
+                    ✕ Сбросить фильтры
+                </button>
+            </div>
         </div>
     </div>
     <?php CollapsibleFilter::end() ?>
 
     <!-- Calendar Card -->
     <div class="card">
-        <!-- Calendar Header -->
-        <div class="card-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <!-- Navigation -->
-            <div class="flex items-center gap-2">
-                <button type="button" @click="goToPrev()" class="btn btn-icon btn-sm btn-outline" title="Назад">
-                    <?= Icon::show('chevron-left') ?>
-                </button>
-                <button type="button" @click="goToNext()" class="btn btn-icon btn-sm btn-outline" title="Вперед">
-                    <?= Icon::show('chevron-right') ?>
-                </button>
-                <button type="button" @click="goToToday()" class="btn btn-sm btn-secondary ml-2">
-                    Сегодня
-                </button>
-            </div>
+        <!-- Calendar Header (compact, responsive) -->
+        <div class="px-2 py-2 bg-white border-b border-gray-100">
+            <!-- Mobile: 2 rows, Desktop: 1 row -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
 
-            <!-- Title -->
-            <h2 class="text-lg font-semibold text-gray-900" x-text="title"></h2>
-
-            <!-- View Mode Toggle -->
-            <div class="flex items-center gap-4">
-                <!-- Grid interval selector (only for day/week views) -->
-                <div x-show="viewMode !== 'month'" class="flex items-center gap-2">
-                    <label class="text-sm text-gray-500">Сетка:</label>
-                    <select x-model.number="gridInterval"
-                            @change="saveGridInterval()"
-                            class="form-select form-select-sm py-1 px-2 text-sm w-20">
-                        <option value="60">1 час</option>
-                        <option value="30">30 мин</option>
-                        <option value="15">15 мин</option>
-                        <option value="10">10 мин</option>
-                    </select>
+                <!-- Row 1 on mobile / Left on desktop: Actions -->
+                <div class="flex items-center justify-between sm:justify-start gap-1.5 sm:gap-1 order-2 sm:order-1">
+                    <div class="flex items-center gap-1.5 sm:gap-1">
+                        <button type="button" @click="goToToday()" class="px-3 py-2 sm:px-2 sm:py-1 text-xs rounded border border-gray-300 hover:bg-gray-50 cursor-pointer active:bg-gray-100">
+                            Сегодня
+                        </button>
+                        <button type="button" @click="openCreateModal(currentDateStr, 9)" class="inline-flex items-center gap-1 px-3 py-2 sm:px-2 sm:py-1 text-xs rounded bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700 cursor-pointer" title="Создать занятие">
+                            <?= Icon::show('plus', 'xs') ?>
+                            Добавить
+                        </button>
+                        <a href="<?= OrganizationUrl::to(['/crm/schedule-template']) ?>" class="inline-flex items-center gap-1 px-3 py-2 sm:px-2 sm:py-1 text-xs rounded border border-gray-300 hover:bg-gray-50 active:bg-gray-100 cursor-pointer" title="Шаблоны">
+                            <?= Icon::show('template', 'xs') ?>
+                            <span class="hidden sm:inline">Шаблон</span>
+                        </a>
+                    </div>
+                    <!-- View mode on mobile (right side of row 1) -->
+                    <div class="flex items-center gap-1 sm:hidden">
+                        <div class="view-mode-toggle">
+                            <button type="button" class="view-mode-btn text-xs px-2.5 py-1.5" :class="{ 'active': viewMode === 'day' }" @click="setViewMode('day')" title="День">Д</button>
+                            <button type="button" class="view-mode-btn text-xs px-2.5 py-1.5" :class="{ 'active': viewMode === 'week' }" @click="setViewMode('week')" title="Неделя">Н</button>
+                            <button type="button" class="view-mode-btn text-xs px-2.5 py-1.5" :class="{ 'active': viewMode === 'month' }" @click="setViewMode('month')" title="Месяц">М</button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Day view mode toggle (timeline/rooms) -->
-                <div x-show="viewMode === 'day' && filterOptions.rooms.length > 0" class="view-mode-toggle">
-                    <button type="button"
-                            class="view-mode-btn"
-                            :class="{ 'active': dayViewMode === 'timeline' }"
-                            @click="setDayViewMode('timeline')"
-                            title="По времени">
-                        <?= Icon::show('clock', 'sm') ?>
+                <!-- Row 0 on mobile / Center on desktop: Navigation + Title -->
+                <div class="flex items-center justify-center gap-1 order-1 sm:order-2">
+                    <button type="button" @click="goToPrev()" class="p-2 sm:p-1 rounded hover:bg-gray-100 active:bg-gray-200 cursor-pointer" title="Назад">
+                        <?= Icon::show('chevron-left', 'sm') ?>
                     </button>
-                    <button type="button"
-                            class="view-mode-btn"
-                            :class="{ 'active': dayViewMode === 'rooms' }"
-                            @click="setDayViewMode('rooms')"
-                            title="По кабинетам">
-                        <?= Icon::show('building-office', 'sm') ?>
+                    <h2 class="text-sm font-medium text-gray-900 min-w-[130px] sm:min-w-[140px] text-center" x-text="title"></h2>
+                    <button type="button" @click="goToNext()" class="p-2 sm:p-1 rounded hover:bg-gray-100 active:bg-gray-200 cursor-pointer" title="Вперед">
+                        <?= Icon::show('chevron-right', 'sm') ?>
                     </button>
                 </div>
 
-                <div class="view-mode-toggle">
-                    <button type="button"
-                            class="view-mode-btn"
-                            :class="{ 'active': viewMode === 'day' }"
-                            @click="setViewMode('day')"
-                            title="Показать расписание на день">
-                        День
-                    </button>
-                    <button type="button"
-                            class="view-mode-btn"
-                            :class="{ 'active': viewMode === 'week' }"
-                            @click="setViewMode('week')"
-                            title="Показать расписание на неделю">
-                        Неделя
-                    </button>
-                    <button type="button"
-                            class="view-mode-btn"
-                            :class="{ 'active': viewMode === 'month' }"
-                            @click="setViewMode('month')"
-                            title="Показать расписание на месяц">
-                        Месяц
-                    </button>
+                <!-- Desktop only: Right side controls -->
+                <div class="hidden sm:flex items-center gap-2 order-3">
+                    <!-- Grid interval selector -->
+                    <div x-show="viewMode !== 'month'" class="flex items-center gap-1">
+                        <select x-model.number="gridInterval" @change="saveGridInterval()" class="text-xs py-1 px-1.5 border border-gray-300 rounded cursor-pointer" title="Интервал сетки">
+                            <option value="60">1ч</option>
+                            <option value="30">30м</option>
+                            <option value="15">15м</option>
+                        </select>
+                    </div>
+                    <!-- Day view mode toggle -->
+                    <div x-show="viewMode === 'day' && filterOptions.rooms.length > 0" class="view-mode-toggle">
+                        <button type="button" class="view-mode-btn" :class="{ 'active': dayViewMode === 'timeline' }" @click="setDayViewMode('timeline')" title="По времени">
+                            <?= Icon::show('clock', 'xs') ?>
+                        </button>
+                        <button type="button" class="view-mode-btn" :class="{ 'active': dayViewMode === 'rooms' }" @click="setDayViewMode('rooms')" title="По кабинетам">
+                            <?= Icon::show('building-office', 'xs') ?>
+                        </button>
+                    </div>
+                    <!-- View mode toggle -->
+                    <div class="view-mode-toggle">
+                        <button type="button" class="view-mode-btn text-xs" :class="{ 'active': viewMode === 'day' }" @click="setViewMode('day')" title="День">Д</button>
+                        <button type="button" class="view-mode-btn text-xs" :class="{ 'active': viewMode === 'week' }" @click="setViewMode('week')" title="Неделя">Н</button>
+                        <button type="button" class="view-mode-btn text-xs" :class="{ 'active': viewMode === 'month' }" @click="setViewMode('month')" title="Месяц">М</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -514,22 +553,6 @@ $config = [
                     </template>
                 </div>
             </template>
-        </div>
-    </div>
-
-    <!-- Legend -->
-    <div class="card">
-        <div class="card-body py-3">
-            <div class="flex flex-wrap items-center gap-6 text-sm">
-                <div class="flex items-center gap-2">
-                    <?= Icon::show('check-circle', 'md', 'text-success-500') ?>
-                    <span class="text-gray-600">Посещение проставлено</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <?= Icon::show('clock', 'md', 'text-warning-500') ?>
-                    <span class="text-gray-600">Ожидает заполнения</span>
-                </div>
-            </div>
         </div>
     </div>
 

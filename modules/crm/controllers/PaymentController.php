@@ -4,13 +4,18 @@ namespace app\modules\crm\controllers;
 
 use app\helpers\ActivityLogger;
 use app\helpers\OrganizationRoles;
+use app\helpers\OrganizationUrl;
+use app\helpers\RoleChecker;
 use app\helpers\SystemRoles;
 use app\models\Payment;
+use app\models\PaymentChangeRequest;
 use app\models\search\PaymentSearch;
 use app\models\services\PupilService;
 use Yii;
+use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\web\Controller;
+use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
@@ -31,13 +36,45 @@ class PaymentController extends Controller
                     'class' => VerbFilter::class,
                     'actions' => [
                         'delete' => ['POST'],
+                        'approve-request' => ['POST'],
+                        'reject-request' => ['POST'],
                     ],
                 ],
                 'access' => [
                     'class' => AccessControl::class,
                     'rules' => [
+                        // Удаление и редактирование - только для директоров
                         [
                             'allow' => true,
+                            'actions' => ['update', 'delete'],
+                            'roles' => [
+                                SystemRoles::SUPER,
+                                OrganizationRoles::DIRECTOR,
+                                OrganizationRoles::GENERAL_DIRECTOR,
+                            ]
+                        ],
+                        // Одобрение/отклонение запросов - только для директоров
+                        [
+                            'allow' => true,
+                            'actions' => ['pending-requests', 'approve-request', 'reject-request', 'view-request'],
+                            'roles' => [
+                                SystemRoles::SUPER,
+                                OrganizationRoles::DIRECTOR,
+                                OrganizationRoles::GENERAL_DIRECTOR,
+                            ]
+                        ],
+                        // Запросы на изменение/удаление - только для админов
+                        [
+                            'allow' => true,
+                            'actions' => ['request-delete', 'request-update', 'my-requests'],
+                            'roles' => [
+                                OrganizationRoles::ADMIN,
+                            ]
+                        ],
+                        // Остальные действия - для всех админов и выше
+                        [
+                            'allow' => true,
+                            'actions' => ['index', 'view', 'create', 'receipt'],
                             'roles' => [
                                 SystemRoles::SUPER,
                                 OrganizationRoles::ADMIN,
@@ -228,6 +265,255 @@ class PaymentController extends Controller
     }
 
     /**
+     * Запрос на удаление платежа (для Admin)
+     * @param int $id ID платежа
+     * @return string|\yii\web\Response
+     * @throws NotFoundHttpException
+     */
+    public function actionRequestDelete($id)
+    {
+        $model = $this->findModel($id);
+
+        // Проверка - нет ли уже ожидающего запроса
+        if (PaymentChangeRequest::hasPendingRequest($model->id)) {
+            Yii::$app->session->setFlash('warning', 'Для этого платежа уже есть ожидающий запрос');
+            return $this->redirect(['view', 'id' => $model->id]);
+        }
+
+        if ($this->request->isPost) {
+            $reason = $this->request->post('reason');
+
+            if (empty($reason)) {
+                Yii::$app->session->setFlash('error', 'Укажите причину удаления');
+            } else {
+                $request = PaymentChangeRequest::createDeleteRequest($model, $reason);
+                if ($request) {
+                    Yii::$app->session->setFlash('success', 'Запрос на удаление отправлен директору');
+                    return $this->redirect(['view', 'id' => $model->id]);
+                } else {
+                    Yii::$app->session->setFlash('error', 'Ошибка при создании запроса');
+                }
+            }
+        }
+
+        return $this->render('request-delete', [
+            'model' => $model,
+        ]);
+    }
+
+    /**
+     * Запрос на изменение платежа (для Admin)
+     * @param int $id ID платежа
+     * @return string|\yii\web\Response
+     * @throws NotFoundHttpException
+     */
+    public function actionRequestUpdate($id)
+    {
+        $model = $this->findModel($id);
+
+        // Проверка - нет ли уже ожидающего запроса
+        if (PaymentChangeRequest::hasPendingRequest($model->id)) {
+            Yii::$app->session->setFlash('warning', 'Для этого платежа уже есть ожидающий запрос');
+            return $this->redirect(['view', 'id' => $model->id]);
+        }
+
+        if ($this->request->isPost) {
+            $reason = $this->request->post('reason');
+            $newValues = [
+                'amount' => $this->request->post('amount'),
+                'date' => $this->request->post('date'),
+                'method_id' => $this->request->post('method_id'),
+                'purpose_id' => $this->request->post('purpose_id'),
+                'comment' => $this->request->post('comment'),
+            ];
+
+            // Удаляем пустые значения
+            $newValues = array_filter($newValues, function($v) { return $v !== '' && $v !== null; });
+
+            if (empty($reason)) {
+                Yii::$app->session->setFlash('error', 'Укажите причину изменения');
+            } elseif (empty($newValues)) {
+                Yii::$app->session->setFlash('error', 'Укажите хотя бы одно изменение');
+            } else {
+                $request = PaymentChangeRequest::createUpdateRequest($model, $newValues, $reason);
+                if ($request) {
+                    Yii::$app->session->setFlash('success', 'Запрос на изменение отправлен директору');
+                    return $this->redirect(['view', 'id' => $model->id]);
+                } else {
+                    Yii::$app->session->setFlash('error', 'Ошибка при создании запроса');
+                }
+            }
+        }
+
+        return $this->render('request-update', [
+            'model' => $model,
+        ]);
+    }
+
+    /**
+     * Мои запросы на изменение платежей (для Admin)
+     * @return string
+     */
+    public function actionMyRequests()
+    {
+        $dataProvider = new ActiveDataProvider([
+            'query' => PaymentChangeRequest::find()
+                ->byOrganization()
+                ->notDeleted()
+                ->andWhere(['requested_by' => Yii::$app->user->id])
+                ->orderBy(['created_at' => SORT_DESC]),
+            'pagination' => [
+                'pageSize' => 20
+            ],
+        ]);
+
+        return $this->render('my-requests', [
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    /**
+     * Ожидающие запросы на изменение платежей (для Director)
+     * @return string
+     */
+    public function actionPendingRequests()
+    {
+        $status = $this->request->get('status', PaymentChangeRequest::STATUS_PENDING);
+
+        $query = PaymentChangeRequest::find()
+            ->byOrganization()
+            ->notDeleted()
+            ->with(['payment', 'requestedByUser'])
+            ->orderBy(['created_at' => SORT_DESC]);
+
+        if ($status !== 'all') {
+            $query->andWhere(['status' => $status]);
+        }
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query,
+            'pagination' => [
+                'pageSize' => 20
+            ],
+        ]);
+
+        $pendingCount = PaymentChangeRequest::getPendingCount();
+
+        return $this->render('pending-requests', [
+            'dataProvider' => $dataProvider,
+            'status' => $status,
+            'pendingCount' => $pendingCount,
+        ]);
+    }
+
+    /**
+     * Просмотр запроса на изменение (для Director)
+     * @param int $id ID запроса
+     * @return string
+     * @throws NotFoundHttpException
+     */
+    public function actionViewRequest($id)
+    {
+        $model = $this->findRequest($id);
+
+        return $this->render('view-request', [
+            'model' => $model,
+        ]);
+    }
+
+    /**
+     * Одобрить запрос на изменение платежа (для Director)
+     * @param int $id ID запроса
+     * @return \yii\web\Response
+     * @throws NotFoundHttpException|ForbiddenHttpException
+     */
+    public function actionApproveRequest($id)
+    {
+        $model = $this->findRequest($id);
+
+        if (!$model->isPending()) {
+            Yii::$app->session->setFlash('warning', 'Этот запрос уже обработан');
+            return $this->redirect(['pending-requests']);
+        }
+
+        $comment = $this->request->post('comment');
+
+        if ($model->approve($comment)) {
+            // Обновляем баланс ученика если платёж затронут
+            $payment = $model->payment;
+            if ($payment && $payment->pupil_id) {
+                PupilService::updateBalance($payment->pupil_id);
+            }
+
+            Yii::$app->session->setFlash('success', 'Запрос одобрен, изменения применены');
+        } else {
+            Yii::$app->session->setFlash('error', 'Ошибка при одобрении запроса');
+        }
+
+        return $this->redirect(['pending-requests']);
+    }
+
+    /**
+     * Отклонить запрос на изменение платежа (для Director)
+     * @param int $id ID запроса
+     * @return \yii\web\Response
+     * @throws NotFoundHttpException|ForbiddenHttpException
+     */
+    public function actionRejectRequest($id)
+    {
+        $model = $this->findRequest($id);
+
+        if (!$model->isPending()) {
+            Yii::$app->session->setFlash('warning', 'Этот запрос уже обработан');
+            return $this->redirect(['pending-requests']);
+        }
+
+        $comment = $this->request->post('comment');
+
+        if (empty($comment)) {
+            Yii::$app->session->setFlash('error', 'Укажите причину отклонения');
+            return $this->redirect(['view-request', 'id' => $id]);
+        }
+
+        if ($model->reject($comment)) {
+            Yii::$app->session->setFlash('success', 'Запрос отклонён');
+        } else {
+            Yii::$app->session->setFlash('error', 'Ошибка при отклонении запроса');
+        }
+
+        return $this->redirect(['pending-requests']);
+    }
+
+    /**
+     * Печать квитанции платежа
+     * @param int $id ID платежа
+     * @return string
+     * @throws NotFoundHttpException
+     */
+    public function actionReceipt($id)
+    {
+        $model = Payment::find()
+            ->with(['method', 'pupil', 'organization'])
+            ->byOrganization()
+            ->andWhere(['id' => $id])
+            ->notDeleted()
+            ->one();
+
+        if ($model === null) {
+            throw new NotFoundHttpException(Yii::t('main', 'Платёж не найден.'));
+        }
+
+        // Квитанции только для оплат
+        if ($model->type !== Payment::TYPE_PAY) {
+            throw new ForbiddenHttpException('Квитанции доступны только для платежей');
+        }
+
+        return $this->renderPartial('_receipt', [
+            'model' => $model,
+        ]);
+    }
+
+    /**
      * Finds the Payment model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param int $id ID
@@ -244,6 +530,27 @@ class PaymentController extends Controller
 
         if ($model === null) {
             throw new NotFoundHttpException(Yii::t('main', 'Платёж не найден.'));
+        }
+
+        return $model;
+    }
+
+    /**
+     * Finds the PaymentChangeRequest model
+     * @param int $id ID
+     * @return PaymentChangeRequest
+     * @throws NotFoundHttpException
+     */
+    protected function findRequest($id)
+    {
+        $model = PaymentChangeRequest::find()
+            ->byOrganization()
+            ->andWhere(['id' => $id])
+            ->notDeleted()
+            ->one();
+
+        if ($model === null) {
+            throw new NotFoundHttpException('Запрос не найден');
         }
 
         return $model;

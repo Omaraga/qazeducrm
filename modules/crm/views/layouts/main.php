@@ -5,6 +5,7 @@
 
 use app\assets\TailwindAsset;
 use app\helpers\Lists;
+use app\helpers\RoleChecker;
 use app\models\Organizations;
 use app\widgets\tailwind\Alert;
 use app\widgets\tailwind\Breadcrumbs;
@@ -24,6 +25,12 @@ $userOrganizations = $user->userOrganizations ?? [];
 $rolesList = Lists::getRoles();
 $hasMultipleOrganizations = count($userOrganizations) > 1;
 
+// Переменные для проверки ролей
+$isDirector = RoleChecker::isDirector();           // SUPER, GENERAL_DIRECTOR, DIRECTOR
+$hasFinanceAccess = RoleChecker::hasFinanceAccess(); // Доступ к финансам (то же что isDirector)
+$isAdminOrHigher = RoleChecker::isAdminOrHigher(); // SUPER, GENERAL_DIRECTOR, DIRECTOR, ADMIN
+$isTeacherOnly = RoleChecker::isTeacherOnly();     // Только учитель
+
 // Конфигурация меню
 $menuConfig = [
     [
@@ -31,10 +38,13 @@ $menuConfig = [
         'items' => [
             ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => ['/crm/default/index'], 'controller' => 'default'],
             ['label' => 'Расписание', 'icon' => 'calendar', 'url' => ['/crm/schedule/index'], 'controller' => 'schedule'],
+            // Пункт "Мои группы" только для учителя
+            ['label' => 'Мои группы', 'icon' => 'group', 'url' => ['/crm/group/my-groups'], 'controller' => 'group', 'visible' => $isTeacherOnly],
             [
                 'label' => 'Лиды',
                 'icon' => 'funnel',
                 'controller' => ['lids', 'lids-funnel', 'lids-interaction'],
+                'visible' => $isAdminOrHigher,
                 'items' => [
                     ['label' => 'Kanban', 'url' => ['/crm/lids-funnel/kanban']],
                     ['label' => 'Таблица', 'url' => ['/crm/lids/index']],
@@ -42,33 +52,38 @@ $menuConfig = [
                     ['label' => 'Скрипты продаж', 'url' => ['/crm/sales-script/index']],
                 ],
             ],
-            ['label' => 'Ученики', 'icon' => 'users', 'url' => ['/crm/pupil/index'], 'controller' => 'pupil'],
-            ['label' => 'Группы', 'icon' => 'group', 'url' => ['/crm/group/index'], 'controller' => 'group'],
-            ['label' => 'Шаблоны расписания', 'icon' => 'template', 'url' => ['/crm/schedule-template/index'], 'controller' => 'schedule-template'],
-            ['label' => 'Платежи', 'icon' => 'payment', 'url' => ['/crm/payment/index'], 'controller' => 'payment'],
+            ['label' => 'Ученики', 'icon' => 'users', 'url' => ['/crm/pupil/index'], 'controller' => 'pupil', 'visible' => $isAdminOrHigher],
+            ['label' => 'Группы', 'icon' => 'group', 'url' => ['/crm/group/index'], 'controller' => 'group', 'visible' => $isAdminOrHigher],
+            ['label' => 'Шаблоны расписания', 'icon' => 'template', 'url' => ['/crm/schedule-template/index'], 'controller' => 'schedule-template', 'visible' => $isAdminOrHigher],
+            ['label' => 'Платежи', 'icon' => 'payment', 'url' => ['/crm/payment/index'], 'controller' => 'payment', 'visible' => $hasFinanceAccess],
             ['label' => 'Зарплаты', 'icon' => 'wallet', 'url' => ['/crm/salary/index'], 'controller' => 'salary'],
 
-            ['label' => 'SMS', 'icon' => 'sms', 'url' => ['/crm/sms/index'], 'controller' => 'sms'],
+            ['label' => 'SMS', 'icon' => 'sms', 'url' => ['/crm/sms/index'], 'controller' => 'sms', 'visible' => $isAdminOrHigher],
             [
                 'label' => 'Отчёты',
                 'icon' => 'chart',
                 'controller' => 'reports',
                 'items' => [
                     ['label' => 'Все отчёты', 'url' => ['/crm/reports/index']],
-                    ['label' => '─── Финансы ───', 'header' => true],
-                    ['label' => 'Доходы', 'url' => ['/crm/reports/view', 'type' => 'finance-income']],
-                    ['label' => 'Расходы', 'url' => ['/crm/reports/view', 'type' => 'finance-expenses']],
-                    ['label' => 'Задолженности', 'url' => ['/crm/reports/view', 'type' => 'finance-debts']],
-                    ['label' => '─── Продажи ───', 'header' => true],
-                    ['label' => 'Воронка продаж', 'url' => ['/crm/reports/view', 'type' => 'leads-funnel']],
-                    ['label' => 'Источники лидов', 'url' => ['/crm/reports/view', 'type' => 'leads-sources']],
-                    ['label' => 'Менеджеры', 'url' => ['/crm/reports/view', 'type' => 'leads-managers']],
+                    // Финансовые отчёты - только для директоров
+                    ['label' => '─── Финансы ───', 'header' => true, 'visible' => $hasFinanceAccess],
+                    ['label' => 'Доходы', 'url' => ['/crm/reports/view', 'type' => 'finance-income'], 'visible' => $hasFinanceAccess],
+                    ['label' => 'Расходы', 'url' => ['/crm/reports/view', 'type' => 'finance-expenses'], 'visible' => $hasFinanceAccess],
+                    ['label' => 'Задолженности', 'url' => ['/crm/reports/view', 'type' => 'finance-debts'], 'visible' => $hasFinanceAccess],
+                    // Продажи - для админов и выше
+                    ['label' => '─── Продажи ───', 'header' => true, 'visible' => $isAdminOrHigher],
+                    ['label' => 'Воронка продаж', 'url' => ['/crm/reports/view', 'type' => 'leads-funnel'], 'visible' => $isAdminOrHigher],
+                    ['label' => 'Источники лидов', 'url' => ['/crm/reports/view', 'type' => 'leads-sources'], 'visible' => $isAdminOrHigher],
+                    ['label' => 'Менеджеры', 'url' => ['/crm/reports/view', 'type' => 'leads-managers'], 'visible' => $isAdminOrHigher],
+                    // Ученики - для всех
                     ['label' => '─── Ученики ───', 'header' => true],
                     ['label' => 'Посещаемость', 'url' => ['/crm/reports/view', 'type' => 'pupils-attendance']],
-                    ['label' => '─── Учителя ───', 'header' => true],
-                    ['label' => 'Зарплаты учителей', 'url' => ['/crm/reports/view', 'type' => 'teachers-salary']],
-                    ['label' => '─── Операции ───', 'header' => true],
-                    ['label' => 'Загрузка групп', 'url' => ['/crm/reports/view', 'type' => 'operations-groups']],
+                    // Учителя - зарплаты только для директоров
+                    ['label' => '─── Учителя ───', 'header' => true, 'visible' => $hasFinanceAccess],
+                    ['label' => 'Зарплаты учителей', 'url' => ['/crm/reports/view', 'type' => 'teachers-salary'], 'visible' => $hasFinanceAccess],
+                    // Операции - для админов и выше
+                    ['label' => '─── Операции ───', 'header' => true, 'visible' => $isAdminOrHigher],
+                    ['label' => 'Загрузка групп', 'url' => ['/crm/reports/view', 'type' => 'operations-groups'], 'visible' => $isAdminOrHigher],
                 ],
             ],
         ]
@@ -77,12 +92,14 @@ $menuConfig = [
         'section' => 'Настройки',
         'collapsible' => true,
         'collapsed' => true,
+        'visible' => $isAdminOrHigher, // Вся секция скрыта для учителя
         'items' => [
             ['label' => 'Сотрудники', 'icon' => 'user', 'url' => ['/crm/user/index'], 'controller' => 'user'],
             ['label' => 'Предметы', 'icon' => 'book', 'url' => ['/crm/subject/index'], 'controller' => 'subject'],
-            ['label' => 'Тарифы', 'icon' => 'tag', 'url' => ['/crm/tariff/index'], 'controller' => 'tariff'],
+            ['label' => 'Тарифы', 'icon' => 'tag', 'url' => ['/crm/tariff/index'], 'controller' => 'tariff', 'visible' => $isDirector],
             ['label' => 'Кабинеты', 'icon' => 'building-office', 'url' => ['/crm/room/index'], 'controller' => 'room'],
-            ['label' => 'Способы оплаты', 'icon' => 'card', 'url' => ['/crm/pay-method/index'], 'controller' => 'pay-method'],
+            ['label' => 'Способы оплаты', 'icon' => 'card', 'url' => ['/crm/pay-method/index'], 'controller' => 'pay-method', 'visible' => $isDirector],
+            ['label' => 'Права доступа', 'icon' => 'shield-check', 'url' => ['/crm/settings/access'], 'controller' => 'settings', 'visible' => $isDirector],
             ['label' => 'Подписка', 'icon' => 'credit-card', 'url' => ['/crm/subscription/index'], 'controller' => 'subscription'],
         ]
     ],
@@ -294,8 +311,7 @@ endforeach;
 
             <!-- Breadcrumbs -->
             <?= Breadcrumbs::widget([
-                'homeLabel' => 'CRM',
-                'homeUrl' => ['/crm/default/index'],
+                'homeLabel' => false,
                 'links' => $this->params['breadcrumbs'] ?? [],
             ]) ?>
         </div>

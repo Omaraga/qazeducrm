@@ -118,6 +118,12 @@ class SidebarMenu extends Widget
      */
     protected function renderSection(array $section): string
     {
+        // Проверка видимости секции
+        $visible = $section['visible'] ?? true;
+        if (!$visible) {
+            return '';
+        }
+
         $items = $section['items'] ?? [];
         $sectionLabel = $section['section'] ?? '';
         $collapsible = $section['collapsible'] ?? false;

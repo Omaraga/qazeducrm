@@ -1,14 +1,18 @@
 <?php
 
 use app\helpers\OrganizationUrl;
+use app\helpers\RoleChecker;
+use app\widgets\tailwind\Icon;
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
 /** @var app\models\User $model */
 
 $this->title = $model->fio;
-$this->params['breadcrumbs'][] = ['label' => 'Преподаватели', 'url' => OrganizationUrl::to(['index'])];
+$this->params['breadcrumbs'][] = ['label' => 'Сотрудники', 'url' => OrganizationUrl::to(['index'])];
 $this->params['breadcrumbs'][] = $this->title;
+
+$canResetPassword = RoleChecker::canResetPasswords() && $model->id !== Yii::$app->user->id;
 ?>
 
 <div class="space-y-6">
@@ -25,18 +29,22 @@ $this->params['breadcrumbs'][] = $this->title;
                 <p class="text-gray-500 mt-1">Карточка преподавателя</p>
             </div>
         </div>
-        <div class="flex gap-3">
+        <div class="flex gap-3 flex-wrap">
+            <?php if ($canResetPassword): ?>
+            <a href="<?= OrganizationUrl::to(['user/reset-password', 'id' => $model->id]) ?>" class="btn btn-warning">
+                <?= Icon::show('key', 'sm') ?>
+                Сбросить пароль
+            </a>
+            <?php endif; ?>
             <a href="<?= OrganizationUrl::to(['user/update', 'id' => $model->id]) ?>" class="btn btn-primary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                </svg>
+                <?= Icon::show('edit', 'sm') ?>
                 Редактировать
             </a>
-            <?= Html::a('<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg> Удалить',
+            <?= Html::a(Icon::show('trash', 'sm') . ' Удалить',
                 OrganizationUrl::to(['user/delete', 'id' => $model->id]), [
                 'class' => 'btn btn-danger',
                 'data' => [
-                    'confirm' => 'Вы действительно хотите удалить преподавателя?',
+                    'confirm' => 'Вы действительно хотите удалить сотрудника?',
                     'method' => 'post',
                 ],
             ]) ?>
@@ -184,8 +192,25 @@ $this->params['breadcrumbs'][] = $this->title;
         <!-- Tab Content: Security -->
         <div x-show="activeTab === 'security'" class="pt-6">
             <div class="card">
+                <div class="card-header">
+                    <h3 class="text-lg font-semibold text-gray-900">Управление паролем</h3>
+                </div>
                 <div class="card-body">
-                    <p class="text-gray-500">Настройки безопасности будут добавлены в будущих версиях.</p>
+                    <?php if ($canResetPassword): ?>
+                        <p class="text-gray-600 mb-4">Вы можете сбросить пароль этого сотрудника. После сброса сотрудник сможет войти только с новым паролем.</p>
+                        <a href="<?= OrganizationUrl::to(['user/reset-password', 'id' => $model->id]) ?>" class="btn btn-warning">
+                            <?= Icon::show('key', 'sm') ?>
+                            Сбросить пароль
+                        </a>
+                    <?php elseif ($model->id === Yii::$app->user->id): ?>
+                        <p class="text-gray-600 mb-4">Для изменения своего пароля перейдите в настройки профиля.</p>
+                        <a href="<?= OrganizationUrl::to(['profile/index']) ?>" class="btn btn-primary">
+                            <?= Icon::show('cog', 'sm') ?>
+                            Настройки профиля
+                        </a>
+                    <?php else: ?>
+                        <p class="text-gray-500">У вас нет прав для сброса пароля этого сотрудника.</p>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

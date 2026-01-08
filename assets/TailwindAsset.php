@@ -41,7 +41,7 @@ class TailwindAsset extends AssetBundle
         // AJAX wrapper with error handling
         'js/ajax.js',
         // Schedule calendar component (загружается перед Alpine.js)
-        'js/schedule-calendar.js?v=13',
+        'js/schedule-calendar.js?v=15',
         // Alpine.js Collapse plugin (должен загружаться ДО основного Alpine.js)
         'https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js',
         // Alpine.js для интерактивности (dropdowns, modals, tabs)

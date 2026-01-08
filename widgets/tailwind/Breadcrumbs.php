@@ -23,7 +23,7 @@ class Breadcrumbs extends Widget
     public $links = [];
 
     /**
-     * @var string метка для главной страницы
+     * @var string|false метка для главной страницы (false для скрытия)
      */
     public $homeLabel = 'Главная';
 
@@ -43,12 +43,14 @@ class Breadcrumbs extends Widget
 
         $items = [];
 
-        // Добавляем главную
-        $items[] = Html::a(
-            Html::encode($this->homeLabel),
-            Url::to($this->homeUrl),
-            ['class' => 'breadcrumb-item']
-        );
+        // Добавляем главную (если homeLabel не пустой и не false)
+        if ($this->homeLabel !== false && $this->homeLabel !== '') {
+            $items[] = Html::a(
+                Html::encode($this->homeLabel),
+                Url::to($this->homeUrl),
+                ['class' => 'breadcrumb-item']
+            );
+        }
 
         // Добавляем ссылки
         foreach ($this->links as $link) {

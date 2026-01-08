@@ -1,7 +1,9 @@
 <?php
 
 use app\helpers\OrganizationUrl;
+use app\helpers\RoleChecker;
 use app\models\Payment;
+use app\models\PaymentChangeRequest;
 use app\widgets\tailwind\Icon;
 use yii\helpers\Html;
 
@@ -11,6 +13,10 @@ use yii\helpers\Html;
 $this->title = Yii::t('main', 'Платеж') . ' #' . $model->id;
 $this->params['breadcrumbs'][] = ['label' => Yii::t('main', 'Бухгалтерия'), 'url' => OrganizationUrl::to(['payment/index'])];
 $this->params['breadcrumbs'][] = $this->title;
+
+$canModify = RoleChecker::canModifyPayments();
+$needsRequest = RoleChecker::needsPaymentChangeRequest();
+$hasPendingRequest = PaymentChangeRequest::hasPendingRequest($model->id);
 ?>
 
 <div class="space-y-6">
@@ -31,19 +37,46 @@ $this->params['breadcrumbs'][] = $this->title;
                 </p>
             </div>
         </div>
-        <div class="flex gap-3">
-            <a href="<?= OrganizationUrl::to(['payment/update', 'id' => $model->id]) ?>" class="btn btn-primary">
-                <?= Icon::show('edit', 'sm') ?>
-                Редактировать
-            </a>
-            <?= Html::a(Icon::show('trash', 'sm') . ' Удалить',
-                OrganizationUrl::to(['payment/delete', 'id' => $model->id]), [
-                'class' => 'btn btn-danger',
-                'data' => [
-                    'confirm' => 'Вы действительно хотите удалить этот платеж?',
-                    'method' => 'post',
-                ],
-            ]) ?>
+        <div class="flex gap-3 flex-wrap">
+            <?php if ($model->type === Payment::TYPE_PAY): ?>
+                <a href="<?= OrganizationUrl::to(['payment/receipt', 'id' => $model->id]) ?>" class="btn btn-secondary" target="_blank">
+                    <?= Icon::show('printer', 'sm') ?>
+                    Квитанция
+                </a>
+            <?php endif; ?>
+
+            <?php if ($canModify): ?>
+                <!-- Director/Super - прямое редактирование/удаление -->
+                <a href="<?= OrganizationUrl::to(['payment/update', 'id' => $model->id]) ?>" class="btn btn-primary">
+                    <?= Icon::show('edit', 'sm') ?>
+                    Редактировать
+                </a>
+                <?= Html::a(Icon::show('trash', 'sm') . ' Удалить',
+                    OrganizationUrl::to(['payment/delete', 'id' => $model->id]), [
+                    'class' => 'btn btn-danger',
+                    'data' => [
+                        'confirm' => 'Вы действительно хотите удалить этот платеж?',
+                        'method' => 'post',
+                    ],
+                ]) ?>
+            <?php elseif ($needsRequest): ?>
+                <!-- Admin - запросы на изменение -->
+                <?php if ($hasPendingRequest): ?>
+                    <span class="btn btn-secondary opacity-50 cursor-not-allowed">
+                        <?= Icon::show('clock', 'sm') ?>
+                        Ожидает рассмотрения
+                    </span>
+                <?php else: ?>
+                    <a href="<?= OrganizationUrl::to(['payment/request-update', 'id' => $model->id]) ?>" class="btn btn-primary">
+                        <?= Icon::show('edit', 'sm') ?>
+                        Запросить изменение
+                    </a>
+                    <a href="<?= OrganizationUrl::to(['payment/request-delete', 'id' => $model->id]) ?>" class="btn btn-danger">
+                        <?= Icon::show('trash', 'sm') ?>
+                        Запросить удаление
+                    </a>
+                <?php endif; ?>
+            <?php endif; ?>
         </div>
     </div>
 

@@ -4,6 +4,7 @@ namespace app\modules\crm\controllers;
 
 use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
+use app\helpers\RoleChecker;
 use app\helpers\SystemRoles;
 use app\models\Group;
 use app\models\Pupil;
@@ -41,6 +42,15 @@ class GroupController extends Controller
                 'access' => [
                     'class' => AccessControl::class,
                     'rules' => [
+                        // Учитель может просматривать свои группы и учеников
+                        [
+                            'allow' => true,
+                            'actions' => ['my-groups', 'view', 'pupils', 'teachers'],
+                            'roles' => [
+                                OrganizationRoles::TEACHER,
+                            ]
+                        ],
+                        // Полный доступ для админов и выше
                         [
                             'allow' => true,
                             'roles' => [
@@ -120,15 +130,53 @@ class GroupController extends Controller
     }
 
     /**
+     * Мои группы - для учителя
+     * Показывает только группы текущего учителя
+     *
+     * @return string
+     */
+    public function actionMyGroups()
+    {
+        $teacherId = RoleChecker::getCurrentTeacherId();
+
+        if (!$teacherId) {
+            throw new ForbiddenHttpException('Доступ запрещён');
+        }
+
+        $query = Group::find()
+            ->innerJoin('teacher_group', 'teacher_group.target_id = group.id AND teacher_group.is_deleted != 1')
+            ->where(['teacher_group.related_id' => $teacherId])
+            ->byOrganization()
+            ->notDeleted()
+            ->orderBy(['group.name' => SORT_ASC]);
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query,
+            'pagination' => [
+                'pageSize' => 20
+            ],
+        ]);
+
+        return $this->render('my-groups', [
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    /**
      * Displays a single Group model.
      * @param int $id ID
      * @return string
-     * @throws NotFoundHttpException if the model cannot be found
+     * @throws NotFoundHttpException|ForbiddenHttpException if the model cannot be found or access denied
      */
     public function actionView($id)
     {
+        $model = $this->findModel($id);
+
+        // Проверка доступа учителя - может смотреть только свои группы
+        $this->checkTeacherGroupAccess($model);
+
         return $this->render('view', [
-            'model' => $this->findModel($id),
+            'model' => $model,
         ]);
     }
 
@@ -152,8 +200,21 @@ class GroupController extends Controller
         ]);
     }
 
-    public function actionPupils($id){
+    /**
+     * Ученики группы
+     * Учитель может смотреть только учеников своих групп
+     *
+     * @param int $id
+     * @return string
+     * @throws NotFoundHttpException|ForbiddenHttpException
+     */
+    public function actionPupils($id)
+    {
         $model = $this->findModel($id);
+
+        // Проверка доступа учителя - может смотреть только свои группы
+        $this->checkTeacherGroupAccess($model);
+
         $dataProvider = new ActiveDataProvider([
             'query' => Pupil::find()->innerJoinWith(['groups' => function($q) use ($model){
                 $q->andWhere(['<>', 'education_group.is_deleted', 1]);
@@ -327,6 +388,33 @@ class GroupController extends Controller
         return $this->render('teacher/form', [
             'model' => $model,
         ]);
+    }
+
+    /**
+     * Проверка доступа учителя к группе
+     * Учитель может работать только со своими группами
+     *
+     * @param Group $group
+     * @throws ForbiddenHttpException
+     */
+    protected function checkTeacherGroupAccess(Group $group): void
+    {
+        // Не учитель - доступ разрешен
+        if (!RoleChecker::isTeacherOnly()) {
+            return;
+        }
+
+        // Учитель - проверяем, что это его группа
+        $teacherId = RoleChecker::getCurrentTeacherId();
+
+        $isTeacherOfGroup = TeacherGroup::find()
+            ->where(['target_id' => $group->id, 'related_id' => $teacherId])
+            ->notDeleted()
+            ->exists();
+
+        if (!$isTeacherOfGroup) {
+            throw new ForbiddenHttpException('Вы не являетесь преподавателем этой группы');
+        }
     }
 
     /**

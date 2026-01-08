@@ -17,6 +17,9 @@ function scheduleCalendar(config) {
         events: [],
         loading: false,
 
+        // Мини-календарь
+        miniCalendarDate: new Date(),  // месяц, отображаемый в мини-календаре
+
         // Кэш для оптимизации производительности
         _layoutCache: {},           // {eventId: {column, totalColumns}}
         _eventsByDate: {},          // {dateStr: [events]}
@@ -277,6 +280,7 @@ function scheduleCalendar(config) {
         // ========== NAVIGATION ==========
         goToToday() {
             this.currentDate = new Date();
+            this.miniCalendarDate = new Date();  // синхронизируем мини-календарь
             this.fetchEvents();
         },
 
@@ -290,6 +294,7 @@ function scheduleCalendar(config) {
                 d.setMonth(d.getMonth() - 1);
             }
             this.currentDate = d;
+            this.miniCalendarDate = new Date(d);  // синхронизируем мини-календарь
             this.fetchEvents();
         },
 
@@ -303,6 +308,7 @@ function scheduleCalendar(config) {
                 d.setMonth(d.getMonth() + 1);
             }
             this.currentDate = d;
+            this.miniCalendarDate = new Date(d);  // синхронизируем мини-календарь
             this.fetchEvents();
         },
 
@@ -333,9 +339,68 @@ function scheduleCalendar(config) {
 
         goToDay(date) {
             this.currentDate = new Date(date);
+            this.miniCalendarDate = new Date(date);  // синхронизируем мини-календарь
             this.viewMode = 'day';
             this.saveViewMode('day');
             this.fetchEvents();
+        },
+
+        goToWeekStart() {
+            const start = this.getWeekStart(new Date());
+            this.currentDate = start;
+            this.miniCalendarDate = new Date(start);
+            this.fetchEvents();
+        },
+
+        // ========== MINI CALENDAR ==========
+        get miniCalendarTitle() {
+            const month = this.miniCalendarDate.getMonth();
+            const year = this.miniCalendarDate.getFullYear();
+            return this.monthNames[month] + ' ' + year;
+        },
+
+        // Плоский массив дней для мини-календаря (42 дня = 6 недель)
+        get miniCalendarDays() {
+            const date = this.miniCalendarDate;
+            const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+            const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+            const start = this.getWeekStart(monthStart);
+            const todayStr = this.todayDateStr;
+            const currentMonth = date.getMonth();
+
+            const days = [];
+            let current = new Date(start);
+
+            // Генерируем 42 дня (6 недель)
+            for (let i = 0; i < 42; i++) {
+                const d = new Date(current);
+                const dateStr = this.formatDate(d);
+                days.push({
+                    date: d,
+                    dateStr: dateStr,
+                    dayNum: d.getDate(),
+                    isToday: dateStr === todayStr,
+                    isCurrentMonth: d.getMonth() === currentMonth
+                });
+                current.setDate(current.getDate() + 1);
+            }
+            return days;
+        },
+
+        miniCalendarPrev() {
+            const d = new Date(this.miniCalendarDate);
+            d.setMonth(d.getMonth() - 1);
+            this.miniCalendarDate = d;
+        },
+
+        miniCalendarNext() {
+            const d = new Date(this.miniCalendarDate);
+            d.setMonth(d.getMonth() + 1);
+            this.miniCalendarDate = d;
+        },
+
+        miniCalendarHasEvents(dateStr) {
+            return this._eventsByDate[dateStr] && this._eventsByDate[dateStr].length > 0;
         },
 
         // ========== DATE HELPERS ==========
