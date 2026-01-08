@@ -144,17 +144,17 @@ class SmsLog extends ActiveRecord
     }
 
     /**
-     * CSS класс для бейджа (Bootstrap)
+     * CSS класс для бейджа (Tailwind)
      */
     public function getStatusBadgeClass(): string
     {
         $classes = [
-            self::STATUS_PENDING => 'bg-secondary',
-            self::STATUS_SENT => 'bg-info',
-            self::STATUS_DELIVERED => 'bg-success',
-            self::STATUS_FAILED => 'bg-danger',
+            self::STATUS_PENDING => 'badge badge-secondary',
+            self::STATUS_SENT => 'badge badge-info',
+            self::STATUS_DELIVERED => 'badge badge-success',
+            self::STATUS_FAILED => 'badge badge-danger',
         ];
-        return $classes[$this->status] ?? 'bg-secondary';
+        return $classes[$this->status] ?? 'badge badge-secondary';
     }
 
     // getStatusLabel(), getStatusColor() предоставляются HasStatusTrait

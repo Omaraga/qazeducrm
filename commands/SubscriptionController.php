@@ -518,7 +518,7 @@ class SubscriptionController extends Controller
             case 'subscription_expiring':
                 $result = $this->notificationService->notifySubscriptionExpiring(
                     $subscription,
-                    $subscription?->getDaysRemaining() ?? 0
+                    ($subscription !== null ? $subscription->getDaysRemaining() : 0)
                 );
                 break;
 
@@ -529,7 +529,7 @@ class SubscriptionController extends Controller
             case 'trial_ending':
                 $result = $this->notificationService->notifyTrialEnding(
                     $subscription,
-                    $subscription?->getDaysRemaining() ?? 0
+                    ($subscription !== null ? $subscription->getDaysRemaining() : 0)
                 );
                 break;
 

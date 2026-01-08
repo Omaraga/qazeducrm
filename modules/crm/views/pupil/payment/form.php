@@ -177,10 +177,12 @@ $canAddPayment = $hasPayMethods || $model->type != Payment::TYPE_PAY;
 
                     <div>
                         <label class="form-label form-label-required" for="paymentform-date">Дата и время</label>
-                        <input type="datetime-local" name="PaymentForm[date]" id="paymentform-date"
+                        <input type="datetime-local" id="paymentform-date-input"
                                class="form-input" value="<?= $dateValue ?>" autocomplete="off"
                                :class="inputClass('date')"
-                               @blur="validateField('date', $event.target.value)">
+                               @blur="validateField('date', $event.target.value)"
+                               onchange="updatePaymentDateHidden(this.value)">
+                        <input type="hidden" name="PaymentForm[date]" id="paymentform-date" value="<?= $model->date ?: date('d.m.Y H:i') ?>">
                         <template x-if="hasError('date')">
                             <p class="form-error-message" x-text="getError('date')"></p>
                         </template>
@@ -220,3 +222,21 @@ $canAddPayment = $hasPayMethods || $model->type != Payment::TYPE_PAY;
         </div>
     </form>
 </div>
+
+<script>
+function updatePaymentDateHidden(datetimeLocalValue) {
+    if (!datetimeLocalValue) return;
+    // Convert from YYYY-MM-DDTHH:MM to DD.MM.YYYY HH:MM
+    const [datePart, timePart] = datetimeLocalValue.split('T');
+    const [year, month, day] = datePart.split('-');
+    const formatted = day + '.' + month + '.' + year + ' ' + timePart;
+    document.getElementById('paymentform-date').value = formatted;
+}
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('paymentform-date-input');
+    if (dateInput && dateInput.value) {
+        updatePaymentDateHidden(dateInput.value);
+    }
+});
+</script>

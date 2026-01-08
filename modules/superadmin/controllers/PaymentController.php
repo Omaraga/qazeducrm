@@ -288,7 +288,7 @@ class PaymentController extends Controller
             $message = 'Платёж подтверждён.';
             if ($subscriptionCreated) {
                 $message .= ' Подписка создана.';
-            } elseif ($planChanged && $subscription?->saasPlan) {
+            } elseif ($planChanged && $subscription !== null && $subscription->saasPlan) {
                 $message .= ' Тариф изменён на "' . $subscription->saasPlan->name . '".';
             } else {
                 $message .= ' Подписка продлена.';

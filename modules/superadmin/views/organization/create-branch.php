@@ -74,7 +74,7 @@ $this->title = 'Новый филиал';
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="saas_plan_id">Тарифный план</label>
-                        <?= Html::dropDownList('saas_plan_id', $parentSubscription?->saas_plan_id, ArrayHelper::map($plans, 'id', function($plan) {
+                        <?= Html::dropDownList('saas_plan_id', ($parentSubscription !== null ? $parentSubscription->saas_plan_id : null), ArrayHelper::map($plans, 'id', function($plan) {
                             return $plan->name . ' (' . number_format($plan->price_monthly, 0, '.', ' ') . ' KZT/мес)';
                         }), [
                             'class' => 'form-control',

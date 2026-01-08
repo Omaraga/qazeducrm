@@ -28,7 +28,7 @@ class SubscriptionAccessService
     public function __construct(?Organizations $organization = null)
     {
         $this->organization = $organization ?? Organizations::getCurrentOrganization();
-        $this->subscription = $this->organization?->getActiveSubscription();
+        $this->subscription = $this->organization !== null ? $this->organization->getActiveSubscription() : null;
     }
 
     /**

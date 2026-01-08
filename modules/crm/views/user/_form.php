@@ -18,7 +18,12 @@ if ($model->birth_date) {
 }
 ?>
 
-<form action="" method="post" class="space-y-6">
+<?php
+$formAction = empty($model->id)
+    ? OrganizationUrl::to(['user/create'])
+    : OrganizationUrl::to(['user/update', 'id' => $model->id]);
+?>
+<form action="<?= $formAction ?>" method="post" class="space-y-6">
     <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
 
     <!-- Basic Info -->

@@ -375,7 +375,7 @@ class SubscriptionNotificationService
             $subject,
             $message,
             $metadata,
-            $subscription?->id
+            $subscription !== null ? $subscription->id : null
         );
 
         try {

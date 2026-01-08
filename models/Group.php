@@ -144,7 +144,7 @@ class Group extends ActiveRecord
      */
     public function getSubjectLabel(): string
     {
-        return $this->subject?->name ?? 'Не указан';
+        return ($this->subject !== null ? $this->subject->name : null) ?? 'Не указан';
     }
 
     /**

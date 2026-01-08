@@ -53,7 +53,7 @@ class FeatureService
         }
 
         $this->subscription = $this->organization->getActiveSubscription();
-        $this->plan = $this->subscription?->saasPlan;
+        $this->plan = $this->subscription !== null ? $this->subscription->saasPlan : null;
     }
 
     /**

@@ -174,15 +174,17 @@ $dateEnd = $model->date_end ? date('Y-m-d', strtotime(str_replace('.', '-', $mod
             <div class="card-body">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="form-label" for="date_start_input"><?= $model->getAttributeLabel('date_start') ?> <span class="text-danger-500">*</span></label>
-                        <input type="date" name="EducationForm[date_start]" id="date_start_input" class="form-input" value="<?= $dateStart ?>" autocomplete="off">
+                        <label class="form-label" for="date_start_display"><?= $model->getAttributeLabel('date_start') ?> <span class="text-danger-500">*</span></label>
+                        <input type="date" id="date_start_display" class="form-input" value="<?= $dateStart ?>" autocomplete="off" onchange="updateEduDateHidden('date_start', this.value)">
+                        <input type="hidden" name="EducationForm[date_start]" id="date_start_input" value="<?= $model->date_start ?>">
                         <?php if ($model->hasErrors('date_start')): ?>
                             <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('date_start') ?></p>
                         <?php endif; ?>
                     </div>
                     <div id="field-date_end">
-                        <label class="form-label" for="date_end_input"><?= $model->getAttributeLabel('date_end') ?></label>
-                        <input type="date" name="EducationForm[date_end]" id="date_end_input" class="form-input" value="<?= $dateEnd ?>" autocomplete="off">
+                        <label class="form-label" for="date_end_display"><?= $model->getAttributeLabel('date_end') ?></label>
+                        <input type="date" id="date_end_display" class="form-input" value="<?= $dateEnd ?>" autocomplete="off" onchange="updateEduDateHidden('date_end', this.value)">
+                        <input type="hidden" name="EducationForm[date_end]" id="date_end_input" value="<?= $model->date_end ?>">
                         <?php if ($model->hasErrors('date_end')): ?>
                             <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('date_end') ?></p>
                         <?php endif; ?>
@@ -226,6 +228,7 @@ $dateEnd = $model->date_end ? date('Y-m-d', strtotime(str_replace('.', '-', $mod
 // Extract CSRF values for use in heredoc (heredoc doesn't process PHP tags)
 $csrfParam = \Yii::$app->request->csrfParam;
 $csrfToken = \Yii::$app->request->csrfToken;
+$tariffInfoUrl = OrganizationUrl::to(['tariff/get-info']);
 
 $js = <<<JS
 document.addEventListener('DOMContentLoaded', function() {
@@ -308,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('sale', sale);
         formData.append('{$csrfParam}', '{$csrfToken}');
 
-        fetch('/tariff/get-info', {
+        fetch('{$tariffInfoUrl}', {
             method: 'POST',
             body: formData
         })
@@ -366,7 +369,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         form.submit();
     });
+
+    // Initialize date values on load
+    initEduDates();
 });
+
+// Function to convert YYYY-MM-DD to DD.MM.YYYY and update hidden field
+function updateEduDateHidden(fieldName, dateValue) {
+    if (!dateValue) return;
+    const [year, month, day] = dateValue.split('-');
+    const formatted = day + '.' + month + '.' + year;
+    document.getElementById(fieldName + '_input').value = formatted;
+}
+
+// Initialize hidden date fields on page load
+function initEduDates() {
+    const dateStartDisplay = document.getElementById('date_start_display');
+    const dateEndDisplay = document.getElementById('date_end_display');
+    if (dateStartDisplay && dateStartDisplay.value) {
+        updateEduDateHidden('date_start', dateStartDisplay.value);
+    }
+    if (dateEndDisplay && dateEndDisplay.value) {
+        updateEduDateHidden('date_end', dateEndDisplay.value);
+    }
+}
 JS;
 $this->registerJs($js);
 ?>

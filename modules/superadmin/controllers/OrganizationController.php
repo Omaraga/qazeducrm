@@ -146,7 +146,7 @@ class OrganizationController extends Controller
                     $branchSubscription = OrganizationSubscription::createForBranch(
                         $model->id,
                         $planId,
-                        $parentSubscription?->id
+                        $parentSubscription !== null ? $parentSubscription->id : null
                     );
 
                     if ($branchSubscription->save()) {

@@ -274,14 +274,14 @@ class OrganizationSubscriptionRequest extends \yii\db\ActiveRecord
         ?string $contactName = null
     ): self {
         $org = Organizations::findOne($organizationId);
-        $subscription = $org?->getActiveSubscription();
+        $subscription = ($org !== null ? $org->getActiveSubscription() : null);
 
         $request = new self();
         $request->organization_id = $organizationId;
         $request->request_type = self::TYPE_RENEWAL;
-        $request->current_plan_id = $subscription?->saas_plan_id;
-        $request->requested_plan_id = $planId ?? $subscription?->saas_plan_id;
-        $request->billing_period = $billingPeriod ?? $subscription?->billing_period;
+        $request->current_plan_id = ($subscription !== null ? $subscription->saas_plan_id : null);
+        $request->requested_plan_id = $planId ?? ($subscription !== null ? $subscription->saas_plan_id : null);
+        $request->billing_period = $billingPeriod ?? ($subscription !== null ? $subscription->billing_period : null);
         $request->comment = $comment;
         $request->contact_phone = $contactPhone;
         $request->contact_name = $contactName;
@@ -303,13 +303,13 @@ class OrganizationSubscriptionRequest extends \yii\db\ActiveRecord
         ?string $contactName = null
     ): self {
         $org = Organizations::findOne($organizationId);
-        $subscription = $org?->getActiveSubscription();
+        $subscription = ($org !== null ? $org->getActiveSubscription() : null);
 
         $request = new self();
         $request->organization_id = $organizationId;
         $request->request_type = self::TYPE_TRIAL_CONVERT;
-        $request->current_plan_id = $subscription?->saas_plan_id;
-        $request->requested_plan_id = $planId ?? $subscription?->saas_plan_id;
+        $request->current_plan_id = ($subscription !== null ? $subscription->saas_plan_id : null);
+        $request->requested_plan_id = $planId ?? ($subscription !== null ? $subscription->saas_plan_id : null);
         $request->billing_period = $billingPeriod;
         $request->comment = $comment;
         $request->contact_phone = $contactPhone;
@@ -332,12 +332,12 @@ class OrganizationSubscriptionRequest extends \yii\db\ActiveRecord
         ?string $contactName = null
     ): self {
         $org = Organizations::findOne($organizationId);
-        $subscription = $org?->getActiveSubscription();
+        $subscription = ($org !== null ? $org->getActiveSubscription() : null);
 
         $request = new self();
         $request->organization_id = $organizationId;
         $request->request_type = self::TYPE_UPGRADE;
-        $request->current_plan_id = $subscription?->saas_plan_id;
+        $request->current_plan_id = ($subscription !== null ? $subscription->saas_plan_id : null);
         $request->requested_plan_id = $requestedPlanId;
         $request->billing_period = $billingPeriod;
         $request->comment = $comment;
