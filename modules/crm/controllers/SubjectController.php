@@ -78,7 +78,7 @@ class SubjectController extends Controller
     public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
-            'query' => Subject::find(),
+            'query' => Subject::find()->byOrganization(),
 
             'pagination' => [
                 'pageSize' => 50

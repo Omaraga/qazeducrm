@@ -39,7 +39,7 @@ $this->registerJs($js);
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="form-label" for="group-subject_id">Предмет <span class="text-danger-500">*</span></label>
-                        <?= Html::activeDropDownList($model, 'subject_id', ArrayHelper::map(Subject::find()->all(), 'id', 'name'), ['class' => 'form-select', 'id' => 'group-subject_id']) ?>
+                        <?= Html::activeDropDownList($model, 'subject_id', ArrayHelper::map(Subject::find()->byOrganization()->all(), 'id', 'name'), ['class' => 'form-select', 'id' => 'group-subject_id']) ?>
                         <?php if ($model->hasErrors('subject_id')): ?>
                             <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('subject_id') ?></p>
                         <?php endif; ?>

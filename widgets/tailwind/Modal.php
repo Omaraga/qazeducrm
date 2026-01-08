@@ -155,6 +155,7 @@ HTML;
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95"
          class="fixed inset-0 z-[70] flex items-center justify-center p-4"
+         @click.self="open = false"
          style="display: none;">
         <div class="modal-content {$sizeClass}{$contentClass}" @click.stop>
             {$header}

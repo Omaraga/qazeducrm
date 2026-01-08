@@ -17,7 +17,7 @@ $this->params['breadcrumbs'][] = ['label' => 'Зарплаты учителей'
 $this->params['breadcrumbs'][] = ['label' => 'Ставки учителей', 'url' => OrganizationUrl::to(['salary/rates'])];
 $this->params['breadcrumbs'][] = $this->title;
 
-$subjects = Subject::find()->andWhere(['!=', 'is_deleted', 1])->all();
+$subjects = Subject::find()->byOrganization()->andWhere(['!=', 'is_deleted', 1])->all();
 $groups = Group::find()
     ->andWhere(['organization_id' => \app\models\Organizations::getCurrentOrganizationId()])
     ->andWhere(['!=', 'is_deleted', 1])

@@ -94,7 +94,7 @@ $this->title = 'Регистрация';
             <div class="step-content hidden" data-step="2">
                 <div class="text-center mb-6">
                     <div class="text-sm text-gray-400 mb-1">Шаг 2 из 3</div>
-                    <h2 class="text-xl font-bold text-gray-900">Данные администратора</h2>
+                    <h2 class="text-xl font-bold text-gray-900">Данные руководителя</h2>
                 </div>
 
                 <div class="grid md:grid-cols-2 gap-4">

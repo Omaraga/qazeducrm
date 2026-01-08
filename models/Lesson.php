@@ -149,10 +149,30 @@ class Lesson extends ActiveRecord
     }
 
     public function getPupils(){
-        $pupilEducationIds = PupilEducation::find()->select('pupil_education.pupil_id')->innerJoinWith(['groups' => function($q){
-            $q->andWhere(['<>','education_group.is_deleted', 1]);
-        }])->andWhere(['pupil_education.organization_id' => $this->organization_id, 'education_group.group_id' => $this->group_id])
-            ->andWhere(['<=', 'pupil_education.date_start', date('Y-m-d', strtotime($this->date))])->andWhere(['>=', 'pupil_education.date_end', date('Y-m-d', strtotime($this->date))])->notDeleted(PupilEducation::tableName())->column();
+        $lessonDate = date('Y-m-d', strtotime($this->date));
+
+        $pupilEducationIds = PupilEducation::find()
+            ->select('pupil_education.pupil_id')
+            ->innerJoinWith(['groups' => function($q){
+                $q->andWhere(['<>','education_group.is_deleted', 1]);
+            }])
+            ->andWhere([
+                'pupil_education.organization_id' => $this->organization_id,
+                'education_group.group_id' => $this->group_id
+            ])
+            // date_start: NULL означает "с начала" или проверяем <= дата занятия
+            ->andWhere(['OR',
+                ['IS', 'pupil_education.date_start', new \yii\db\Expression('NULL')],
+                ['<=', 'pupil_education.date_start', $lessonDate]
+            ])
+            // date_end: NULL означает "бессрочно" или проверяем >= дата занятия
+            ->andWhere(['OR',
+                ['IS', 'pupil_education.date_end', new \yii\db\Expression('NULL')],
+                ['>=', 'pupil_education.date_end', $lessonDate]
+            ])
+            ->notDeleted(PupilEducation::tableName())
+            ->column();
+
         return Pupil::find()->where(['in', 'id', $pupilEducationIds])->orderBy('fio ASC')->notDeleted()->all();
     }
 }

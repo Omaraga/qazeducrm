@@ -294,6 +294,7 @@ class ScheduleController extends Controller
         $id = \Yii::$app->request->post('id');
         $newDate = \Yii::$app->request->post('newDate');
         $newStartTime = \Yii::$app->request->post('newStartTime');
+        $roomId = \Yii::$app->request->post('roomId');
 
         if (!$id || !$newDate || !$newStartTime) {
             return ['success' => false, 'message' => 'Недостаточно данных'];
@@ -305,7 +306,7 @@ class ScheduleController extends Controller
             return ['success' => false, 'message' => 'У вас нет прав на перемещение этого занятия'];
         }
 
-        if (ScheduleService::moveLesson($id, $newDate, $newStartTime)) {
+        if (ScheduleService::moveLesson($id, $newDate, $newStartTime, $roomId)) {
             return ['success' => true, 'message' => 'Занятие перемещено'];
         }
 

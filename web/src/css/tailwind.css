@@ -697,13 +697,24 @@
   }
 
   /* Drag & Drop states */
+  .calendar-event[draggable="true"] {
+    cursor: grab;
+  }
+
   .calendar-event-dragging {
-    @apply opacity-50 ring-2 ring-primary-500 ring-offset-1;
+    @apply opacity-50 ring-2 ring-primary-500 ring-offset-1 scale-105 shadow-lg;
+    cursor: grabbing !important;
   }
 
   .calendar-drop-target {
     @apply bg-primary-50 ring-2 ring-primary-300;
-    border: 2px dashed var(--color-primary-300);
+    border: 2px dashed var(--color-primary-400);
+    animation: pulse-border 1s ease-in-out infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { border-color: var(--color-primary-300); }
+    50% { border-color: var(--color-primary-500); }
   }
 
   /* Today highlight */

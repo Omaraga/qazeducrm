@@ -762,7 +762,7 @@ $config = [
             </div>
             <div>
                 <label class="form-label">Группа</label>
-                <select x-model="lessonForm.group_id" class="form-select" required @change="updateTeachersForGroup()">
+                <select x-model="lessonForm.group_id" class="form-select" required>
                     <option value="">Выберите группу</option>
                     <template x-for="group in formData.groups" :key="group.id">
                         <option :value="group.id" x-text="group.code + ' - ' + group.name"></option>

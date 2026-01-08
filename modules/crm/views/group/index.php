@@ -54,7 +54,7 @@ $buttonStatus = LimitProgress::addButtonStatus('groups');
                 </div>
                 <div>
                     <label class="form-label">Предмет</label>
-                    <?= Html::activeDropDownList($searchModel, 'subject_id', ArrayHelper::map(Subject::find()->all(), 'id', 'name'), ['class' => 'form-select', 'prompt' => 'Все предметы']) ?>
+                    <?= Html::activeDropDownList($searchModel, 'subject_id', ArrayHelper::map(Subject::find()->byOrganization()->all(), 'id', 'name'), ['class' => 'form-select', 'prompt' => 'Все предметы']) ?>
                 </div>
                 <div>
                     <label class="form-label">Категория</label>

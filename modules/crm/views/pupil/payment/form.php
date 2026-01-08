@@ -206,9 +206,9 @@ $canAddPayment = $hasPayMethods || $model->type != Payment::TYPE_PAY;
 
         <!-- Actions -->
         <div class="flex items-center gap-3">
-            <button type="submit" class="btn <?= $model->type == Payment::TYPE_PAY ? 'btn-primary' : 'btn-warning' ?>" :disabled="isSubmitting">
+            <button type="submit" class="btn <?= $model->type == Payment::TYPE_PAY ? 'btn-primary' : 'btn-warning' ?> flex items-center gap-2" :disabled="isSubmitting">
                 <template x-if="!isSubmitting">
-                    <?= Icon::show('check', 'sm') ?>
+                    <span><?= Icon::show('check', 'sm') ?></span>
                 </template>
                 <template x-if="isSubmitting">
                     <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -216,7 +216,7 @@ $canAddPayment = $hasPayMethods || $model->type != Payment::TYPE_PAY;
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                 </template>
-                <span x-text="isSubmitting ? 'Сохранение...' : 'Сохранить'"></span>
+                <span x-text="isSubmitting ? 'Сохранение...' : 'Сохранить'">Сохранить</span>
             </button>
             <a href="<?= OrganizationUrl::to(['pupil/payment', 'id' => $model->pupil_id]) ?>" class="btn btn-secondary">Отмена</a>
         </div>

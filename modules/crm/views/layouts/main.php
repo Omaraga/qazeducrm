@@ -62,6 +62,7 @@ $menuConfig = [
             ['label' => 'Моя зарплата', 'icon' => 'wallet', 'url' => ['/crm/salary/index'], 'controller' => 'salary', 'visible' => $isTeacherOnly && RoleChecker::canTeacherViewOwnSalary()],
 
             ['label' => 'SMS', 'icon' => 'sms', 'url' => ['/crm/sms/index'], 'controller' => 'sms', 'visible' => $isAdminOrHigher],
+            ['label' => 'WhatsApp', 'icon' => 'whatsapp', 'url' => ['/crm/whatsapp/index'], 'controller' => 'whatsapp', 'visible' => $isAdminOrHigher],
             [
                 'label' => 'Отчёты',
                 'icon' => 'chart',

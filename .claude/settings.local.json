@@ -124,7 +124,32 @@
       "mcp__playwright__browser_console_messages",
       "mcp__playwright__browser_network_requests",
       "mcp__playwright__browser_wait_for",
-      "mcp__playwright__browser_type"
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_drag",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:waha.devlike.pro)",
+      "Bash(mkdir:*)",
+      "Bash(docker:*)",
+      "Bash(docker compose:*)",
+      "Bash(start \"\" \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe\")",
+      "Bash(timeout /t 30 /nobreak)",
+      "Bash(mysql -u root qazeducrm -e \"DROP TABLE IF EXISTS whatsapp_session;\")",
+      "Bash(\"C:/xampp8/mysql/bin/mysql.exe\" -u root qazeducrm -e \"DROP TABLE IF EXISTS whatsapp_session;\")",
+      "Bash(composer require:*)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(\"C:/xampp8/mysql/bin/mysql.exe\" -u root qazeducrm -e \"DESCRIBE subject;\")",
+      "Bash(\"C:/xampp8/mysql/bin/mysql.exe\" -u root qazeducrm -e \"DESCRIBE tariff;\")",
+      "Bash(\"C:/xampp8/mysql/bin/mysql.exe\":*)",
+      "Bash(\"C:/xampp8/mysql/bin/mysql.exe\" -u root qazeducrm -e \"SELECT id, name, organization_id FROM tariff WHERE organization_id=5;\")",
+      "Bash(\"C:/xampp8/mysql/bin/mysql.exe\" -u root qazeducrm -e \"SELECT id, name FROM subject WHERE is_deleted=0;\")",
+      "Bash(for i in 1 2 3 4 5)",
+      "Bash(do curl -s \"http://localhost:8085/instance/connect/org_test\" -H \"apikey: qazeducrm-dev-api-key-2025\")",
+      "WebFetch(domain:doc.evolution-api.com)",
+      "mcp__playwright__browser_handle_dialog",
+      "Bash(mysql:*)",
+      "Bash(\"C:\\\\xampp8\\\\mysql\\\\bin\\\\mysql.exe\" -u root qazeducrm -e \"SELECT id, organization_id, instance_name, status, phone_number FROM whatsapp_session WHERE is_deleted=0\")",
+      "Bash(\"C:\\\\xampp8\\\\mysql\\\\bin\\\\mysql.exe\":*)"
     ]
   }
 }

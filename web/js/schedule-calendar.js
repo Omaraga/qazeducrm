@@ -413,7 +413,10 @@ function scheduleCalendar(config) {
         // ========== DATE HELPERS ==========
         formatDate(date) {
             const d = new Date(date);
-            return d.toISOString().split('T')[0];
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         },
 
         formatDateDisplay(date) {
@@ -557,13 +560,9 @@ function scheduleCalendar(config) {
             return this.filterOptions.rooms.filter(room => this.filters.rooms.includes(room.id));
         },
 
-        // Отфильтрованные группы (только те, у которых есть занятия в текущем периоде)
+        // Отфильтрованные группы (показываем все доступные для фильтрации)
         get filteredGroups() {
-            // Сначала получаем группы, которые есть в текущих событиях
-            const groupIdsInEvents = new Set(this.events.map(e => e.group_id));
-
-            // Фильтруем: только группы с занятиями в текущем периоде
-            let groups = this.filterOptions.groups.filter(g => groupIdsInEvents.has(g.id));
+            let groups = [...this.filterOptions.groups];
 
             // Если выбраны преподаватели - дополнительно фильтруем по связям
             if (this.filters.teachers.length > 0) {
@@ -579,13 +578,9 @@ function scheduleCalendar(config) {
             return groups;
         },
 
-        // Отфильтрованные преподаватели (только те, у которых есть занятия в текущем периоде)
+        // Отфильтрованные преподаватели (показываем всех доступных для фильтрации)
         get filteredTeachers() {
-            // Сначала получаем преподавателей, которые есть в текущих событиях
-            const teacherIdsInEvents = new Set(this.events.map(e => e.teacher_id));
-
-            // Фильтруем: только преподаватели с занятиями в текущем периоде
-            let teachers = this.filterOptions.teachers.filter(t => teacherIdsInEvents.has(t.id));
+            let teachers = [...this.filterOptions.teachers];
 
             // Если выбраны группы - дополнительно фильтруем по связям
             if (this.filters.groups.length > 0) {
@@ -1198,12 +1193,13 @@ function scheduleCalendar(config) {
             return false;
         },
 
-        async moveEvent(id, newDate, newStartTime) {
+        async moveEvent(id, newDate, newStartTime, roomId = null) {
             try {
                 const response = await QazFetch.post(this.urls.move, {
                     id: id,
                     newDate: newDate,
-                    newStartTime: newStartTime
+                    newStartTime: newStartTime,
+                    roomId: roomId
                 });
                 if (response && response.success) {
                     QazToast.success(response.message || 'Занятие перемещено');
@@ -1225,10 +1221,10 @@ function scheduleCalendar(config) {
             event.dataTransfer.setData('text/plain', lessonId);
         },
 
-        onDragOver(event, dateStr, hour, minute = 0) {
+        onDragOver(event, dateStr, hour, minute = 0, roomId = null) {
             event.preventDefault();
             event.dataTransfer.dropEffect = 'move';
-            this.dragOver = { date: dateStr, hour: hour, minute: minute };
+            this.dragOver = { date: dateStr, hour: hour, minute: minute, roomId: roomId };
         },
 
         onDragLeave() {
@@ -1240,13 +1236,13 @@ function scheduleCalendar(config) {
             this.dragOver = null;
         },
 
-        async onDrop(event, dateStr, hour, minute = 0) {
+        async onDrop(event, dateStr, hour, minute = 0, roomId = null) {
             event.preventDefault();
             const lessonId = parseInt(event.dataTransfer.getData('text/plain'));
 
             if (lessonId && dateStr && hour !== undefined) {
                 const newStartTime = hour.toString().padStart(2, '0') + ':' + minute.toString().padStart(2, '0');
-                await this.moveEvent(lessonId, dateStr, newStartTime);
+                await this.moveEvent(lessonId, dateStr, newStartTime, roomId);
             }
 
             this.dragging = null;
@@ -1257,8 +1253,12 @@ function scheduleCalendar(config) {
             return this.dragging === eventId;
         },
 
-        isDropTarget(dateStr, hour, minute = 0) {
-            return this.dragOver && this.dragOver.date === dateStr && this.dragOver.hour === hour && this.dragOver.minute === minute;
+        isDropTarget(dateStr, hour, minute = 0, roomId = null) {
+            if (!this.dragOver) return false;
+            return this.dragOver.date === dateStr
+                && this.dragOver.hour === hour
+                && this.dragOver.minute === minute
+                && this.dragOver.roomId === roomId;
         },
 
         // ========== TEACHERS FOR GROUP ==========

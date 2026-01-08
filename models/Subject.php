@@ -12,6 +12,7 @@ use app\components\ActiveRecord;
  * This is the model class for table "subject".
  *
  * @property int $id
+ * @property int|null $organization_id
  * @property string|null $name
  * @property int $is_deleted
  * @property int|null $order_col
@@ -52,7 +53,7 @@ class Subject extends ActiveRecord
     public function rules()
     {
         return [
-            [['is_deleted', 'order_col'], 'integer'],
+            [['is_deleted', 'order_col', 'organization_id'], 'integer'],
             [['created_at', 'updated_at'], 'safe'],
             [['info'], 'string'],
             [['name'], 'string', 'max' => 255],

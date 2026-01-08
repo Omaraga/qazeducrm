@@ -86,7 +86,7 @@ class TariffController extends Controller
      */
     public function actionIndex()
     {
-        $query = Tariff::find();
+        $query = Tariff::find()->byOrganization();
         $dataProvider = new ActiveDataProvider([
             'query' => $query
         ]);

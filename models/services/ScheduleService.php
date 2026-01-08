@@ -443,9 +443,10 @@ class ScheduleService
      * @param int $id ID урока
      * @param string $newDate Новая дата (Y-m-d)
      * @param string $newStartTime Новое время начала (H:i)
+     * @param int|null $roomId Новый кабинет (null = оставить без изменений, 0 или пустая строка = убрать кабинет)
      * @return bool
      */
-    public static function moveLesson(int $id, string $newDate, string $newStartTime): bool
+    public static function moveLesson(int $id, string $newDate, string $newStartTime, $roomId = null): bool
     {
         $lesson = Lesson::find()
             ->where(['id' => $id])
@@ -469,6 +470,11 @@ class ScheduleService
         $lesson->start_time = date('H:i', $newStart);
         $lesson->end_time = date('H:i', $newEnd);
         $lesson->week = date('w', strtotime($newDate));
+
+        // Обновляем кабинет, если передан
+        if ($roomId !== null) {
+            $lesson->room_id = !empty($roomId) ? (int)$roomId : null;
+        }
 
         return $lesson->save(false);
     }

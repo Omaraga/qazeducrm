@@ -405,12 +405,15 @@ $config = [
                                     <div class="calendar-time-slot calendar-time-slot-clickable calendar-room-cell"
                                          :style="{ position: 'relative', minHeight: slotHeight + 'px' }"
                                          :class="{
-                                             'calendar-drop-target': isDropTarget(currentDateStr + '-' + room.id, slot.hour, slot.minute),
+                                             'calendar-drop-target': isDropTarget(currentDateStr, slot.hour, slot.minute, room.id),
                                              'calendar-room-hover': hoveredRoomId === room.id
                                          }"
                                          @mouseenter="hoveredRoomId = room.id"
                                          @mouseleave="hoveredRoomId = null"
-                                         @click="openCreateModal(currentDateStr, slot.hour, slot.minute, room.id)">
+                                         @click="openCreateModal(currentDateStr, slot.hour, slot.minute, room.id)"
+                                         @dragover.prevent="onDragOver($event, currentDateStr, slot.hour, slot.minute, room.id)"
+                                         @dragleave="onDragLeave()"
+                                         @drop="onDrop($event, currentDateStr, slot.hour, slot.minute, room.id)">
                                         <!-- События с абсолютным позиционированием -->
                                         <!-- ОПТИМИЗИРОВАНО: используем предрасчитанные стили из event._style -->
                                         <template x-for="(event, idx) in getEventsStartingInRoomSlot(currentDateStr, room.id, slot.hour, slot.minute)" :key="event.id">
@@ -435,10 +438,16 @@ $config = [
                                 <div x-show="filters.rooms.length === 0"
                                      class="calendar-time-slot calendar-time-slot-clickable calendar-room-cell bg-gray-50/50"
                                      :style="{ position: 'relative', minHeight: slotHeight + 'px' }"
-                                     :class="{ 'calendar-room-hover': hoveredRoomId === 'none' }"
+                                     :class="{
+                                         'calendar-drop-target': isDropTarget(currentDateStr, slot.hour, slot.minute, null),
+                                         'calendar-room-hover': hoveredRoomId === 'none'
+                                     }"
                                      @mouseenter="hoveredRoomId = 'none'"
                                      @mouseleave="hoveredRoomId = null"
-                                     @click="openCreateModal(currentDateStr, slot.hour, slot.minute, null)">
+                                     @click="openCreateModal(currentDateStr, slot.hour, slot.minute, null)"
+                                     @dragover.prevent="onDragOver($event, currentDateStr, slot.hour, slot.minute, null)"
+                                     @dragleave="onDragLeave()"
+                                     @drop="onDrop($event, currentDateStr, slot.hour, slot.minute, null)">
                                     <!-- События без комнаты с абсолютным позиционированием -->
                                     <!-- ОПТИМИЗИРОВАНО: используем предрасчитанные стили из event._style -->
                                     <template x-for="(event, idx) in getEventsStartingWithoutRoom(currentDateStr, slot.hour, slot.minute)" :key="event.id">

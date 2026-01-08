@@ -1,0 +1,8 @@
+# Environment files (contain secrets)
+.env
+
+# Data directory (sessions, messages, media)
+data/
+
+# Logs
+*.log

@@ -826,7 +826,7 @@ function kanbanBoard() {
 
             if (!this.draggedId) return;
 
-            const card = document.querySelector(`[data-id="${this.draggedId}"]`);
+            const card = document.querySelector(`.kanban-card[data-id="${this.draggedId}"]`);
             if (!card) return;
 
             const targetColumn = event.currentTarget;

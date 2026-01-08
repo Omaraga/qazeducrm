@@ -134,7 +134,7 @@ class Tariff extends ActiveRecord
      * @return array
      */
     public static function getSubjectsMap(){
-        return ArrayHelper::merge([-1 => \Yii::t('main', 'Любой предмет')],ArrayHelper::map(Subject::find()->all(), 'id', 'name'));
+        return ArrayHelper::merge([-1 => \Yii::t('main', 'Любой предмет')],ArrayHelper::map(Subject::find()->byOrganization()->all(), 'id', 'name'));
     }
 
     /**
