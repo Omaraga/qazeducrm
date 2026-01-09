@@ -36,3 +36,6 @@ tests/_support/_generated
 # WhatsApp Service data (sessions, credentials)
 /whatsapp-service/data/
 /whatsapp-service/.env
+
+# Playwright MCP screenshots
+/.playwright-mcp/
