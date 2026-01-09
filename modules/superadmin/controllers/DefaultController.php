@@ -37,6 +37,15 @@ class DefaultController extends Controller
             'blocked' => Organizations::find()->andWhere(['status' => 'blocked', 'is_deleted' => 0])->count(),
         ];
 
+        // Организации ожидающие одобрения (PENDING + email верифицирован)
+        $awaitingApproval = Organizations::find()
+            ->andWhere(['status' => 'pending', 'is_deleted' => 0])
+            ->andWhere(['is not', 'email_verified_at', null])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->all();
+
+        $awaitingApprovalCount = count($awaitingApproval);
+
         // Статистика подписок
         $subscriptionsByStatus = [
             'trial' => OrganizationSubscription::find()->andWhere(['status' => 'trial'])->count(),
@@ -119,6 +128,8 @@ class DefaultController extends Controller
             'recentOrganizations' => $recentOrganizations,
             'recentPendingPayments' => $recentPendingPayments,
             'planStats' => $planStats,
+            'awaitingApproval' => $awaitingApproval,
+            'awaitingApprovalCount' => $awaitingApprovalCount,
         ]);
     }
 }

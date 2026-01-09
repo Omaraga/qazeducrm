@@ -444,8 +444,18 @@ $lostReasons = [
             <!-- Header with status and tags -->
             <div class="flex items-start justify-between pb-4 border-b border-gray-200">
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600">
-                        <?= Icon::show('user', 'lg') ?>
+                    <!-- Аватар (WhatsApp или иконка) -->
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden"
+                         :class="!$store.lids.viewingLid?.whatsapp_profile_picture ? 'bg-primary-100' : ''">
+                        <template x-if="$store.lids.viewingLid?.whatsapp_profile_picture">
+                            <img :src="$store.lids.viewingLid.whatsapp_profile_picture"
+                                 :alt="$store.lids.viewingLid?.fio"
+                                 class="w-full h-full object-cover"
+                                 @error="$store.lids.viewingLid.whatsapp_profile_picture = null">
+                        </template>
+                        <template x-if="!$store.lids.viewingLid?.whatsapp_profile_picture">
+                            <span class="text-primary-600"><?= Icon::show('user', 'lg') ?></span>
+                        </template>
                     </div>
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900" x-text="$store.lids.viewingLid?.fio || 'Без имени'"></h3>

@@ -4,10 +4,12 @@ namespace app\modules\crm\controllers;
 
 use app\helpers\OrganizationRoles;
 use app\helpers\SystemRoles;
+use app\models\NotificationSetting;
 use app\models\Organizations;
 use app\models\SmsLog;
 use app\models\SmsTemplate;
 use app\models\search\SmsLogSearch;
+use app\models\WhatsappSession;
 use app\services\SmsService;
 use Yii;
 use yii\data\ActiveDataProvider;
@@ -15,9 +17,10 @@ use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\web\Response;
 
 /**
- * SmsController - управление SMS уведомлениями
+ * SmsController - управление рассылками (SMS и WhatsApp)
  */
 class SmsController extends Controller
 {
@@ -33,6 +36,7 @@ class SmsController extends Controller
                     'delete-template' => ['POST'],
                     'send' => ['POST'],
                     'test-send' => ['POST'],
+                    'save-automation' => ['POST'],
                 ],
             ],
             'access' => [
@@ -65,7 +69,7 @@ class SmsController extends Controller
     }
 
     /**
-     * Лог отправленных SMS
+     * История рассылок
      */
     public function actionIndex()
     {
@@ -84,20 +88,98 @@ class SmsController extends Controller
     }
 
     /**
-     * Список шаблонов
+     * Страница авторассылок - настройка автоматических уведомлений
+     */
+    public function actionAutomations()
+    {
+        $orgId = Organizations::getCurrentOrganizationId();
+
+        // Получаем все настройки авторассылок для организации
+        $settings = NotificationSetting::getAllForOrganization($orgId);
+
+        // Получаем все шаблоны (без фильтра по is_active - теперь это просто библиотека текстов)
+        $templates = SmsTemplate::find()
+            ->andWhere(['organization_id' => $orgId])
+            ->andWhere(['!=', 'is_deleted', 1])
+            ->orderBy(['type' => SORT_ASC, 'name' => SORT_ASC])
+            ->all();
+
+        // Проверяем статусы подключений
+        $whatsappSession = WhatsappSession::getCurrentSession();
+        $whatsappConnected = $whatsappSession && $whatsappSession->isConnected();
+        $smsConfigured = $this->isSmsConfigured();
+
+        return $this->render('automations', [
+            'settings' => $settings,
+            'templates' => $templates,
+            'smsConfigured' => $smsConfigured,
+            'whatsappConnected' => $whatsappConnected,
+        ]);
+    }
+
+    /**
+     * AJAX: Сохранить настройку авторассылки
+     */
+    public function actionSaveAutomation()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $orgId = Organizations::getCurrentOrganizationId();
+        $data = json_decode(Yii::$app->request->rawBody, true);
+
+        $type = $data['type'] ?? null;
+
+        if (!$type || !in_array($type, array_keys(NotificationSetting::getTypeList()))) {
+            return ['success' => false, 'message' => 'Неверный тип авторассылки'];
+        }
+
+        $setting = NotificationSetting::getOrCreate($orgId, $type);
+
+        $setting->is_active = !empty($data['is_active']);
+        $setting->channel = $data['channel'] ?? NotificationSetting::CHANNEL_WHATSAPP;
+        $setting->template_id = !empty($data['template_id']) ? (int)$data['template_id'] : null;
+
+        if ($setting->hasHoursBefore() && isset($data['hours_before'])) {
+            $setting->hours_before = (int)$data['hours_before'];
+        }
+
+        if ($setting->hasFrequency() && isset($data['frequency'])) {
+            $setting->frequency = $data['frequency'];
+        }
+
+        if ($setting->save()) {
+            return ['success' => true, 'message' => 'Настройка сохранена'];
+        }
+
+        return ['success' => false, 'message' => 'Ошибка сохранения', 'errors' => $setting->errors];
+    }
+
+    /**
+     * Список шаблонов сообщений
      */
     public function actionTemplates()
     {
         $type = Yii::$app->request->get('type', 'all');
+        $smsConfigured = $this->isSmsConfigured();
+
+        // Если SMS не настроен и запрашивают SMS шаблоны, показываем WhatsApp
+        if (!$smsConfigured && $type === SmsTemplate::TYPE_SMS) {
+            $type = SmsTemplate::TYPE_WHATSAPP;
+        }
 
         $query = SmsTemplate::find()
             ->andWhere(['sms_template.organization_id' => Organizations::getCurrentOrganizationId()])
             ->andWhere(['!=', 'sms_template.is_deleted', 1])
-            ->orderBy(['type' => SORT_ASC, 'code' => SORT_ASC]);
+            ->orderBy(['type' => SORT_ASC, 'name' => SORT_ASC]);
 
         // Фильтр по типу
         if ($type !== 'all' && in_array($type, [SmsTemplate::TYPE_SMS, SmsTemplate::TYPE_WHATSAPP])) {
             $query->andWhere(['type' => $type]);
+        }
+
+        // Если SMS не настроен, скрываем SMS шаблоны
+        if (!$smsConfigured) {
+            $query->andWhere(['type' => SmsTemplate::TYPE_WHATSAPP]);
         }
 
         $dataProvider = new ActiveDataProvider([
@@ -108,6 +190,7 @@ class SmsController extends Controller
         return $this->render('templates', [
             'dataProvider' => $dataProvider,
             'type' => $type,
+            'smsConfigured' => $smsConfigured,
         ]);
     }
 
@@ -118,7 +201,11 @@ class SmsController extends Controller
     {
         $model = new SmsTemplate();
         $model->organization_id = Organizations::getCurrentOrganizationId();
-        $model->is_active = true;
+
+        // Если SMS не настроен, по умолчанию создаём WhatsApp шаблон
+        if (!$this->isSmsConfigured()) {
+            $model->type = SmsTemplate::TYPE_WHATSAPP;
+        }
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             Yii::$app->session->setFlash('success', 'Шаблон создан');
@@ -127,6 +214,7 @@ class SmsController extends Controller
 
         return $this->render('template-form', [
             'model' => $model,
+            'smsConfigured' => $this->isSmsConfigured(),
         ]);
     }
 
@@ -144,6 +232,7 @@ class SmsController extends Controller
 
         return $this->render('template-form', [
             'model' => $model,
+            'smsConfigured' => $this->isSmsConfigured(),
         ]);
     }
 
@@ -183,11 +272,12 @@ class SmsController extends Controller
     }
 
     /**
-     * Настройки SMS
+     * Настройки SMS провайдера
      */
     public function actionSettings()
     {
-        $org = Organizations::findOne(Organizations::getCurrentOrganizationId());
+        $orgId = Organizations::getCurrentOrganizationId();
+        $org = Organizations::findOne($orgId);
 
         if (Yii::$app->request->isPost) {
             $org->sms_provider = Yii::$app->request->post('sms_provider');
@@ -200,9 +290,15 @@ class SmsController extends Controller
             }
         }
 
+        // Проверяем статус WhatsApp
+        $whatsappSession = WhatsappSession::getCurrentSession();
+        $whatsappConnected = $whatsappSession && $whatsappSession->isConnected();
+
         return $this->render('settings', [
             'org' => $org,
             'providers' => SmsService::getProviderList(),
+            'smsConfigured' => $this->isSmsConfigured(),
+            'whatsappConnected' => $whatsappConnected,
         ]);
     }
 
@@ -226,6 +322,15 @@ class SmsController extends Controller
         }
 
         return $this->redirect(['settings']);
+    }
+
+    /**
+     * Проверить, настроен ли SMS провайдер
+     */
+    protected function isSmsConfigured(): bool
+    {
+        $org = Organizations::findOne(Organizations::getCurrentOrganizationId());
+        return $org && !empty($org->sms_provider) && !empty($org->sms_api_key);
     }
 
     /**

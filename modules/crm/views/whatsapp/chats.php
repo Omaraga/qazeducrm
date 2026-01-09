@@ -14,336 +14,326 @@ $this->title = 'WhatsApp';
 $this->params['breadcrumbs'][] = ['label' => 'CRM', 'url' => ['/crm']];
 $this->params['breadcrumbs'][] = 'WhatsApp';
 
-// URLs для AJAX (с полным путём модуля)
+// URLs для AJAX
 $getChatContentUrl = Url::to(['/crm/whatsapp/get-chat-content']);
 $getMessagesUrl = Url::to(['/crm/whatsapp/get-messages']);
+$loadMoreMessagesUrl = Url::to(['/crm/whatsapp/load-more-messages']);
 $sendMessageUrl = Url::to(['/crm/whatsapp/send-message']);
 $createLidUrl = Url::to(['/crm/whatsapp/create-lid-from-chat']);
 $csrfToken = Yii::$app->request->csrfToken;
 $csrfParam = Yii::$app->request->csrfParam;
 ?>
 
-<style>
-    /* WhatsApp Web color scheme */
-    :root {
-        --wa-green-primary: #00a884;
-        --wa-green-dark: #008069;
-        --wa-green-light: #d9fdd3;
-        --wa-bg-chat: #efeae2;
-        --wa-bg-panel: #f0f2f5;
-        --wa-text-primary: #111b21;
-        --wa-text-secondary: #667781;
-        --wa-blue-check: #53bdeb;
-        --wa-border: #e9edef;
-    }
+<?php
+// Register WhatsApp CSS
+$this->registerCssFile('@web/css/whatsapp.css', ['depends' => [\yii\web\JqueryAsset::class]]);
+?>
 
-    .wa-chat-bg {
-        background-color: var(--wa-bg-chat);
-        background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M14 16H9v-2h5V9h2v5h5v2h-5v5h-2v-5zM64 16h-5v-2h5V9h2v5h5v2h-5v5h-2v-5zM14 66h-5v-2h5v-5h2v5h5v2h-5v5h-2v-5zM64 66h-5v-2h5v-5h2v5h5v2h-5v5h-2v-5z' fill='%23d1d5db' fill-opacity='0.2' fill-rule='evenodd'/%3E%3C/svg%3E");
-    }
+<div class="space-y-4" x-data="whatsappChat()" x-init="init()">
 
-    .wa-message-out {
-        background-color: var(--wa-green-light);
-        border-radius: 7.5px 0 7.5px 7.5px;
-    }
-
-    .wa-message-in {
-        background-color: white;
-        border-radius: 0 7.5px 7.5px 7.5px;
-    }
-
-    .wa-message-tail-out::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: -8px;
-        width: 8px;
-        height: 13px;
-        background: var(--wa-green-light);
-        clip-path: polygon(0 0, 0% 100%, 100% 0);
-    }
-
-    .wa-message-tail-in::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -8px;
-        width: 8px;
-        height: 13px;
-        background: white;
-        clip-path: polygon(100% 0, 0 0, 100% 100%);
-    }
-
-    .wa-check {
-        color: var(--wa-text-secondary);
-    }
-
-    .wa-check-read {
-        color: var(--wa-blue-check);
-    }
-
-    /* Emoji picker positioning */
-    emoji-picker {
-        --num-columns: 8;
-        --emoji-padding: 0.5rem;
-        height: 300px;
-    }
-
-    /* Scrollbar styling */
-    .wa-scrollbar::-webkit-scrollbar {
-        width: 6px;
-    }
-    .wa-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .wa-scrollbar::-webkit-scrollbar-thumb {
-        background-color: rgba(0,0,0,0.2);
-        border-radius: 3px;
-    }
-</style>
-
-<div class="whatsapp-split-view h-[calc(100vh-180px)] min-h-[500px]"
-     x-data="whatsappSplitView()"
-     x-init="init()">
-
-    <div class="flex h-full bg-white border rounded-lg overflow-hidden shadow-sm">
-        <!-- Left Panel: Chat List -->
-        <div class="w-[350px] flex-shrink-0 border-r flex flex-col bg-white">
-            <!-- Header -->
-            <div class="px-4 py-3 bg-[var(--wa-bg-panel)] border-b flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-[var(--wa-green-primary)] flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="font-medium text-[var(--wa-text-primary)]">WhatsApp</div>
-                        <?php if ($session->phone_number): ?>
-                            <div class="text-xs text-[var(--wa-text-secondary)]">+<?= Html::encode($session->phone_number) ?></div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></span>
-                    Online
-                </span>
-            </div>
-
-            <!-- Search -->
-            <div class="p-2 bg-[var(--wa-bg-panel)]">
-                <form method="get" action="<?= Url::to(['chats']) ?>">
-                    <div class="relative">
-                        <input type="text" name="search" value="<?= Html::encode($search) ?>"
-                               placeholder="Поиск или новый чат"
-                               class="w-full pl-10 pr-4 py-2 bg-white border-0 rounded-lg text-sm focus:ring-1 focus:ring-[var(--wa-green-primary)]">
-                        <svg class="absolute left-3 top-2.5 w-4 h-4 text-[var(--wa-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Chat List -->
-            <div class="flex-1 overflow-y-auto wa-scrollbar">
-                <?php if (empty($chats)): ?>
-                    <div class="p-8 text-center text-[var(--wa-text-secondary)]">
-                        <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                        </svg>
-                        <p class="font-medium">Нет чатов</p>
-                        <p class="text-sm mt-1">Чаты появятся когда клиенты напишут вам</p>
-                    </div>
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">WhatsApp</h1>
+            <p class="text-gray-500 mt-1">
+                <?php if ($session->phone_number): ?>
+                    <span class="inline-flex items-center">
+                        <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                        +<?= Html::encode($session->phone_number) ?>
+                    </span>
                 <?php else: ?>
-                    <?php foreach ($chats as $chat): ?>
-                        <div @click="selectChat(<?= $chat->id ?>)"
-                             :class="{ 'bg-[var(--wa-bg-panel)]': selectedChatId === <?= $chat->id ?> }"
-                             class="flex items-center gap-3 px-3 py-3 cursor-pointer hover:bg-[var(--wa-bg-panel)] border-b border-[var(--wa-border)] transition-colors">
-                            <!-- Avatar -->
-                            <div class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 <?= $chat->lid_id ? 'bg-blue-100' : 'bg-gray-200' ?>">
-                                <?php if ($chat->lid): ?>
-                                    <span class="text-blue-600 font-semibold text-lg">
-                                        <?= mb_strtoupper(mb_substr($chat->getDisplayName(), 0, 1)) ?>
-                                    </span>
-                                <?php else: ?>
-                                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                    </svg>
-                                <?php endif; ?>
-                            </div>
+                    Чатов: <?= count($chats) ?>
+                <?php endif; ?>
+            </p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="<?= Url::to(['index']) ?>" class="btn btn-secondary">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Настройки
+            </a>
+        </div>
+    </div>
 
-                            <!-- Info -->
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center justify-between mb-0.5">
-                                    <span class="font-medium text-[var(--wa-text-primary)] truncate">
-                                        <?= Html::encode($chat->getDisplayName()) ?>
-                                    </span>
-                                    <span class="text-xs text-[var(--wa-text-secondary)] flex-shrink-0 ml-2">
-                                        <?= $chat->getLastMessageTime() ?>
-                                    </span>
-                                </div>
+    <!-- Main Container -->
+    <div class="card overflow-hidden" style="height: calc(100vh - 220px); min-height: 500px;">
+        <div class="flex h-full">
 
-                                <div class="flex items-center justify-between">
-                                    <p class="text-sm text-[var(--wa-text-secondary)] truncate">
-                                        <?php if ($chat->lastMessage): ?>
-                                            <?php if ($chat->lastMessage->is_from_me): ?>
-                                                <svg class="w-4 h-4 inline <?= $chat->lastMessage->status === 'read' ? 'wa-check-read' : 'wa-check' ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                </svg>
-                                            <?php endif; ?>
-                                            <?= Html::encode($chat->lastMessage->getPreview()) ?>
-                                        <?php else: ?>
-                                            <span class="italic">Нет сообщений</span>
-                                        <?php endif; ?>
-                                    </p>
+            <!-- Левая панель: Список чатов -->
+            <div class="w-full md:w-80 lg:w-96 flex-shrink-0 border-r border-gray-200 flex flex-col bg-gray-50"
+                 :class="{ 'hidden md:flex': selectedChatId }">
 
-                                    <?php if ($chat->unread_count > 0): ?>
-                                        <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-[var(--wa-green-primary)] rounded-full flex-shrink-0 ml-2">
-                                            <?= $chat->unread_count > 99 ? '99+' : $chat->unread_count ?>
+                <!-- Фильтры и Поиск -->
+                <div class="p-3 border-b border-gray-200 space-y-2">
+                    <!-- Табы фильтрации -->
+                    <div class="wa-filter-tabs">
+                        <button type="button" class="wa-filter-tab" :class="{ 'active': chatFilter === 'all' }" @click="chatFilter = 'all'">Все</button>
+                        <button type="button" class="wa-filter-tab" :class="{ 'active': chatFilter === 'unread' }" @click="chatFilter = 'unread'">Непрочитанные</button>
+                        <button type="button" class="wa-filter-tab" :class="{ 'active': chatFilter === 'leads' }" @click="chatFilter = 'leads'">С лидами</button>
+                    </div>
+                    <!-- Поиск -->
+                    <form method="get" action="<?= Url::to(['chats']) ?>">
+                        <div class="relative">
+                            <input type="text" name="search" value="<?= Html::encode($search) ?>"
+                                   placeholder="Поиск по имени или телефону..."
+                                   class="form-input pl-10 pr-4 py-2 text-sm">
+                            <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Список чатов -->
+                <div class="flex-1 overflow-y-auto wa-scrollbar">
+                    <?php if (empty($chats)): ?>
+                        <div class="p-8 text-center text-gray-500">
+                            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            <p class="font-medium">Нет чатов</p>
+                            <p class="text-sm mt-1">Чаты появятся когда клиенты напишут вам</p>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($chats as $chat): ?>
+                            <div @click="selectChat(<?= $chat->id ?>)"
+                                 :class="selectedChatId === <?= $chat->id ?> ? 'bg-blue-50 border-l-2 border-blue-500' : 'hover:bg-gray-100 border-l-2 border-transparent'"
+                                 x-show="chatFilter === 'all' || (chatFilter === 'unread' && <?= $chat->unread_count > 0 ? 'true' : 'false' ?>) || (chatFilter === 'leads' && <?= $chat->lid_id ? 'true' : 'false' ?>)"
+                                 class="flex items-center gap-3 px-3 py-3 cursor-pointer transition-colors border-b border-gray-100 chat-item"
+                                 data-unread="<?= $chat->unread_count > 0 ? '1' : '0' ?>"
+                                 data-has-lid="<?= $chat->lid_id ? '1' : '0' ?>">
+
+                                <!-- Аватар -->
+                                <div class="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden <?= !$chat->profile_picture_url ? ($chat->lid_id ? 'bg-blue-100' : 'bg-gray-200') : '' ?>">
+                                    <?php if ($chat->profile_picture_url): ?>
+                                        <img src="<?= Html::encode($chat->profile_picture_url) ?>"
+                                             alt="<?= Html::encode($chat->getDisplayName()) ?>"
+                                             class="w-full h-full object-cover"
+                                             onerror="this.parentElement.innerHTML='<span class=\'<?= $chat->lid_id ? 'text-blue-600' : 'text-gray-500' ?> font-semibold\'><?= mb_strtoupper(mb_substr($chat->getDisplayName(), 0, 1)) ?></span>'">
+                                    <?php elseif ($chat->lid): ?>
+                                        <span class="text-blue-600 font-semibold">
+                                            <?= mb_strtoupper(mb_substr($chat->getDisplayName(), 0, 1)) ?>
                                         </span>
+                                    <?php else: ?>
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                        </svg>
                                     <?php endif; ?>
                                 </div>
 
-                                <?php if ($chat->lid): ?>
-                                    <div class="mt-1">
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
-                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                            </svg>
-                                            <?= Html::encode($chat->lid->fio ?: $chat->lid->parent_fio ?: 'Лид') ?>
+                                <!-- Информация -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between mb-0.5">
+                                        <span class="font-medium text-gray-900 truncate text-sm">
+                                            <?= Html::encode($chat->getDisplayName()) ?>
+                                        </span>
+                                        <span class="text-xs text-gray-400 flex-shrink-0 ml-2">
+                                            <?= $chat->getLastMessageTime() ?>
                                         </span>
                                     </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-        </div>
 
-        <!-- Right Panel: Chat Content -->
-        <div class="flex-1 flex flex-col bg-[var(--wa-bg-panel)]">
-            <!-- Empty State -->
-            <template x-if="!selectedChatId">
-                <div class="flex-1 flex items-center justify-center wa-chat-bg">
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm text-gray-500 truncate">
+                                            <?php if ($chat->lastMessage): ?>
+                                                <?php if ($chat->lastMessage->is_from_me): ?>
+                                                    <svg class="w-4 h-4 inline <?= $chat->lastMessage->status === 'read' ? 'text-blue-500' : 'text-gray-400' ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                    </svg>
+                                                <?php endif; ?>
+                                                <?= Html::encode($chat->lastMessage->getPreview()) ?>
+                                            <?php else: ?>
+                                                <span class="italic text-gray-400">Нет сообщений</span>
+                                            <?php endif; ?>
+                                        </p>
+
+                                        <?php if ($chat->unread_count > 0): ?>
+                                            <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-blue-500 rounded-full flex-shrink-0 ml-2">
+                                                <?= $chat->unread_count > 99 ? '99+' : $chat->unread_count ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <?php if ($chat->lid): ?>
+                                        <div class="mt-1">
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                                                <?= Html::encode($chat->lid->fio ?: $chat->lid->parent_fio ?: 'Лид') ?>
+                                            </span>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Правая панель: Содержимое чата -->
+            <div class="flex-1 flex flex-col bg-white"
+                 :class="{ 'hidden md:flex': !selectedChatId }">
+
+                <!-- Пустое состояние -->
+                <div x-show="!selectedChatId" class="hidden md:flex flex-1 items-center justify-center bg-gray-50">
                     <div class="text-center">
-                        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-[var(--wa-green-primary)]/10 flex items-center justify-center">
-                            <svg class="w-12 h-12 text-[var(--wa-green-primary)]" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                        <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                             </svg>
                         </div>
-                        <h3 class="text-2xl font-light text-[var(--wa-text-primary)] mb-2">WhatsApp CRM</h3>
-                        <p class="text-[var(--wa-text-secondary)]">Выберите чат для начала общения</p>
+                        <h3 class="text-lg font-medium text-gray-900">Выберите чат</h3>
+                        <p class="text-gray-500 mt-1">для начала общения</p>
                     </div>
                 </div>
-            </template>
 
-            <!-- Chat Content -->
-            <template x-if="selectedChatId">
-                <div class="flex-1 flex flex-col">
-                    <!-- Chat Header -->
-                    <div class="px-4 py-2 bg-[var(--wa-bg-panel)] border-b border-[var(--wa-border)] flex items-center justify-between">
+                <!-- Контент чата -->
+                <div x-show="selectedChatId" x-cloak class="flex-1 flex flex-col h-full">
+
+                    <!-- Заголовок чата -->
+                    <div class="px-4 py-3 flex items-center justify-between border-b border-gray-200 bg-white">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full flex items-center justify-center"
-                                 :class="chatInfo.lid_id ? 'bg-blue-100' : 'bg-gray-200'">
-                                <span class="font-semibold" :class="chatInfo.lid_id ? 'text-blue-600' : 'text-gray-500'"
-                                      x-text="chatInfo.name ? chatInfo.name.charAt(0).toUpperCase() : '?'"></span>
+                            <!-- Кнопка назад (мобильные) -->
+                            <button @click="goBack()"
+                                    class="md:hidden p-1.5 -ml-1 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                </svg>
+                            </button>
+                            <!-- Аватар с онлайн-индикатором -->
+                            <div class="relative flex-shrink-0">
+                                <div class="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden"
+                                     :class="!chatInfo.profile_picture_url ? (chatInfo.lid_id ? 'bg-blue-100' : 'bg-gray-200') : ''">
+                                    <template x-if="chatInfo.profile_picture_url">
+                                        <img :src="chatInfo.profile_picture_url"
+                                             :alt="chatInfo.name"
+                                             class="w-full h-full object-cover"
+                                             @error="chatInfo.profile_picture_url = null">
+                                    </template>
+                                    <template x-if="!chatInfo.profile_picture_url">
+                                        <span class="font-semibold text-lg" :class="chatInfo.lid_id ? 'text-blue-600' : 'text-gray-500'"
+                                              x-text="chatInfo.name ? chatInfo.name.charAt(0).toUpperCase() : '?'"></span>
+                                    </template>
+                                </div>
+                                <!-- Online indicator -->
+                                <div class="wa-online-indicator" title="Онлайн"></div>
                             </div>
-                            <div>
-                                <div class="font-medium text-[var(--wa-text-primary)]" x-text="chatInfo.name"></div>
-                                <div class="text-xs text-[var(--wa-text-secondary)]" x-text="chatInfo.phone"></div>
+                            <div class="min-w-0">
+                                <div class="font-medium text-gray-900 truncate text-base" x-text="chatInfo.name"></div>
+                                <div class="text-sm text-gray-500 truncate" x-text="chatInfo.phone"></div>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2">
-                            <!-- Link to Lead -->
-                            <template x-if="chatInfo.lid_id">
-                                <a :href="'/<?= Yii::$app->params['organizationId'] ?? 2 ?>/lids/view?id=' + chatInfo.lid_id"
-                                   class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                    </svg>
-                                    <span x-text="chatInfo.lid_name || 'Открыть лид'"></span>
-                                </a>
-                            </template>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <!-- Ссылка на лид -->
+                            <a x-show="chatInfo.lid_id"
+                               :href="'/<?= Yii::$app->params['organizationId'] ?? 2 ?>/lids/view?id=' + chatInfo.lid_id"
+                               class="btn btn-secondary btn-sm">
+                                <svg class="w-4 h-4 md:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                                <span class="hidden md:inline" x-text="chatInfo.lid_name || 'Открыть лид'"></span>
+                            </a>
 
-                            <!-- Create Lead Button -->
-                            <template x-if="!chatInfo.lid_id">
-                                <button @click="createLid()"
-                                        :disabled="creatingLid"
-                                        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-[var(--wa-green-dark)] bg-green-50 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50">
-                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                    </svg>
-                                    <span x-text="creatingLid ? 'Создание...' : 'Создать лид'"></span>
-                                </button>
-                            </template>
+                            <!-- Кнопка создания лида -->
+                            <button x-show="!chatInfo.lid_id"
+                                    @click="createLid()"
+                                    :disabled="creatingLid"
+                                    class="btn btn-primary btn-sm">
+                                <svg class="w-4 h-4 md:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                <span class="hidden md:inline" x-text="creatingLid ? 'Создание...' : 'Создать лид'"></span>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Messages Area -->
-                    <div class="flex-1 overflow-y-auto wa-chat-bg wa-scrollbar p-4"
+                    <!-- Область сообщений -->
+                    <div class="flex-1 overflow-y-auto wa-scrollbar p-4 bg-gray-50"
                          x-ref="messagesContainer"
                          id="messages-container">
+                        <!-- Кнопка загрузки старых сообщений -->
+                        <div x-show="hasMoreMessages" class="text-center py-3 mb-4">
+                            <button type="button"
+                                    @click="loadMoreMessages()"
+                                    class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 bg-white hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors shadow-sm"
+                                    :disabled="loadingMore">
+                                <span x-show="!loadingMore">Загрузить ранние сообщения</span>
+                                <span x-show="loadingMore" class="flex items-center gap-2">
+                                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Загрузка...
+                                </span>
+                            </button>
+                        </div>
                         <div x-html="messagesHtml"></div>
                     </div>
 
-                    <!-- Input Area -->
-                    <div class="px-4 py-3 bg-[var(--wa-bg-panel)] border-t border-[var(--wa-border)]">
+                    <!-- Область ввода сообщения -->
+                    <div class="px-4 py-3 border-t border-gray-200 bg-white relative"
+                         @reply-message.window="replyTo = $event.detail; $nextTick(() => $refs.messageInput?.focus())">
+
+                        <!-- Reply preview -->
+                        <div x-show="replyTo" x-transition class="wa-reply-preview mb-2">
+                            <div class="wa-reply-preview-content">
+                                <div class="wa-reply-preview-name" x-text="replyTo?.name"></div>
+                                <div class="wa-reply-preview-text" x-text="replyTo?.text"></div>
+                            </div>
+                            <button type="button" class="wa-reply-preview-close" @click="replyTo = null">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
                         <!-- Emoji Picker -->
                         <div x-show="showEmojiPicker"
-                             x-transition:enter="transition ease-out duration-200"
-                             x-transition:enter-start="opacity-0 transform translate-y-2"
-                             x-transition:enter-end="opacity-100 transform translate-y-0"
-                             x-transition:leave="transition ease-in duration-150"
-                             x-transition:leave-start="opacity-100 transform translate-y-0"
-                             x-transition:leave-end="opacity-0 transform translate-y-2"
+                             x-transition
                              @click.outside="showEmojiPicker = false"
-                             class="absolute bottom-20 left-4 z-10 bg-white rounded-lg shadow-lg border">
+                             class="absolute bottom-full left-4 mb-2 z-50 bg-white rounded-lg shadow-xl border border-gray-200">
                             <emoji-picker @emoji-click="insertEmoji($event)"></emoji-picker>
                         </div>
 
-                        <div class="flex items-center gap-3">
-                            <!-- Emoji Button -->
+                        <div class="flex items-center gap-2">
+                            <!-- Кнопка Emoji -->
                             <button @click="showEmojiPicker = !showEmojiPicker"
                                     type="button"
-                                    class="flex-shrink-0 w-10 h-10 flex items-center justify-center text-[var(--wa-text-secondary)] hover:text-[var(--wa-green-primary)] hover:bg-gray-100 rounded-full transition-colors">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    class="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                             </button>
 
-                            <!-- Text Input -->
+                            <!-- Поле ввода -->
                             <div class="flex-1">
                                 <textarea x-model="messageText"
                                           x-ref="messageInput"
                                           @keydown.enter.prevent="if (!$event.shiftKey) sendMessage()"
                                           @input="adjustTextarea()"
-                                          placeholder="Введите сообщение"
+                                          placeholder="Введите сообщение..."
                                           rows="1"
-                                          class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-3xl text-sm resize-none focus:outline-none focus:border-[var(--wa-green-primary)] focus:ring-1 focus:ring-[var(--wa-green-primary)] max-h-32 overflow-y-auto"
-                                          style="min-height: 42px; line-height: 1.4;"></textarea>
+                                          class="form-input py-2 text-sm resize-none max-h-32 overflow-y-auto"
+                                          style="min-height: 38px; line-height: 1.4;"></textarea>
                             </div>
 
-                            <!-- Send Button -->
+                            <!-- Кнопка отправки -->
                             <button @click="sendMessage()"
                                     :disabled="!messageText.trim() || sending"
-                                    class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    style="background-color: #00a884; color: white;"
-                                    onmouseover="this.style.backgroundColor='#008069'"
-                                    onmouseout="this.style.backgroundColor='#00a884'">
+                                    class="btn btn-primary flex-shrink-0 px-3"
+                                    :class="{ 'opacity-50 cursor-not-allowed': !messageText.trim() || sending }">
                                 <svg x-show="!sending" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                                 </svg>
                                 <svg x-show="sending" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                 </svg>
                             </button>
                         </div>
                     </div>
                 </div>
-            </template>
+            </div>
         </div>
     </div>
 </div>
@@ -353,19 +343,23 @@ $csrfParam = Yii::$app->request->csrfParam;
 
 <script>
 document.addEventListener('alpine:init', () => {
-    Alpine.data('whatsappSplitView', () => ({
+    Alpine.data('whatsappChat', () => ({
         selectedChatId: null,
         chatInfo: {},
         messagesHtml: '',
         lastMessageId: 0,
+        oldestMessageId: null,
+        hasMoreMessages: false,
+        loadingMore: false,
         messageText: '',
         showEmojiPicker: false,
         sending: false,
         creatingLid: false,
         pollInterval: null,
+        chatFilter: 'all',
+        replyTo: null,
 
         init() {
-            // Start polling for new messages
             this.pollInterval = setInterval(() => {
                 if (this.selectedChatId) {
                     this.checkNewMessages();
@@ -373,28 +367,86 @@ document.addEventListener('alpine:init', () => {
             }, 3000);
         },
 
+        goBack() {
+            this.selectedChatId = null;
+            this.chatInfo = {};
+            this.messagesHtml = '';
+            this.oldestMessageId = null;
+            this.hasMoreMessages = false;
+        },
+
         async selectChat(chatId, forceReload = false) {
             if (this.selectedChatId === chatId && !forceReload) return;
 
             this.selectedChatId = chatId;
             this.messagesHtml = '<div class="text-center py-8 text-gray-400">Загрузка...</div>';
+            this.oldestMessageId = null;
+            this.hasMoreMessages = false;
 
             try {
                 const response = await fetch(`<?= $getChatContentUrl ?>?chat_id=${chatId}`);
                 const data = await response.json();
 
                 if (data.success) {
-                    this.chatInfo = data.chat;
+                    this.chatInfo = {
+                        ...data.chat,
+                        profile_picture_url: data.chat.profile_picture_url || null
+                    };
                     this.messagesHtml = data.messages_html;
                     this.lastMessageId = data.last_message_id;
+                    this.oldestMessageId = data.oldest_id;
+                    this.hasMoreMessages = data.has_more;
 
-                    this.$nextTick(() => {
-                        this.scrollToBottom();
-                    });
+                    this.$nextTick(() => this.scrollToBottom());
                 }
             } catch (error) {
                 console.error('Error loading chat:', error);
-                this.messagesHtml = '<div class="text-center py-8 text-red-500">Ошибка загрузки чата</div>';
+                this.messagesHtml = '<div class="text-center py-8 text-red-500">Ошибка загрузки</div>';
+            }
+        },
+
+        async loadMoreMessages() {
+            if (!this.oldestMessageId || this.loadingMore || !this.hasMoreMessages) return;
+
+            this.loadingMore = true;
+            const container = this.$refs.messagesContainer;
+            const scrollHeightBefore = container ? container.scrollHeight : 0;
+
+            try {
+                const response = await fetch(`<?= $loadMoreMessagesUrl ?>?chat_id=${this.selectedChatId}&before_id=${this.oldestMessageId}`);
+                const data = await response.json();
+
+                if (data.success && data.messages_html) {
+                    // Вставляем новые сообщения в начало
+                    const messagesWrapper = container.querySelector('.space-y-4');
+                    if (messagesWrapper) {
+                        // Создаём временный контейнер для новых сообщений
+                        const temp = document.createElement('div');
+                        temp.innerHTML = data.messages_html;
+
+                        // Ищем контейнер сообщений в новом HTML
+                        const newMessages = temp.querySelector('.space-y-4');
+                        if (newMessages) {
+                            // Вставляем содержимое в начало существующего контейнера
+                            messagesWrapper.insertAdjacentHTML('afterbegin', newMessages.innerHTML);
+                        }
+                    }
+
+                    this.oldestMessageId = data.oldest_id;
+                    this.hasMoreMessages = data.has_more;
+
+                    // Сохраняем позицию скролла
+                    this.$nextTick(() => {
+                        if (container) {
+                            const scrollHeightAfter = container.scrollHeight;
+                            container.scrollTop = scrollHeightAfter - scrollHeightBefore;
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading more messages:', error);
+            } finally {
+                this.loadingMore = false;
             }
         },
 
@@ -403,16 +455,20 @@ document.addEventListener('alpine:init', () => {
 
             this.sending = true;
             const text = this.messageText;
+            const replyToId = this.replyTo?.id || null;
             this.messageText = '';
             this.showEmojiPicker = false;
+            this.replyTo = null;
 
-            // Reset textarea height
-            this.$refs.messageInput.style.height = '42px';
+            if (this.$refs.messageInput) {
+                this.$refs.messageInput.style.height = '38px';
+            }
 
             try {
                 const formData = new FormData();
                 formData.append('chat_id', this.selectedChatId);
                 formData.append('text', text);
+                if (replyToId) formData.append('reply_to', replyToId);
                 formData.append('<?= $csrfParam ?>', '<?= $csrfToken ?>');
 
                 const response = await fetch('<?= $sendMessageUrl ?>', {
@@ -423,7 +479,6 @@ document.addEventListener('alpine:init', () => {
                 const data = await response.json();
 
                 if (data.success) {
-                    // Reload messages (force reload since same chat)
                     await this.selectChat(this.selectedChatId, true);
                 } else {
                     alert(data.message || 'Ошибка отправки');
@@ -438,33 +493,70 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        pollCounter: 0,
+
         async checkNewMessages() {
-            if (!this.selectedChatId || !this.lastMessageId) return;
+            if (!this.selectedChatId) return;
+
+            this.pollCounter++;
 
             try {
+                // Каждые 5 проверок (15 сек) делаем полную перезагрузку для обновления статусов
+                if (this.pollCounter % 5 === 0) {
+                    await this.reloadMessages();
+                    return;
+                }
+
+                // Остальные проверки - только новые сообщения
+                if (!this.lastMessageId) return;
+
                 const response = await fetch(`<?= $getMessagesUrl ?>?chat_id=${this.selectedChatId}&after_id=${this.lastMessageId}`);
                 const data = await response.json();
 
-                if (data.success && data.messages.length > 0) {
-                    // Reload the whole chat to get new messages
-                    await this.selectChat(this.selectedChatId);
+                if (data.success && data.messages && data.messages.length > 0) {
+                    await this.reloadMessages();
                 }
             } catch (error) {
                 console.error('Error checking messages:', error);
             }
         },
 
+        async reloadMessages() {
+            try {
+                const response = await fetch(`<?= $getChatContentUrl ?>?chat_id=${this.selectedChatId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const wasAtBottom = this.isScrolledToBottom();
+
+                    this.messagesHtml = data.messages_html;
+                    this.lastMessageId = data.last_message_id;
+                    this.oldestMessageId = data.oldest_id;
+                    this.hasMoreMessages = data.has_more;
+
+                    if (wasAtBottom) {
+                        this.$nextTick(() => this.scrollToBottom());
+                    }
+                }
+            } catch (error) {
+                console.error('Error reloading messages:', error);
+            }
+        },
+
+        isScrolledToBottom() {
+            const container = this.$refs.messagesContainer;
+            if (!container) return true;
+            return container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+        },
+
         async createLid() {
             if (this.creatingLid) return;
-
             this.creatingLid = true;
 
             try {
                 const response = await fetch(`<?= $createLidUrl ?>?chat_id=${this.selectedChatId}`, {
                     method: 'POST',
-                    headers: {
-                        'X-CSRF-Token': '<?= $csrfToken ?>'
-                    }
+                    headers: { 'X-CSRF-Token': '<?= $csrfToken ?>' }
                 });
 
                 const data = await response.json();
@@ -472,9 +564,6 @@ document.addEventListener('alpine:init', () => {
                 if (data.success) {
                     this.chatInfo.lid_id = data.lid_id;
                     this.chatInfo.lid_name = 'Лид';
-                    if (window.$store && window.$store.toast) {
-                        window.$store.toast.show('Лид создан', 'success');
-                    }
                 } else {
                     alert(data.message || 'Ошибка создания лида');
                 }
@@ -489,6 +578,8 @@ document.addEventListener('alpine:init', () => {
         insertEmoji(event) {
             const emoji = event.detail.unicode;
             const input = this.$refs.messageInput;
+            if (!input) return;
+
             const start = input.selectionStart;
             const end = input.selectionEnd;
 
@@ -502,7 +593,8 @@ document.addEventListener('alpine:init', () => {
 
         adjustTextarea() {
             const textarea = this.$refs.messageInput;
-            textarea.style.height = '42px';
+            if (!textarea) return;
+            textarea.style.height = '38px';
             textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
         },
 
@@ -514,4 +606,87 @@ document.addEventListener('alpine:init', () => {
         }
     }));
 });
+
+// Audio player functions
+function toggleAudio(audioId) {
+    const audio = document.getElementById(audioId);
+    const playBtn = document.getElementById(audioId + '-play');
+    const pauseBtn = document.getElementById(audioId + '-pause');
+
+    if (!audio) return;
+
+    // Pause all other audio
+    document.querySelectorAll('.wa-audio-player audio').forEach(a => {
+        if (a.id !== audioId && !a.paused) {
+            a.pause();
+            const otherId = a.id;
+            document.getElementById(otherId + '-play')?.classList.remove('hidden');
+            document.getElementById(otherId + '-pause')?.classList.add('hidden');
+        }
+    });
+
+    if (audio.paused) {
+        audio.play();
+        playBtn?.classList.add('hidden');
+        pauseBtn?.classList.remove('hidden');
+    } else {
+        audio.pause();
+        playBtn?.classList.remove('hidden');
+        pauseBtn?.classList.add('hidden');
+    }
+
+    // Setup event listeners once
+    if (!audio.dataset.initialized) {
+        audio.dataset.initialized = 'true';
+
+        audio.addEventListener('timeupdate', () => {
+            const fill = document.getElementById(audioId + '-fill');
+            const timeEl = document.getElementById(audioId + '-time');
+            if (fill && audio.duration) {
+                fill.style.width = (audio.currentTime / audio.duration * 100) + '%';
+            }
+            if (timeEl) {
+                timeEl.textContent = formatAudioTime(audio.currentTime);
+            }
+        });
+
+        audio.addEventListener('ended', () => {
+            playBtn?.classList.remove('hidden');
+            pauseBtn?.classList.add('hidden');
+            const fill = document.getElementById(audioId + '-fill');
+            if (fill) fill.style.width = '0%';
+        });
+
+        audio.addEventListener('loadedmetadata', () => {
+            const timeEl = document.getElementById(audioId + '-time');
+            if (timeEl && audio.duration) {
+                timeEl.textContent = formatAudioTime(audio.duration);
+            }
+        });
+    }
+}
+
+function seekAudio(event, audioId) {
+    const audio = document.getElementById(audioId);
+    const track = event.currentTarget;
+    if (!audio || !track) return;
+
+    const rect = track.getBoundingClientRect();
+    const percent = (event.clientX - rect.left) / rect.width;
+    audio.currentTime = percent * audio.duration;
+}
+
+function formatAudioTime(seconds) {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return mins + ':' + (secs < 10 ? '0' : '') + secs;
+}
+
+// Copy message text
+function copyMessageText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Could show a toast notification here
+    });
+}
 </script>

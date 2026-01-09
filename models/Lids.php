@@ -189,6 +189,23 @@ class Lids extends ActiveRecord
             ->orderBy(['created_at' => SORT_DESC]);
     }
 
+    /**
+     * Связанный чат WhatsApp
+     */
+    public function getWhatsappChat()
+    {
+        return $this->hasOne(WhatsappChat::class, ['lid_id' => 'id']);
+    }
+
+    /**
+     * Получить URL аватарки из WhatsApp
+     * @return string|null
+     */
+    public function getWhatsappProfilePicture(): ?string
+    {
+        return $this->whatsappChat?->profile_picture_url;
+    }
+
     // ===================== ТЕГИ (через LidTag) =====================
 
     /**

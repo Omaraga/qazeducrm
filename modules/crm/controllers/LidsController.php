@@ -334,6 +334,7 @@ class LidsController extends CrmBaseController
                     'is_overdue' => $model->isOverdue(),
                     'is_stale' => $model->isStaleInStatus(),
                     'created_at' => $model->created_at ? Yii::$app->formatter->asDatetime($model->created_at, 'php:d.m.Y H:i') : null,
+                    'whatsapp_profile_picture' => $model->getWhatsappProfilePicture(),
                     'history' => $history,
                 ],
             ];

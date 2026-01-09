@@ -8,7 +8,7 @@ use Yii;
 use yii\db\Expression;
 
 /**
- * Модель шаблонов SMS и WhatsApp
+ * Модель правил рассылки SMS и WhatsApp
  *
  * @property int $id
  * @property int $organization_id
@@ -25,11 +25,11 @@ class SmsTemplate extends ActiveRecord
 {
     use UpdateInsteadOfDeleteTrait;
 
-    // Типы шаблонов
+    // Типы (каналы отправки)
     const TYPE_SMS = 'sms';
     const TYPE_WHATSAPP = 'whatsapp';
 
-    // Коды шаблонов SMS
+    // Коды назначений (общие для SMS и WhatsApp)
     const CODE_LESSON_REMINDER = 'lesson_reminder';      // Напоминание о занятии
     const CODE_LESSON_CANCELLED = 'lesson_cancelled';    // Отмена занятия
     const CODE_PAYMENT_DUE = 'payment_due';              // Задолженность
@@ -38,11 +38,9 @@ class SmsTemplate extends ActiveRecord
     const CODE_TRIAL_INVITE = 'trial_invite';            // Приглашение на пробное
     const CODE_CUSTOM = 'custom';                        // Произвольное
 
-    // Коды шаблонов WhatsApp для лидов
+    // Дополнительные коды для работы с лидами (WhatsApp)
     const CODE_WA_FIRST_CONTACT = 'wa_first_contact';    // Первый контакт
-    const CODE_WA_TRIAL_INVITE = 'wa_trial_invite';      // Приглашение на пробное
     const CODE_WA_AFTER_TRIAL = 'wa_after_trial';        // После пробного
-    const CODE_WA_REMINDER = 'wa_reminder';              // Напоминание
     const CODE_WA_FOLLOW_UP = 'wa_follow_up';            // Повторное касание
 
     /**
@@ -84,7 +82,7 @@ class SmsTemplate extends ActiveRecord
             ['code', 'in', 'range' => array_keys(self::getAllCodeList())],
             ['type', 'in', 'range' => [self::TYPE_SMS, self::TYPE_WHATSAPP]],
             ['type', 'default', 'value' => self::TYPE_SMS],
-            ['is_active', 'default', 'value' => true],
+            ['is_active', 'default', 'value' => false],
         ];
     }
 
@@ -96,7 +94,7 @@ class SmsTemplate extends ActiveRecord
         return [
             'id' => 'ID',
             'organization_id' => 'Организация',
-            'code' => 'Код шаблона',
+            'code' => 'Назначение',
             'type' => 'Тип',
             'name' => 'Название',
             'content' => 'Текст сообщения',
@@ -135,17 +133,19 @@ class SmsTemplate extends ActiveRecord
     }
 
     /**
-     * Список кодов WhatsApp шаблонов для лидов
+     * Список кодов WhatsApp правил рассылки
+     * Включает все общие назначения + специфичные для работы с лидами
      */
     public static function getWhatsAppCodeList()
     {
-        return [
-            self::CODE_WA_FIRST_CONTACT => 'Первый контакт',
-            self::CODE_WA_TRIAL_INVITE => 'Приглашение на пробное',
-            self::CODE_WA_AFTER_TRIAL => 'После пробного занятия',
-            self::CODE_WA_REMINDER => 'Напоминание',
-            self::CODE_WA_FOLLOW_UP => 'Повторное касание',
-        ];
+        return array_merge(
+            self::getCodeList(), // Все общие назначения доступны для WhatsApp
+            [
+                self::CODE_WA_FIRST_CONTACT => 'Первый контакт (лиды)',
+                self::CODE_WA_AFTER_TRIAL => 'После пробного занятия (лиды)',
+                self::CODE_WA_FOLLOW_UP => 'Повторное касание (лиды)',
+            ]
+        );
     }
 
     /**
@@ -285,7 +285,7 @@ class SmsTemplate extends ActiveRecord
             $template->code = $data['code'];
             $template->name = $data['name'];
             $template->content = $data['content'];
-            $template->is_active = true;
+            $template->is_active = false;
             $template->save();
         }
 
@@ -339,7 +339,7 @@ class SmsTemplate extends ActiveRecord
                 $template->code = $data['code'];
                 $template->name = $data['name'];
                 $template->content = $data['content'];
-                $template->is_active = true;
+                $template->is_active = false;
                 $template->save();
             }
         }

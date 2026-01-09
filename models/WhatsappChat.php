@@ -17,6 +17,7 @@ use yii\db\Expression;
  * @property string $remote_jid
  * @property string|null $remote_phone
  * @property string|null $remote_name
+ * @property string|null $profile_picture_url
  * @property int|null $last_message_id
  * @property string|null $last_message_at
  * @property int $unread_count
@@ -70,6 +71,7 @@ class WhatsappChat extends ActiveRecord
             [['remote_jid'], 'string', 'max' => 100],
             [['remote_phone'], 'string', 'max' => 20],
             [['remote_name'], 'string', 'max' => 255],
+            [['profile_picture_url'], 'string', 'max' => 512],
             [['unread_count'], 'default', 'value' => 0],
             [['is_archived'], 'default', 'value' => false],
             [['session_id', 'remote_jid'], 'unique', 'targetAttribute' => ['session_id', 'remote_jid']],
@@ -154,7 +156,9 @@ class WhatsappChat extends ActiveRecord
         }
 
         // Обновляем данные чата
-        if ($message->remote_name && !$chat->remote_name) {
+        // ВАЖНО: обновляем remote_name только от входящих сообщений,
+        // т.к. для исходящих remote_name будет null или содержать неправильное имя
+        if ($message->remote_name && !$chat->remote_name && !$message->is_from_me) {
             $chat->remote_name = $message->remote_name;
         }
 
@@ -292,6 +296,28 @@ class WhatsappChat extends ActiveRecord
         );
 
         return $this->save(false);
+    }
+
+    /**
+     * Проверить, есть ли входящие сообщения от контакта
+     * @param string $phone Номер телефона (без +)
+     * @param int $sessionId ID сессии
+     * @return bool
+     */
+    public static function hasIncomingFrom(string $phone, int $sessionId): bool
+    {
+        // Формируем JID для поиска
+        $jid = $phone . '@s.whatsapp.net';
+
+        return WhatsappMessage::find()
+            ->where(['session_id' => $sessionId])
+            ->andWhere([
+                'or',
+                ['remote_jid' => $jid],
+                ['remote_phone' => $phone],
+            ])
+            ->andWhere(['direction' => WhatsappMessage::DIRECTION_INCOMING])
+            ->exists();
     }
 
     /**

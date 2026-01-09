@@ -179,9 +179,11 @@ class WhatsappMessage extends ActiveRecord
         $message->session_id = $sessionId;
         $message->remote_jid = $key['remoteJid'] ?? '';
         $message->remote_phone = self::extractPhoneFromJid($message->remote_jid);
-        $message->remote_name = $data['pushName'] ?? null;
         $message->is_from_me = $key['fromMe'] ?? false;
         $message->direction = $message->is_from_me ? self::DIRECTION_OUTGOING : self::DIRECTION_INCOMING;
+        // ВАЖНО: для исходящих сообщений pushName содержит имя нашего профиля, а не контакта
+        // Поэтому берём pushName только для входящих сообщений
+        $message->remote_name = $message->is_from_me ? null : ($data['pushName'] ?? null);
         $message->whatsapp_id = $key['id'] ?? null;
         $message->whatsapp_timestamp = isset($data['messageTimestamp'])
             ? date('Y-m-d H:i:s', $data['messageTimestamp'])
@@ -276,6 +278,23 @@ class WhatsappMessage extends ActiveRecord
                 ['like', 'parent_phone', $phone],
             ])
             ->one();
+    }
+
+    /**
+     * Получить значение из JSON поля info
+     * @param string $key Ключ
+     * @param mixed $default Значение по умолчанию
+     * @return mixed
+     */
+    public function getInfo(string $key, $default = null)
+    {
+        if (empty($this->info)) {
+            return $default;
+        }
+
+        $info = is_string($this->info) ? json_decode($this->info, true) : $this->info;
+
+        return $info[$key] ?? $default;
     }
 
     /**
@@ -391,9 +410,10 @@ class WhatsappMessage extends ActiveRecord
         $message->session_id = $sessionId;
         $message->remote_jid = $data['from'] ?? '';
         $message->remote_phone = self::extractPhoneFromJid($message->remote_jid);
-        $message->remote_name = $data['_data']['notifyName'] ?? $data['notifyName'] ?? null;
         $message->is_from_me = $data['fromMe'] ?? false;
         $message->direction = $message->is_from_me ? self::DIRECTION_OUTGOING : self::DIRECTION_INCOMING;
+        // ВАЖНО: для исходящих сообщений notifyName содержит имя нашего профиля, а не контакта
+        $message->remote_name = $message->is_from_me ? null : ($data['_data']['notifyName'] ?? $data['notifyName'] ?? null);
         $message->whatsapp_id = $messageId;
         $message->whatsapp_timestamp = isset($data['timestamp'])
             ? date('Y-m-d H:i:s', $data['timestamp'])

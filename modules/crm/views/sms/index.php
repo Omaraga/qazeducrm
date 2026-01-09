@@ -1,13 +1,15 @@
 <?php
 
 use app\helpers\OrganizationUrl;
+use app\widgets\tailwind\Icon;
 use app\widgets\tailwind\LinkPager;
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
-$this->title = 'SMS уведомления';
+$this->title = 'История рассылки';
+$this->params['breadcrumbs'][] = ['label' => 'Рассылка', 'url' => ['automations']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
@@ -16,21 +18,12 @@ $this->params['breadcrumbs'][] = $this->title;
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-900"><?= Html::encode($this->title) ?></h1>
-            <p class="text-gray-500 mt-1">История отправок и управление SMS</p>
+            <p class="text-gray-500 mt-1">Лог отправленных SMS сообщений</p>
         </div>
         <div class="flex gap-2">
-            <a href="<?= OrganizationUrl::to(['sms/templates']) ?>" class="btn btn-secondary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                Шаблоны
-            </a>
-            <a href="<?= OrganizationUrl::to(['sms/settings']) ?>" class="btn btn-secondary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-                Настройки
+            <a href="<?= OrganizationUrl::to(['sms/automations']) ?>" class="btn btn-secondary">
+                <?= Icon::widget(['name' => 'arrow-left', 'class' => 'w-4 h-4']) ?>
+                Авторассылки
             </a>
         </div>
     </div>
@@ -82,9 +75,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     <?php if (empty($dataProvider->getModels())): ?>
                     <tr>
                         <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-                            </svg>
+                            <?= Icon::widget(['name' => 'chat-bubble-left-right', 'class' => 'w-12 h-12 mx-auto text-gray-300']) ?>
                             <p class="mt-2">SMS сообщения не найдены</p>
                             <p class="text-sm mt-1">Здесь будет история отправленных SMS</p>
                         </td>

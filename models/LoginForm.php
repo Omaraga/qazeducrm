@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use app\models\relations\UserOrganization;
 use Yii;
 use yii\base\Model;
 
@@ -32,6 +33,8 @@ class LoginForm extends Model
             ['rememberMe', 'boolean'],
             // password is validated by validatePassword()
             ['password', 'validatePassword'],
+            // check organization status
+            ['username', 'validateOrganizationStatus'],
         ];
     }
 
@@ -49,6 +52,55 @@ class LoginForm extends Model
 
             if (!$user || !$user->validatePassword($this->password)) {
                 $this->addError($attribute, 'Неверный логин или пароль.');
+            }
+        }
+    }
+
+    /**
+     * Validates organization status.
+     * Prevents login if user's organization is not active (pending approval).
+     *
+     * @param string $attribute the attribute currently being validated
+     * @param array $params the additional name-value pairs given in the rule
+     */
+    public function validateOrganizationStatus($attribute, $params)
+    {
+        if (!$this->hasErrors()) {
+            $user = $this->getUser();
+
+            if ($user) {
+                // Skip check for superadmins
+                if (Yii::$app->authManager->checkAccess($user->id, 'SUPER')) {
+                    return;
+                }
+
+                // Check user's organizations
+                $userOrganizations = UserOrganization::find()
+                    ->where(['related_id' => $user->id])
+                    ->all();
+
+                if (!empty($userOrganizations)) {
+                    $hasActiveOrg = false;
+                    $pendingOrgName = null;
+
+                    foreach ($userOrganizations as $userOrg) {
+                        $organization = $userOrg->organization;
+                        if ($organization) {
+                            if ($organization->status === Organizations::STATUS_ACTIVE) {
+                                $hasActiveOrg = true;
+                                break;
+                            } elseif ($organization->status === Organizations::STATUS_PENDING) {
+                                $pendingOrgName = $organization->name;
+                            }
+                        }
+                    }
+
+                    if (!$hasActiveOrg && $pendingOrgName) {
+                        $this->addError($attribute, "Ваша организация \"{$pendingOrgName}\" ожидает одобрения администратором. Пожалуйста, дождитесь подтверждения.");
+                    } elseif (!$hasActiveOrg) {
+                        $this->addError($attribute, 'Ваша организация заблокирована или приостановлена. Свяжитесь с администратором.');
+                    }
+                }
             }
         }
     }

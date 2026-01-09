@@ -14,6 +14,8 @@
 /** @var array $recentOrganizations */
 /** @var array $recentPendingPayments */
 /** @var array $planStats */
+/** @var array $awaitingApproval */
+/** @var int $awaitingApprovalCount */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -86,9 +88,12 @@ $revenueChange = $lastMonthRevenue > 0
         <div class="stat-card">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-value"><?= $pendingPayments + $expiringSoon ?></div>
+                    <div class="stat-value"><?= $awaitingApprovalCount + $pendingPayments + $expiringSoon ?></div>
                     <div class="stat-label">Требуют внимания</div>
                     <small class="text-muted">
+                        <?php if ($awaitingApprovalCount > 0): ?>
+                            <span class="text-warning"><?= $awaitingApprovalCount ?> заявок</span>,
+                        <?php endif; ?>
                         <?= $pendingPayments ?> платежей, <?= $expiringSoon ?> истекают
                     </small>
                 </div>
@@ -99,6 +104,94 @@ $revenueChange = $lastMonthRevenue > 0
         </div>
     </div>
 </div>
+
+<?php if ($awaitingApprovalCount > 0): ?>
+<!-- Организации ожидающие одобрения -->
+<div class="card card-custom mb-4 border-warning">
+    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+        <span>
+            <i class="fas fa-hourglass-half mr-2"></i>
+            <strong>Ожидают одобрения</strong>
+            <span class="badge badge-dark ml-2"><?= $awaitingApprovalCount ?></span>
+        </span>
+        <a href="<?= Url::to(['/superadmin/organization/pending']) ?>" class="btn btn-sm btn-dark">
+            Все заявки
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Организация</th>
+                    <th>Email</th>
+                    <th>Телефон</th>
+                    <th>Дата регистрации</th>
+                    <th class="text-center">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($awaitingApproval as $org): ?>
+                    <tr>
+                        <td>
+                            <strong><?= Html::encode($org->name) ?></strong>
+                            <?php if ($org->bin): ?>
+                                <br><small class="text-muted">БИН: <?= Html::encode($org->bin) ?></small>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <a href="mailto:<?= Html::encode($org->email) ?>"><?= Html::encode($org->email) ?></a>
+                            <br><small class="text-success"><i class="fas fa-check-circle"></i> Подтверждён</small>
+                        </td>
+                        <td>
+                            <?php if ($org->phone): ?>
+                                <a href="tel:<?= Html::encode($org->phone) ?>"><?= Html::encode($org->phone) ?></a>
+                            <?php else: ?>
+                                <span class="text-muted">-</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <small><?= Yii::$app->formatter->asDatetime($org->created_at, 'php:d.m.Y H:i') ?></small>
+                            <br><small class="text-muted"><?= Yii::$app->formatter->asRelativeTime($org->created_at) ?></small>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group">
+                                <a href="<?= Url::to(['/superadmin/organization/view', 'id' => $org->id]) ?>"
+                                   class="btn btn-sm btn-outline-secondary" title="Просмотр">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <?= Html::a(
+                                    '<i class="fas fa-check"></i>',
+                                    ['/superadmin/organization/activate', 'id' => $org->id],
+                                    [
+                                        'class' => 'btn btn-sm btn-success',
+                                        'title' => 'Одобрить',
+                                        'data' => [
+                                            'method' => 'post',
+                                            'confirm' => 'Вы уверены, что хотите одобрить организацию "' . Html::encode($org->name) . '"?',
+                                        ],
+                                    ]
+                                ) ?>
+                                <?= Html::a(
+                                    '<i class="fas fa-times"></i>',
+                                    ['/superadmin/organization/block', 'id' => $org->id],
+                                    [
+                                        'class' => 'btn btn-sm btn-danger',
+                                        'title' => 'Отклонить',
+                                        'data' => [
+                                            'method' => 'post',
+                                            'confirm' => 'Вы уверены, что хотите отклонить организацию "' . Html::encode($org->name) . '"?',
+                                        ],
+                                    ]
+                                ) ?>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="row">
     <!-- Левая колонка -->
@@ -301,6 +394,13 @@ $revenueChange = $lastMonthRevenue > 0
                 Быстрые действия
             </div>
             <div class="card-body">
+                <?php if ($awaitingApprovalCount > 0): ?>
+                <a href="<?= Url::to(['/superadmin/organization/pending']) ?>"
+                   class="btn btn-warning btn-block mb-2">
+                    <i class="fas fa-hourglass-half"></i> Одобрить заявки
+                    <span class="badge badge-light ml-1"><?= $awaitingApprovalCount ?></span>
+                </a>
+                <?php endif; ?>
                 <a href="<?= Url::to(['/superadmin/organization/create']) ?>" class="btn btn-primary btn-block mb-2">
                     <i class="fas fa-plus"></i> Добавить организацию
                 </a>

@@ -55,10 +55,16 @@ class WhatsappService extends Component
 
             $ch = curl_init();
 
+            // Увеличенный таймаут для больших файлов (base64)
+            $timeout = 60;
+            if (!empty($data['media']) && strlen($data['media']) > 100000) {
+                $timeout = 120; // 2 минуты для больших файлов
+            }
+
             curl_setopt_array($ch, [
                 CURLOPT_URL => $url,
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT => 30,
+                CURLOPT_TIMEOUT => $timeout,
                 CURLOPT_HTTPHEADER => [
                     'Content-Type: application/json',
                     'apikey: ' . $this->apiKey,
@@ -95,8 +101,18 @@ class WhatsappService extends Component
                 return $result;
             }
 
-            Yii::error("WhatsApp API error: {$httpCode} - {$response}", 'whatsapp');
-            return null;
+            // Логируем детали ошибки
+            $errorDetail = is_array($result) ? json_encode($result) : $response;
+            Yii::error("WhatsApp API error [{$httpCode}]: {$errorDetail}", 'whatsapp');
+
+            // Возвращаем результат с меткой ошибки для диагностики
+            if (is_array($result)) {
+                $result['_api_error'] = true;
+                $result['_http_code'] = $httpCode;
+                return $result;
+            }
+
+            return ['_api_error' => true, '_http_code' => $httpCode, '_raw_response' => substr($response, 0, 500)];
 
         } catch (\Exception $e) {
             Yii::error("WhatsApp API exception: " . $e->getMessage(), 'whatsapp');
@@ -203,10 +219,15 @@ class WhatsappService extends Component
                 'webhookByEvents' => false,
                 'webhookBase64' => false,
                 'events' => [
+                    'APPLICATION_STARTUP',
                     'CONNECTION_UPDATE',
+                    'QRCODE_UPDATED',
+                    'MESSAGES_SET',
                     'MESSAGES_UPSERT',
                     'MESSAGES_UPDATE',
-                    'QRCODE_UPDATED',
+                    'MESSAGES_DELETE',
+                    'SEND_MESSAGE',
+                    'MESSAGE_ACK',
                 ],
             ],
         ];
@@ -398,10 +419,14 @@ class WhatsappService extends Component
             'text' => $text,
         ]);
 
+        Yii::info('SendText API response: ' . json_encode($result), 'whatsapp');
+
         if (!$result || !isset($result['key'])) {
             Yii::error('Failed to send WhatsApp message: ' . json_encode($result), 'whatsapp');
             return null;
         }
+
+        Yii::info('Message sent, whatsapp_id: ' . ($result['key']['id'] ?? 'null'), 'whatsapp');
 
         // Создаём запись о сообщении
         $message = new WhatsappMessage();
@@ -456,35 +481,84 @@ class WhatsappService extends Component
         $phone = $this->normalizePhone($phone);
         $remoteJid = "{$phone}@s.whatsapp.net";
 
-        $endpoint = match ($mediaType) {
-            'image' => "/message/sendMedia/{$session->instance_name}",
-            'document', 'file' => "/message/sendMedia/{$session->instance_name}",
-            default => null,
+        // Маппинг типов для Evolution API
+        $apiMediaType = match ($mediaType) {
+            'image' => 'image',
+            'video' => 'video',
+            'audio' => 'audio',
+            'document', 'file' => 'document',
+            default => 'document',
         };
 
-        if (!$endpoint) {
-            return null;
-        }
+        // Evolution API v2 - выбираем endpoint в зависимости от типа
+        $endpoint = match ($apiMediaType) {
+            'image' => "/message/sendMedia/{$session->instance_name}",
+            'video' => "/message/sendMedia/{$session->instance_name}",
+            'audio' => "/message/sendWhatsAppAudio/{$session->instance_name}",
+            'document' => "/message/sendMedia/{$session->instance_name}",
+            default => "/message/sendMedia/{$session->instance_name}",
+        };
 
+        // Формат данных для Evolution API v2
         $data = [
             'number' => $phone,
-            'mediatype' => $mediaType,
+            'mediatype' => $apiMediaType,
             'media' => $mediaUrl,
         ];
+
+        // Для документов добавляем имя файла и mimetype
+        if ($apiMediaType === 'document' && $filename) {
+            $data['fileName'] = $filename;
+            // Определяем mimetype по расширению
+            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+            $mimeTypes = [
+                'pdf' => 'application/pdf',
+                'doc' => 'application/msword',
+                'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'xls' => 'application/vnd.ms-excel',
+                'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'txt' => 'text/plain',
+            ];
+            if (isset($mimeTypes[$ext])) {
+                $data['mimetype'] = $mimeTypes[$ext];
+            }
+        }
 
         if ($caption) {
             $data['caption'] = $caption;
         }
 
-        if ($filename) {
-            $data['fileName'] = $filename;
-        }
+        Yii::info("Sending media to {$phone}: type={$apiMediaType}, mediaLength=" . strlen($mediaUrl), 'whatsapp');
 
         $result = $this->request('POST', $endpoint, $data);
 
-        if (!$result || !isset($result['key'])) {
+        Yii::info("SendMedia result: " . json_encode($result), 'whatsapp');
+
+        if (!$result) {
+            Yii::error("SendMedia failed: no result returned", 'whatsapp');
             return null;
         }
+
+        // Проверяем на ошибку API
+        if (!empty($result['_api_error'])) {
+            $errorMsg = $result['error'] ?? $result['message'] ?? $result['response']['message'] ?? $result['_raw_response'] ?? 'API Error';
+            $httpCode = $result['_http_code'] ?? 'unknown';
+            Yii::error("SendMedia API error [{$httpCode}]: {$errorMsg}", 'whatsapp');
+            return null;
+        }
+
+        // Evolution API может возвращать key в разных форматах
+        $messageKey = $result['key'] ?? $result['id'] ?? $result['messageId'] ?? null;
+
+        if (!$messageKey) {
+            // Проверим, может ответ содержит ошибку
+            $errorMsg = $result['error'] ?? $result['message'] ?? $result['response']['message'] ?? json_encode($result);
+            Yii::error("SendMedia failed: no key in response. Response: {$errorMsg}", 'whatsapp');
+            return null;
+        }
+
+        // Извлекаем ID сообщения
+        $whatsappId = is_array($messageKey) ? ($messageKey['id'] ?? null) : $messageKey;
 
         $message = new WhatsappMessage();
         $message->organization_id = $session->organization_id;
@@ -495,10 +569,10 @@ class WhatsappService extends Component
         $message->direction = WhatsappMessage::DIRECTION_OUTGOING;
         $message->message_type = $mediaType;
         $message->content = $caption;
-        $message->media_url = $mediaUrl;
+        $message->media_url = ''; // Will be updated after save
         $message->media_filename = $filename;
         $message->status = WhatsappMessage::STATUS_SENT;
-        $message->whatsapp_id = $result['key']['id'] ?? null;
+        $message->whatsapp_id = $whatsappId;
         $message->is_from_me = true;
         $message->info = json_encode($result);
 
@@ -522,6 +596,15 @@ class WhatsappService extends Component
         $event = $data['event'] ?? '';
         $instanceName = $data['instance'] ?? '';
 
+        // Быстрая проверка на групповые/broadcast сообщения до обработки
+        $messageData = $data['data'] ?? [];
+        $key = $messageData['key'] ?? [];
+        $remoteJid = $key['remoteJid'] ?? $messageData['remoteJid'] ?? '';
+        if ($remoteJid && $this->shouldIgnoreJid($remoteJid)) {
+            // Тихо игнорируем групповые сообщения без лишнего логирования
+            return true;
+        }
+
         Yii::info("WhatsApp webhook: {$event} for {$instanceName}", 'whatsapp');
 
         // Находим сессию по имени
@@ -535,12 +618,84 @@ class WhatsappService extends Component
             return false;
         }
 
+        // Evolution API v2 может использовать разные названия событий
         return match ($event) {
             'connection.update' => $this->handleConnectionUpdate($session, $data),
             'messages.upsert' => $this->handleMessagesUpsert($session, $data),
-            'messages.update' => $this->handleMessagesUpdate($session, $data),
+            'messages.update', 'message.ack', 'messages.ack' => $this->handleMessagesUpdate($session, $data),
+            'send.message' => $this->handleSendMessage($session, $data),
             default => true,
         };
+    }
+
+    /**
+     * Обработка события отправки сообщения (содержит статус)
+     */
+    private function handleSendMessage(WhatsappSession $session, array $data): bool
+    {
+        // send.message может содержать обновление статуса отправленного сообщения
+        $messageData = $data['data'] ?? [];
+        $key = $messageData['key'] ?? [];
+
+        // Пропускаем групповые и broadcast сообщения
+        $remoteJid = $key['remoteJid'] ?? '';
+        if ($this->shouldIgnoreJid($remoteJid)) {
+            return true;
+        }
+
+        $messageId = $key['id'] ?? null;
+        $status = $messageData['status'] ?? $messageData['ack'] ?? null;
+
+        if ($messageId && $status !== null) {
+            return $this->updateMessageStatus($session, $messageId, $status);
+        }
+
+        return true;
+    }
+
+    /**
+     * Обновить статус сообщения
+     */
+    private function updateMessageStatus(WhatsappSession $session, string $messageId, $status): bool
+    {
+        $newStatus = null;
+
+        // Числовой статус (0=ERROR, 1=PENDING, 2=SERVER_ACK, 3=DELIVERY_ACK, 4=READ, 5=PLAYED)
+        if (is_numeric($status)) {
+            $numericMap = [
+                0 => WhatsappMessage::STATUS_FAILED,
+                1 => WhatsappMessage::STATUS_PENDING,
+                2 => WhatsappMessage::STATUS_SENT,
+                3 => WhatsappMessage::STATUS_DELIVERED,
+                4 => WhatsappMessage::STATUS_READ,
+                5 => WhatsappMessage::STATUS_READ,
+            ];
+            $newStatus = $numericMap[(int)$status] ?? null;
+        } else {
+            // Строковые статусы
+            $statusMap = [
+                'PENDING' => WhatsappMessage::STATUS_PENDING,
+                'SERVER_ACK' => WhatsappMessage::STATUS_SENT,
+                'DELIVERY_ACK' => WhatsappMessage::STATUS_DELIVERED,
+                'READ' => WhatsappMessage::STATUS_READ,
+                'PLAYED' => WhatsappMessage::STATUS_READ,
+                'sent' => WhatsappMessage::STATUS_SENT,
+                'delivered' => WhatsappMessage::STATUS_DELIVERED,
+                'read' => WhatsappMessage::STATUS_READ,
+            ];
+            $newStatus = $statusMap[$status] ?? null;
+        }
+
+        if ($newStatus) {
+            $updated = WhatsappMessage::updateAll(
+                ['status' => $newStatus],
+                ['whatsapp_id' => $messageId, 'session_id' => $session->id]
+            );
+            Yii::info("Updated message {$messageId} status to {$newStatus}, affected: {$updated}", 'whatsapp');
+            return $updated > 0;
+        }
+
+        return false;
     }
 
     /**
@@ -563,6 +718,25 @@ class WhatsappService extends Component
     }
 
     /**
+     * Проверить, нужно ли игнорировать JID (группы, broadcast, статусы)
+     * @param string $jid
+     * @return bool true если нужно игнорировать
+     */
+    private function shouldIgnoreJid(string $jid): bool
+    {
+        // Игнорируем:
+        // - группы: @g.us
+        // - broadcast/рассылки: @broadcast
+        // - статусы: @status или status@broadcast
+        // - lid (labels): @lid
+        return str_contains($jid, '@g.us')
+            || str_contains($jid, '@broadcast')
+            || str_contains($jid, '@status')
+            || str_contains($jid, '@lid')
+            || str_starts_with($jid, 'status@');
+    }
+
+    /**
      * Обработка сообщений (входящих и исходящих)
      */
     private function handleMessagesUpsert(WhatsappSession $session, array $data): bool
@@ -581,9 +755,10 @@ class WhatsappService extends Component
             $key = $msgData['key'] ?? [];
             $isFromMe = $key['fromMe'] ?? false;
 
-            // Пропускаем групповые сообщения
+            // Пропускаем групповые, broadcast и статусные сообщения
             $remoteJid = $key['remoteJid'] ?? '';
-            if (str_contains($remoteJid, '@g.us')) {
+            if ($this->shouldIgnoreJid($remoteJid)) {
+                Yii::info("Ignoring message from JID: {$remoteJid}", 'whatsapp');
                 continue;
             }
 
@@ -629,39 +804,248 @@ class WhatsappService extends Component
 
     /**
      * Обработка обновления статуса сообщений
+     * Evolution API v2 отправляет данные в формате:
+     * {"event":"messages.update","data":{"keyId":"3A306016E4342E2264BC","status":"DELIVERY_ACK",...}}
      */
     private function handleMessagesUpdate(WhatsappSession $session, array $data): bool
     {
-        $updates = $data['data'] ?? [];
+        $updateData = $data['data'] ?? [];
+
+        // Пропускаем групповые и broadcast сообщения
+        $remoteJid = $updateData['remoteJid'] ?? $updateData['key']['remoteJid'] ?? '';
+        if ($this->shouldIgnoreJid($remoteJid)) {
+            return true;
+        }
+
+        Yii::info("Messages update received: " . json_encode($data), 'whatsapp');
+
+        // Evolution API v2 формат: data.keyId и data.status напрямую
+        if (isset($updateData['keyId'])) {
+            $messageId = $updateData['keyId'];
+            $status = $updateData['status'] ?? null;
+
+            if ($messageId && $status) {
+                Yii::info("Processing status update: messageId={$messageId}, status={$status}", 'whatsapp');
+                $this->updateMessageStatus($session, $messageId, $status);
+            }
+            return true;
+        }
+
+        // Альтернативный формат: массив updates
+        $updates = $updateData;
+        if (isset($updates['key'])) {
+            $updates = [$updates];
+        }
 
         foreach ($updates as $update) {
-            $messageId = $update['key']['id'] ?? null;
-            $status = $update['update']['status'] ?? null;
+            // Попробуем найти messageId в разных местах
+            $messageId = $update['keyId'] ?? $update['key']['id'] ?? $update['id'] ?? null;
 
-            if (!$messageId || !$status) {
+            // Попробуем найти status в разных местах
+            $status = $update['status']
+                ?? $update['update']['status']
+                ?? $update['ack']
+                ?? null;
+
+            if (!$messageId) {
+                Yii::warning("Messages update: no messageId found in: " . json_encode($update), 'whatsapp');
                 continue;
             }
 
-            // Статусы в Evolution API: PENDING, SERVER_ACK, DELIVERY_ACK, READ, PLAYED
-            $statusMap = [
-                'PENDING' => WhatsappMessage::STATUS_PENDING,
-                'SERVER_ACK' => WhatsappMessage::STATUS_SENT,
-                'DELIVERY_ACK' => WhatsappMessage::STATUS_DELIVERED,
-                'READ' => WhatsappMessage::STATUS_READ,
-                'PLAYED' => WhatsappMessage::STATUS_READ,
-            ];
-
-            $newStatus = $statusMap[$status] ?? null;
-
-            if ($newStatus) {
-                WhatsappMessage::updateAll(
-                    ['status' => $newStatus],
-                    ['whatsapp_id' => $messageId, 'session_id' => $session->id]
-                );
+            if ($status !== null) {
+                $this->updateMessageStatus($session, $messageId, $status);
+            } else {
+                Yii::warning("Messages update: no status found for {$messageId} in: " . json_encode($update), 'whatsapp');
             }
         }
 
         return true;
+    }
+
+    // ==================== Получение профиля контакта ====================
+
+    /**
+     * Получить информацию о профиле контакта WhatsApp
+     * @param WhatsappSession $session
+     * @param string $phone Номер телефона
+     * @return array|null Данные профиля (profilePictureUrl, isBusiness, name, description)
+     */
+    public function fetchProfile(WhatsappSession $session, string $phone): ?array
+    {
+        $phone = $this->normalizePhone($phone);
+
+        Yii::info("Fetching profile for phone: {$phone}", 'whatsapp');
+
+        // Evolution API v2 использует GET запрос с query параметром
+        $result = $this->request('GET', "/chat/fetchProfile/{$session->instance_name}?number={$phone}");
+
+        Yii::info("FetchProfile result: " . json_encode($result), 'whatsapp');
+
+        if (!$result) {
+            return null;
+        }
+
+        // Evolution API v2 может возвращать данные в разных форматах
+        $pictureUrl = $result['profilePictureUrl']
+            ?? $result['picture']
+            ?? $result['imgUrl']
+            ?? $result['profilePicThumbObj']['eurl']
+            ?? null;
+
+        if ($pictureUrl) {
+            return [
+                'profilePictureUrl' => $pictureUrl,
+                'isBusiness' => $result['isBusiness'] ?? false,
+                'name' => $result['name'] ?? $result['pushName'] ?? null,
+                'description' => $result['description'] ?? $result['status'] ?? null,
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Получить URL аватарки контакта
+     * @param WhatsappSession $session
+     * @param string $phone Номер телефона
+     * @return string|null URL аватарки или null
+     */
+    public function fetchProfilePicture(WhatsappSession $session, string $phone): ?string
+    {
+        $phone = $this->normalizePhone($phone);
+
+        // Попытка 1: Прямой endpoint для аватарки
+        $result = $this->request('POST', "/chat/fetchProfilePictureUrl/{$session->instance_name}", [
+            'number' => $phone,
+        ]);
+
+        Yii::info("FetchProfilePictureUrl result: " . json_encode($result), 'whatsapp');
+
+        if ($result) {
+            $pictureUrl = $result['profilePictureUrl']
+                ?? $result['picture']
+                ?? $result['imgUrl']
+                ?? $result['url']
+                ?? null;
+
+            if ($pictureUrl) {
+                return $pictureUrl;
+            }
+        }
+
+        // Попытка 2: Через общий профиль
+        $profile = $this->fetchProfile($session, $phone);
+        return $profile['profilePictureUrl'] ?? null;
+    }
+
+    /**
+     * Обновить аватарку в чате
+     * @param WhatsappChat $chat
+     * @return bool
+     */
+    public function updateChatProfilePicture(WhatsappChat $chat): bool
+    {
+        if (!$chat->remote_phone) {
+            return false;
+        }
+
+        $session = $chat->session;
+        if (!$session || !$session->isConnected()) {
+            return false;
+        }
+
+        $pictureUrl = $this->fetchProfilePicture($session, $chat->remote_phone);
+
+        if ($pictureUrl) {
+            $chat->profile_picture_url = $pictureUrl;
+            return $chat->save(false);
+        }
+
+        return false;
+    }
+
+    // ==================== Скачивание медиа ====================
+
+    /**
+     * Получить медиа файл в base64 по ID сообщения
+     * @param WhatsappSession $session
+     * @param string $messageId WhatsApp ID сообщения
+     * @return array|null ['base64' => string, 'mimetype' => string] или null
+     */
+    public function getMediaBase64(WhatsappSession $session, string $messageId): ?array
+    {
+        if (!$messageId) {
+            return null;
+        }
+
+        // Evolution API v2 endpoint для получения base64 медиа
+        // POST /chat/getBase64FromMediaMessage/{instanceName}
+        $result = $this->request('POST', "/chat/getBase64FromMediaMessage/{$session->instance_name}", [
+            'message' => [
+                'key' => [
+                    'id' => $messageId,
+                ],
+            ],
+            'convertToMp4' => false,
+        ]);
+
+        Yii::info("GetMediaBase64 result for {$messageId}: " . (isset($result['base64']) ? 'has base64' : 'no base64'), 'whatsapp');
+
+        if ($result && !empty($result['base64'])) {
+            return [
+                'base64' => $result['base64'],
+                'mimetype' => $result['mimetype'] ?? null,
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Альтернативный метод получения медиа - используя сохранённые данные сообщения
+     * @param WhatsappSession $session
+     * @param WhatsappMessage $message
+     * @return array|null
+     */
+    public function getMediaBase64Alternative(WhatsappSession $session, WhatsappMessage $message): ?array
+    {
+        // Пробуем получить из info - там может быть сохранён полный объект сообщения
+        $info = is_string($message->info) ? json_decode($message->info, true) : $message->info;
+
+        if (!$info) {
+            return null;
+        }
+
+        // Пробуем найти messageId в разных местах
+        $messageId = $info['key']['id']
+            ?? $info['id']['id']
+            ?? $info['id']
+            ?? $message->whatsapp_id;
+
+        if ($messageId && $messageId !== $message->whatsapp_id) {
+            // Пробуем с другим ID
+            return $this->getMediaBase64($session, $messageId);
+        }
+
+        // Пробуем использовать полный key объект если он есть
+        $key = $info['key'] ?? null;
+        if ($key && isset($key['remoteJid'])) {
+            $result = $this->request('POST', "/chat/getBase64FromMediaMessage/{$session->instance_name}", [
+                'message' => [
+                    'key' => $key,
+                ],
+                'convertToMp4' => false,
+            ]);
+
+            if ($result && !empty($result['base64'])) {
+                return [
+                    'base64' => $result['base64'],
+                    'mimetype' => $result['mimetype'] ?? $message->media_mimetype,
+                ];
+            }
+        }
+
+        return null;
     }
 
     // ==================== Вспомогательные методы ====================

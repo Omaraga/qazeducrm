@@ -14,6 +14,7 @@ use app\widgets\tailwind\Icon;
 use app\widgets\tailwind\SidebarMenu;
 use app\widgets\tailwind\SubscriptionAlert;
 use app\widgets\tailwind\SubscriptionBadge;
+use app\widgets\tailwind\WhatsappWidget;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
@@ -61,7 +62,18 @@ $menuConfig = [
             // Моя зарплата - только для учителя (тот же index, но фильтруется автоматически)
             ['label' => 'Моя зарплата', 'icon' => 'wallet', 'url' => ['/crm/salary/index'], 'controller' => 'salary', 'visible' => $isTeacherOnly && RoleChecker::canTeacherViewOwnSalary()],
 
-            ['label' => 'SMS', 'icon' => 'sms', 'url' => ['/crm/sms/index'], 'controller' => 'sms', 'visible' => $isAdminOrHigher],
+            [
+                'label' => 'Рассылка',
+                'icon' => 'sms',
+                'controller' => 'sms',
+                'visible' => $isAdminOrHigher,
+                'items' => [
+                    ['label' => 'Авторассылки', 'url' => ['/crm/sms/automations']],
+                    ['label' => 'Шаблоны', 'url' => ['/crm/sms/templates']],
+                    ['label' => 'История', 'url' => ['/crm/sms/index']],
+                    ['label' => 'Настройки', 'url' => ['/crm/sms/settings']],
+                ],
+            ],
             ['label' => 'WhatsApp', 'icon' => 'whatsapp', 'url' => ['/crm/whatsapp/index'], 'controller' => 'whatsapp', 'visible' => $isAdminOrHigher],
             [
                 'label' => 'Отчёты',
@@ -403,6 +415,8 @@ endforeach;
 </div>
 
 <?= ConfirmModal::widget() ?>
+
+<?= WhatsappWidget::widget() ?>
 
 <?php $this->endBody() ?>
 </body>

@@ -30,12 +30,12 @@ class RegistrationController extends Controller
                 'class' => AccessControl::class,
                 'rules' => [
                     [
-                        'actions' => ['index', 'success', 'verify-email'],
+                        'actions' => ['index', 'success', 'verify-email', 'awaiting-approval'],
                         'allow' => true,
                         'roles' => ['?'], // Только для гостей
                     ],
                     [
-                        'actions' => ['index', 'success', 'verify-email'],
+                        'actions' => ['index', 'success', 'verify-email', 'awaiting-approval'],
                         'allow' => true,
                         'roles' => ['@'], // Также для авторизованных (для verify-email)
                     ],
@@ -123,17 +123,27 @@ class RegistrationController extends Controller
         // Проверяем, не подтверждён ли уже email
         if ($organization->email_verified_at !== null) {
             Yii::$app->session->setFlash('info', 'Email уже был подтверждён ранее.');
-            return $this->render('verify-email', [
-                'success' => true,
-                'alreadyVerified' => true,
+
+            // Если организация уже активна - показываем страницу верификации
+            if ($organization->status === Organizations::STATUS_ACTIVE) {
+                return $this->render('verify-email', [
+                    'success' => true,
+                    'alreadyVerified' => true,
+                    'organization' => $organization,
+                ]);
+            }
+
+            // Если ещё на модерации - показываем страницу ожидания
+            return $this->render('awaiting-approval', [
                 'organization' => $organization,
             ]);
         }
 
-        // Подтверждаем email
+        // Подтверждаем email, НО НЕ активируем организацию!
+        // Организация остаётся в статусе PENDING до одобрения супер-админом
         $organization->email_verified_at = date('Y-m-d H:i:s');
-        $organization->status = Organizations::STATUS_ACTIVE;
         $organization->verification_token = null; // Очищаем токен
+        // НЕ меняем статус: $organization->status остаётся PENDING
 
         if ($organization->save()) {
             // Логируем активность
@@ -141,14 +151,11 @@ class RegistrationController extends Controller
                 $organization->id,
                 OrganizationActivityLog::ACTION_EMAIL_VERIFIED,
                 OrganizationActivityLog::CATEGORY_ORGANIZATION,
-                'Email организации подтверждён'
+                'Email организации подтверждён. Ожидает одобрения администратором.'
             );
 
-            Yii::$app->session->setFlash('success', 'Email успешно подтверждён! Теперь вы можете войти в систему.');
-
-            return $this->render('verify-email', [
-                'success' => true,
-                'alreadyVerified' => false,
+            // Показываем страницу ожидания одобрения
+            return $this->render('awaiting-approval', [
                 'organization' => $organization,
             ]);
         }
@@ -157,6 +164,40 @@ class RegistrationController extends Controller
 
         return $this->render('verify-email', [
             'success' => false,
+            'organization' => $organization,
+        ]);
+    }
+
+    /**
+     * Страница ожидания одобрения (для повторного доступа)
+     *
+     * @return string|\yii\web\Response
+     */
+    public function actionAwaitingApproval()
+    {
+        // Получаем email из сессии или параметра
+        $email = Yii::$app->request->get('email');
+
+        if (!$email) {
+            return $this->redirect(['index']);
+        }
+
+        $organization = Organizations::find()
+            ->andWhere(['email' => $email])
+            ->andWhere(['is_deleted' => 0])
+            ->one();
+
+        if (!$organization) {
+            return $this->redirect(['index']);
+        }
+
+        // Если организация уже активна - редирект на логин
+        if ($organization->status === Organizations::STATUS_ACTIVE) {
+            Yii::$app->session->setFlash('success', 'Ваша организация одобрена! Теперь вы можете войти.');
+            return $this->redirect(['/site/login']);
+        }
+
+        return $this->render('awaiting-approval', [
             'organization' => $organization,
         ]);
     }

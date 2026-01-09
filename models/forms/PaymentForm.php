@@ -7,9 +7,7 @@ use app\models\Payment;
 use app\models\PayMethod;
 use app\models\Pupil;
 use app\models\services\PupilService;
-use Egulias\EmailValidator\Parser\IDLeftPart;
 use Yii;
-use yii\base\BaseObject;
 
 class PaymentForm extends \yii\base\Model
 {
@@ -34,11 +32,11 @@ class PaymentForm extends \yii\base\Model
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::TYPE_ADD_PAY] = ['id','pupil_id', 'purpose_id', 'method_id', 'type','number','amount','date','comment'];;
-        $scenarios[self::TYPE_UPDATE_PAY] = ['id','pupil_id', 'purpose_id', 'method_id', 'type','number','amount','date','comment'];;
-        $scenarios[self::TYPE_ADD_REFUND] = ['id','pupil_id', 'type','number','amount','date','comment'];;
-        $scenarios[self::TYPE_UPDATE_REFUND] = ['id','pupil_id', 'type','number','amount','date','comment'];;
-        $scenarios[self::TYPE_CONSUMPTION] = ['id', 'type','number','amount','date','comment'];;
+        $scenarios[self::TYPE_ADD_PAY] = ['id', 'pupil_id', 'purpose_id', 'method_id', 'type', 'number', 'amount', 'date', 'comment'];
+        $scenarios[self::TYPE_UPDATE_PAY] = ['id', 'pupil_id', 'purpose_id', 'method_id', 'type', 'number', 'amount', 'date', 'comment'];
+        $scenarios[self::TYPE_ADD_REFUND] = ['id', 'pupil_id', 'type', 'number', 'amount', 'date', 'comment'];
+        $scenarios[self::TYPE_UPDATE_REFUND] = ['id', 'pupil_id', 'type', 'number', 'amount', 'date', 'comment'];
+        $scenarios[self::TYPE_CONSUMPTION] = ['id', 'type', 'number', 'amount', 'date', 'comment'];
         return $scenarios;
     }
 
@@ -48,12 +46,12 @@ class PaymentForm extends \yii\base\Model
     public function rules()
     {
         return [
-            [['organization_id', 'pupil_id', 'purpose_id', 'method_id', 'type'], 'integer'],
+            [['pupil_id', 'purpose_id', 'method_id', 'type'], 'integer'],
             [['pupil_id', 'type', 'date'], 'required'],
-            [['amount'], 'number', 'min' => 0.01],
             [['amount'], 'required'],
-            [['date', 'created_at', 'updated_at'], 'safe'],
-            ['date', 'date', 'format' => 'php:d.m.Y H:i'],
+            [['amount'], 'number', 'min' => 0.01],
+            [['date'], 'safe'],
+            [['date'], 'date', 'format' => 'php:d.m.Y H:i'],
             [['comment'], 'string'],
             [['number'], 'string', 'max' => 255],
             [['method_id'], 'exist', 'skipOnError' => true, 'targetClass' => PayMethod::class, 'targetAttribute' => ['method_id' => 'id']],

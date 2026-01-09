@@ -294,18 +294,21 @@ class PupilController extends Controller
 
     public function actionCreatePayment($pupil_id)
     {
-        $pupil = Pupil::findOne($pupil_id);
+        // Security: проверяем organization_id
+        $pupil = Pupil::find()
+            ->where(['id' => $pupil_id])
+            ->byOrganization()
+            ->one();
 
-        // Проверка null
         if ($pupil === null) {
             throw new NotFoundHttpException(\Yii::t('main', 'Ученик не найден'));
         }
 
         $model = new PaymentForm();
-        $model->loadDefaultValues();
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
+                Yii::$app->session->setFlash('success', Yii::t('main', 'Платёж успешно сохранён'));
                 return $this->redirect(OrganizationUrl::to(['pupil/payment', 'id' => $model->pupil_id]));
             }
         }

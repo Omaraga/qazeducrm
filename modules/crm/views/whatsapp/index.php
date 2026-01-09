@@ -180,6 +180,17 @@ $this->params['breadcrumbs'][] = $this->title;
                             Отключить
                         </button>
                     </div>
+
+                    <!-- Дополнительные действия -->
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-500">Не обновляются статусы доставки?</span>
+                            <a href="<?= \yii\helpers\Url::to(['/crm/whatsapp/reconfigure-webhook', 'oid' => \app\models\Organizations::getCurrentOrganizationId()]) ?>"
+                               class="text-sm text-blue-600 hover:text-blue-800">
+                                Переконфигурировать webhook
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         <?php endif; ?>

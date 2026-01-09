@@ -51,6 +51,23 @@ class OrganizationController extends Controller
     }
 
     /**
+     * Список организаций ожидающих одобрения
+     * (PENDING + email верифицирован)
+     */
+    public function actionPending()
+    {
+        $organizations = Organizations::find()
+            ->andWhere(['status' => Organizations::STATUS_PENDING, 'is_deleted' => 0])
+            ->andWhere(['is not', 'email_verified_at', null])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->all();
+
+        return $this->render('pending', [
+            'organizations' => $organizations,
+        ]);
+    }
+
+    /**
      * Просмотр организации
      */
     public function actionView($id)
@@ -229,7 +246,7 @@ class OrganizationController extends Controller
     }
 
     /**
-     * Активация организации
+     * Активация организации (одобрение заявки)
      */
     public function actionActivate($id)
     {
@@ -238,16 +255,31 @@ class OrganizationController extends Controller
         $model->status = Organizations::STATUS_ACTIVE;
         $model->save(false);
 
+        // Логируем одобрение
+        $logMessage = $oldStatus === Organizations::STATUS_PENDING
+            ? "Организация одобрена администратором"
+            : "Организация активирована";
+
         OrganizationActivityLog::log(
             $model->id,
             OrganizationActivityLog::ACTION_STATUS_CHANGED,
             OrganizationActivityLog::CATEGORY_STATUS,
-            "Организация активирована",
+            $logMessage,
             $oldStatus,
             $model->status
         );
 
-        Yii::$app->session->setFlash('success', 'Организация активирована.');
+        Yii::$app->session->setFlash('success', "Организация \"{$model->name}\" одобрена.");
+
+        // Возвращаем на referrer или на dashboard
+        $referrer = Yii::$app->request->referrer;
+        if ($referrer && strpos($referrer, 'pending') !== false) {
+            return $this->redirect(['pending']);
+        }
+        if ($referrer && strpos($referrer, 'default/index') !== false) {
+            return $this->redirect(['/superadmin']);
+        }
+
         return $this->redirect(['view', 'id' => $id]);
     }
 
@@ -275,7 +307,7 @@ class OrganizationController extends Controller
     }
 
     /**
-     * Блокировка организации
+     * Блокировка организации (отклонение заявки)
      */
     public function actionBlock($id)
     {
@@ -284,16 +316,35 @@ class OrganizationController extends Controller
         $model->status = Organizations::STATUS_BLOCKED;
         $model->save(false);
 
+        // Логируем отклонение/блокировку
+        $logMessage = $oldStatus === Organizations::STATUS_PENDING
+            ? "Заявка организации отклонена администратором"
+            : "Организация заблокирована";
+
         OrganizationActivityLog::log(
             $model->id,
             OrganizationActivityLog::ACTION_STATUS_CHANGED,
             OrganizationActivityLog::CATEGORY_STATUS,
-            "Организация заблокирована",
+            $logMessage,
             $oldStatus,
             $model->status
         );
 
-        Yii::$app->session->setFlash('danger', 'Организация заблокирована.');
+        $flashMessage = $oldStatus === Organizations::STATUS_PENDING
+            ? "Заявка организации \"{$model->name}\" отклонена."
+            : "Организация \"{$model->name}\" заблокирована.";
+
+        Yii::$app->session->setFlash('danger', $flashMessage);
+
+        // Возвращаем на referrer или на dashboard
+        $referrer = Yii::$app->request->referrer;
+        if ($referrer && strpos($referrer, 'pending') !== false) {
+            return $this->redirect(['pending']);
+        }
+        if ($referrer && strpos($referrer, 'default/index') !== false) {
+            return $this->redirect(['/superadmin']);
+        }
+
         return $this->redirect(['view', 'id' => $id]);
     }
 
