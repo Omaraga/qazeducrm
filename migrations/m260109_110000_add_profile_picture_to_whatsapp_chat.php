@@ -6,7 +6,7 @@ use yii\db\Migration;
  * Добавляет поле profile_picture_url в таблицу whatsapp_chat
  * для хранения URL аватарки контакта WhatsApp
  */
-class m260109_100000_add_profile_picture_to_whatsapp_chat extends Migration
+class m260109_110000_add_profile_picture_to_whatsapp_chat extends Migration
 {
     /**
      * {@inheritdoc}

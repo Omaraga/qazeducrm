@@ -2,22 +2,75 @@
 
 ## Requirements
 
-- Ubuntu 20.04+ (or any modern Linux)
+- Ubuntu 20.04+ (22.04 recommended)
 - Minimum 2GB RAM, 20GB disk
-- Domain name (for SSL)
-- Open ports: 80, 443
+- Root access (SSH)
+- Domain name (optional, for SSL)
 
 ---
 
-## Quick Deploy (5 minutes)
-
-### 1. Connect to server
+## Step 1: Connect to Server
 
 ```bash
 ssh root@your-server-ip
 ```
 
-### 2. Clone project
+---
+
+## Step 2: Update System
+
+```bash
+apt update && apt upgrade -y
+```
+
+---
+
+## Step 3: Install Docker
+
+```bash
+# Install dependencies
+apt install -y ca-certificates curl gnupg lsb-release
+
+# Add Docker GPG key
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+chmod a+r /etc/apt/keyrings/docker.gpg
+
+# Add Docker repository
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Install Docker
+apt update
+apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Start Docker
+systemctl enable docker
+systemctl start docker
+
+# Verify installation
+docker --version
+docker compose version
+```
+
+**Expected output:**
+```
+Docker version 24.x.x
+Docker Compose version v2.x.x
+```
+
+---
+
+## Step 4: Install Git
+
+```bash
+apt install -y git
+```
+
+---
+
+## Step 5: Clone Project
 
 ```bash
 cd /opt
@@ -25,7 +78,15 @@ git clone https://github.com/your-repo/qazeducrm.git
 cd qazeducrm
 ```
 
-### 3. Configure environment
+**Or upload manually via SCP:**
+```bash
+# From your Windows machine (Git Bash or PowerShell)
+scp -r /path/to/qazeducrm root@your-server-ip:/opt/
+```
+
+---
+
+## Step 6: Configure Environment
 
 ```bash
 cp .env.production .env

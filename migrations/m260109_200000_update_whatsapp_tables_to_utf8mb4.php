@@ -3,11 +3,11 @@
 use yii\db\Migration;
 
 /**
- * Class m260108_234104_update_whatsapp_tables_to_utf8mb4
+ * Class m260109_200000_update_whatsapp_tables_to_utf8mb4
  *
  * Converts WhatsApp tables to utf8mb4 charset to support emojis (4-byte characters)
  */
-class m260108_234104_update_whatsapp_tables_to_utf8mb4 extends Migration
+class m260109_200000_update_whatsapp_tables_to_utf8mb4 extends Migration
 {
     /**
      * {@inheritdoc}

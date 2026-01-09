@@ -19,8 +19,7 @@ class m231222_134000_modify_user_table extends Migration
         $this->addColumn('user', 'phone', $this->string(255));
         $this->addColumn('user', 'home_phone', $this->string(255));
         $this->addColumn('user', 'birth_date', $this->string(255));
-        $this->alterColumn('user', 'created_at', $this->timestamp()->notNull()->defaultValue(new \yii\db\Expression("NOW()")));
-        $this->alterColumn('user', 'updated_at', $this->timestamp()->notNull()->defaultValue(new \yii\db\Expression("NOW()")));
+        // created_at and updated_at are already TIMESTAMP from initial migration
 
     }
 

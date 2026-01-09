@@ -31,22 +31,49 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
+# Update system
+echo -e "${YELLOW}Updating system packages...${NC}"
+apt-get update
+
 # Install Docker if not installed
 if ! command -v docker &> /dev/null; then
     echo -e "${YELLOW}Installing Docker...${NC}"
-    curl -fsSL https://get.docker.com | sh
+
+    # Install dependencies
+    apt-get install -y ca-certificates curl gnupg lsb-release
+
+    # Add Docker GPG key
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    chmod a+r /etc/apt/keyrings/docker.gpg
+
+    # Add Docker repository
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+      $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    # Install Docker
+    apt-get update
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+    # Start Docker
     systemctl enable docker
     systemctl start docker
+
     echo -e "${GREEN}Docker installed successfully${NC}"
+    docker --version
 fi
 
 # Install Docker Compose plugin if not installed
 if ! docker compose version &> /dev/null; then
     echo -e "${YELLOW}Installing Docker Compose plugin...${NC}"
-    apt-get update
     apt-get install -y docker-compose-plugin
     echo -e "${GREEN}Docker Compose installed successfully${NC}"
 fi
+
+echo -e "${GREEN}Docker version:${NC}"
+docker --version
+docker compose version
 
 # Create required directories
 echo -e "${YELLOW}Creating directories...${NC}"

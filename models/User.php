@@ -76,7 +76,7 @@ class User extends ActiveRecord implements IdentityInterface
                 'class' => \yii\behaviors\TimestampBehavior::class,
                 'createdAtAttribute' => 'created_at',
                 'updatedAtAttribute' => 'updated_at',
-                'value' => (new Expression('NOW()')),
+                'value' => new Expression('NOW()'),
             ],
         ];
     }
