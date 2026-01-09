@@ -35,7 +35,7 @@ class TailwindAsset extends AssetBundle
         // Confirm modal dialogs (загружается перед Alpine.js)
         'js/confirm.js',
         // Form validation (загружается перед Alpine.js)
-        'js/validation.js',
+        'js/validation.js?v=2',
         // Loading states
         'js/loading.js',
         // AJAX wrapper with error handling

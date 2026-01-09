@@ -26,7 +26,7 @@ $validationRules = [
     <?= $this->render('balance', ['model' => $model]) ?>
 
     <form method="post" class="space-y-6"
-          x-data="formValidation(<?= \yii\helpers\Json::htmlEncode($validationRules) ?>)"
+          x-data='formValidation(<?= \yii\helpers\Json::encode($validationRules) ?>)'
           @submit="handleSubmit($event)">
         <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
 

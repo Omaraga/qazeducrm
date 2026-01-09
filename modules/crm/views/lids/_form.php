@@ -42,7 +42,7 @@ $lidsFormData = [
 ?>
 
 <form action="" method="post" id="lids-form" class="grid grid-cols-1 lg:grid-cols-3 gap-6"
-      x-data="{ ...formValidation(<?= Json::htmlEncode($validationRules) ?>), ...<?= Json::htmlEncode($lidsFormData) ?> }"
+      x-data='{ ...formValidation(<?= Json::encode($validationRules) ?>), ...<?= Json::encode($lidsFormData) ?> }'
       @submit="handleSubmit($event)">
     <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
 

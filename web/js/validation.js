@@ -311,10 +311,18 @@ window.ValidationRules = ValidationRules;
 window.ValidationMessages = ValidationMessages;
 
 /**
- * Маска для телефона (Alpine.js директива)
- * Использование: <input x-mask-phone>
+ * Регистрируем Alpine.js компоненты и директивы
+ * Используем alpine:init чтобы гарантировать что всё зарегистрировано ДО инициализации DOM
  */
 document.addEventListener('alpine:init', () => {
+    // Регистрируем formValidation как Alpine.js data компонент
+    // Это гарантирует доступность при инициализации x-data="formValidation(...)"
+    Alpine.data('formValidation', (rules = {}) => formValidation(rules));
+
+    /**
+     * Маска для телефона (Alpine.js директива)
+     * Использование: <input x-mask-phone>
+     */
     Alpine.directive('mask-phone', (el) => {
         el.addEventListener('input', (e) => {
             let value = e.target.value.replace(/\D/g, '');
