@@ -12,7 +12,6 @@ use app\models\TeacherSalary;
 use app\models\search\TeacherSalarySearch;
 use app\models\search\TeacherRateSearch;
 use Yii;
-use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
@@ -20,12 +19,12 @@ use yii\filters\AccessControl;
 /**
  * SalaryController - управление зарплатами учителей
  */
-class SalaryController extends Controller
+class SalaryController extends CrmBaseController
 {
     /**
      * {@inheritdoc}
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return [
             'verbs' => [

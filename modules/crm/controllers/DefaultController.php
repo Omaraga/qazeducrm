@@ -6,17 +6,16 @@ use app\helpers\OrganizationRoles;
 use app\helpers\SystemRoles;
 use app\models\services\DashboardService;
 use yii\filters\AccessControl;
-use yii\web\Controller;
 
 /**
  * Default controller for the CRM module - Dashboard
  */
-class DefaultController extends Controller
+class DefaultController extends CrmBaseController
 {
     /**
      * {@inheritdoc}
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return [
             'access' => [

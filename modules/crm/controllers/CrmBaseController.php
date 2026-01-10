@@ -3,6 +3,7 @@
 namespace app\modules\crm\controllers;
 
 use app\helpers\OrganizationRoles;
+use app\helpers\OrganizationUrl;
 use app\helpers\SystemRoles;
 use Yii;
 use yii\filters\AccessControl;
@@ -155,5 +156,20 @@ abstract class CrmBaseController extends Controller
     protected function isAjax(): bool
     {
         return Yii::$app->request->isAjax;
+    }
+
+    /**
+     * Переопределение redirect для автоматического добавления oid
+     *
+     * @param string|array $url
+     * @param int $statusCode
+     * @return Response
+     */
+    public function redirect($url, $statusCode = 302)
+    {
+        if (is_array($url)) {
+            $url = OrganizationUrl::to($url);
+        }
+        return parent::redirect($url, $statusCode);
     }
 }

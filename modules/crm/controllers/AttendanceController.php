@@ -12,7 +12,6 @@ use app\models\LessonAttendance;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
-use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
@@ -20,12 +19,12 @@ use yii\web\Response;
 /**
  * AttendanceController - управление посещаемостью занятий
  */
-class AttendanceController extends Controller
+class AttendanceController extends CrmBaseController
 {
     /**
      * {@inheritdoc}
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return [
             'verbs' => [

@@ -10,12 +10,10 @@ use richardfan\sortable\SortableAction;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
-use yii\web\Controller;
-
 /**
  * RoomController - управление кабинетами/аудиториями
  */
-class RoomController extends Controller
+class RoomController extends CrmBaseController
 {
     use FindModelTrait;
 
@@ -25,7 +23,7 @@ class RoomController extends Controller
     /**
      * @inheritDoc
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return array_merge(
             parent::behaviors(),

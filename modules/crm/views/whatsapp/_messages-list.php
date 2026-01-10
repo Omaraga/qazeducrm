@@ -1,5 +1,6 @@
 <?php
 
+use app\helpers\OrganizationUrl;
 use app\models\WhatsappMessage;
 use yii\helpers\Html;
 
@@ -81,7 +82,7 @@ if (empty($messages)): ?>
                 <div class="px-4 py-3 rounded-2xl shadow-sm text-gray-900 <?= $isOutgoing ? 'bg-[#dcf8c6] rounded-tr-sm' : 'bg-white rounded-tl-sm' ?> msg-bubble <?= $isOutgoing ? 'msg-bubble-out' : 'msg-bubble-in' ?>">
                 <?php
                 // Render content based on message type
-                $downloadUrl = \yii\helpers\Url::to(['download-media', 'message_id' => $message->id]);
+                $downloadUrl = OrganizationUrl::to(['download-media', 'message_id' => $message->id]);
                 switch ($message->message_type):
                     case 'image':
                         $caption = $message->getInfo('caption') ?? $message->content ?? '';
@@ -126,7 +127,7 @@ if (empty($messages)): ?>
                     case 'audio':
                     case 'ptt':
                         // URL для inline воспроизведения
-                        $audioUrl = \yii\helpers\Url::to(['download-media', 'message_id' => $message->id, 'inline' => 1]);
+                        $audioUrl = OrganizationUrl::to(['download-media', 'message_id' => $message->id, 'inline' => 1]);
                         $audioId = 'audio-' . $message->id;
                         ?>
                         <div class="wa-audio-player" data-audio-id="<?= $audioId ?>">

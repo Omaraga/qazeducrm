@@ -12,7 +12,6 @@ use app\models\Organizations;
 use app\models\search\DateSearch;
 use app\models\User;
 use yii\filters\AccessControl;
-use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\ForbiddenHttpException;
 
@@ -22,12 +21,12 @@ use yii\web\ForbiddenHttpException;
  * Поддерживает как старые отчеты (day, month, employer),
  * так и новую систему отчетов
  */
-class ReportsController extends Controller
+class ReportsController extends CrmBaseController
 {
     /**
      * {@inheritdoc}
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return [
             'access' => [

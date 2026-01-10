@@ -19,18 +19,17 @@ use Yii;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
-use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 
 /**
  * PupilController implements the CRUD actions for Pupil model.
  */
-class PupilController extends Controller
+class PupilController extends CrmBaseController
 {
     /**
      * @inheritDoc
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return array_merge(
             parent::behaviors(),

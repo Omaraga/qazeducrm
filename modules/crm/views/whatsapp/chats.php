@@ -1,5 +1,6 @@
 <?php
 
+use app\helpers\OrganizationUrl;
 use app\models\WhatsappChat;
 use app\models\WhatsappSession;
 use yii\helpers\Html;
@@ -15,11 +16,11 @@ $this->params['breadcrumbs'][] = ['label' => 'CRM', 'url' => ['/crm']];
 $this->params['breadcrumbs'][] = 'WhatsApp';
 
 // URLs для AJAX
-$getChatContentUrl = Url::to(['/crm/whatsapp/get-chat-content']);
-$getMessagesUrl = Url::to(['/crm/whatsapp/get-messages']);
-$loadMoreMessagesUrl = Url::to(['/crm/whatsapp/load-more-messages']);
-$sendMessageUrl = Url::to(['/crm/whatsapp/send-message']);
-$createLidUrl = Url::to(['/crm/whatsapp/create-lid-from-chat']);
+$getChatContentUrl = OrganizationUrl::to(['/crm/whatsapp/get-chat-content']);
+$getMessagesUrl = OrganizationUrl::to(['/crm/whatsapp/get-messages']);
+$loadMoreMessagesUrl = OrganizationUrl::to(['/crm/whatsapp/load-more-messages']);
+$sendMessageUrl = OrganizationUrl::to(['/crm/whatsapp/send-message']);
+$createLidUrl = OrganizationUrl::to(['/crm/whatsapp/create-lid-from-chat']);
 $csrfToken = Yii::$app->request->csrfToken;
 $csrfParam = Yii::$app->request->csrfParam;
 ?>
@@ -80,7 +81,7 @@ $this->registerCssFile('@web/css/whatsapp.css', ['depends' => [\yii\web\JqueryAs
             </p>
         </div>
         <div class="flex items-center gap-3">
-            <a href="<?= Url::to(['index']) ?>" class="btn btn-secondary">
+            <a href="<?= OrganizationUrl::to(['index']) ?>" class="btn btn-secondary">
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -107,7 +108,7 @@ $this->registerCssFile('@web/css/whatsapp.css', ['depends' => [\yii\web\JqueryAs
                         <button type="button" class="wa-filter-tab" :class="{ 'active': chatFilter === 'leads' }" @click="chatFilter = 'leads'">С лидами</button>
                     </div>
                     <!-- Поиск -->
-                    <form method="get" action="<?= Url::to(['chats']) ?>">
+                    <form method="get" action="<?= OrganizationUrl::to(['chats']) ?>">
                         <div class="relative">
                             <input type="text" name="search" value="<?= Html::encode($search) ?>"
                                    placeholder="Поиск по имени или телефону..."
@@ -259,7 +260,7 @@ $this->registerCssFile('@web/css/whatsapp.css', ['depends' => [\yii\web\JqueryAs
                         <div class="flex items-center gap-2 flex-shrink-0">
                             <!-- Ссылка на лид -->
                             <a x-show="chatInfo.lid_id"
-                               :href="'/<?= Yii::$app->params['organizationId'] ?? 2 ?>/lids/view?id=' + chatInfo.lid_id"
+                               :href="'<?= OrganizationUrl::to(['/crm/lids/view']) ?>&id=' + chatInfo.lid_id"
                                class="btn btn-secondary btn-sm">
                                 <svg class="w-4 h-4 md:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>

@@ -14,7 +14,6 @@ use app\services\SmsService;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
-use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\web\Response;
@@ -22,12 +21,12 @@ use yii\web\Response;
 /**
  * SmsController - управление рассылками (SMS и WhatsApp)
  */
-class SmsController extends Controller
+class SmsController extends CrmBaseController
 {
     /**
      * {@inheritdoc}
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return [
             'verbs' => [

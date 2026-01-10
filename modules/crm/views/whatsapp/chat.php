@@ -1,5 +1,6 @@
 <?php
 
+use app\helpers\OrganizationUrl;
 use app\models\WhatsappChat;
 use app\models\WhatsappMessage;
 use yii\helpers\Html;
@@ -23,7 +24,7 @@ $this->params['breadcrumbs'][] = $chat->getDisplayName();
             <!-- Заголовок чата -->
             <div class="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
                 <div class="flex items-center gap-3">
-                    <a href="<?= Url::to(['chats']) ?>" class="text-gray-400 hover:text-gray-600 lg:hidden">
+                    <a href="<?= OrganizationUrl::to(['chats']) ?>" class="text-gray-400 hover:text-gray-600 lg:hidden">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                         </svg>
@@ -47,7 +48,7 @@ $this->params['breadcrumbs'][] = $chat->getDisplayName();
 
                 <div class="flex items-center gap-2">
                     <?php if ($chat->lid): ?>
-                        <a href="<?= Url::to(['/crm/lids/view', 'id' => $chat->lid_id]) ?>"
+                        <a href="<?= OrganizationUrl::to(['/crm/lids/view', 'id' => $chat->lid_id]) ?>"
                            class="btn btn-sm btn-outline-primary">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -124,7 +125,7 @@ $this->params['breadcrumbs'][] = $chat->getDisplayName();
                         <div class="mt-2 p-3 bg-blue-50 rounded-lg">
                             <p class="font-medium text-blue-900"><?= Html::encode($chat->lid->fio ?: $chat->lid->parent_fio) ?></p>
                             <p class="text-sm text-blue-700">Статус: <?= $chat->lid->getStatusLabel() ?></p>
-                            <a href="<?= Url::to(['/crm/lids/view', 'id' => $chat->lid_id]) ?>"
+                            <a href="<?= OrganizationUrl::to(['/crm/lids/view', 'id' => $chat->lid_id]) ?>"
                                class="text-sm text-blue-600 hover:underline mt-1 inline-block">
                                 Открыть карточку →
                             </a>
@@ -174,7 +175,7 @@ function whatsappChat(chatId) {
             this.newMessage = '';
 
             try {
-                const response = await fetch('<?= Url::to(['send-message']) ?>', {
+                const response = await fetch('<?= OrganizationUrl::to(['send-message']) ?>', {
                     method: 'POST',
                     headers: {
                         'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>',
@@ -231,7 +232,7 @@ function whatsappChat(chatId) {
 
         async checkNewMessages() {
             try {
-                const response = await fetch(`<?= Url::to(['get-messages']) ?>&chat_id=${this.chatId}&after_id=${this.lastMessageId}`);
+                const response = await fetch(`<?= OrganizationUrl::to(['get-messages']) ?>&chat_id=${this.chatId}&after_id=${this.lastMessageId}`);
                 const data = await response.json();
 
                 if (data.success && data.messages.length > 0) {
@@ -255,7 +256,7 @@ function whatsappChat(chatId) {
             if (!confirm('Создать лид из этого чата?')) return;
 
             try {
-                const response = await fetch(`<?= Url::to(['create-lid-from-chat']) ?>&chat_id=${this.chatId}`, {
+                const response = await fetch(`<?= OrganizationUrl::to(['create-lid-from-chat']) ?>&chat_id=${this.chatId}`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>',

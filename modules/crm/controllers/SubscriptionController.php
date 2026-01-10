@@ -3,7 +3,6 @@
 namespace app\modules\crm\controllers;
 
 use Yii;
-use yii\web\Controller;
 use yii\filters\AccessControl;
 use yii\web\NotFoundHttpException;
 use app\models\Organizations;
@@ -18,12 +17,12 @@ use app\models\OrganizationSubscriptionRequest;
 /**
  * Контроллер управления подпиской для пользователей
  */
-class SubscriptionController extends Controller
+class SubscriptionController extends CrmBaseController
 {
     /**
      * {@inheritdoc}
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return [
             'access' => [

@@ -12,19 +12,18 @@ use app\services\SubscriptionLimitService;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
-use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 
 /**
  * UserController - управление сотрудниками организации
  */
-class UserController extends Controller
+class UserController extends CrmBaseController
 {
     /**
      * @inheritDoc
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return array_merge(
             parent::behaviors(),

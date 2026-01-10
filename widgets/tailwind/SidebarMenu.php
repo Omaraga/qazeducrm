@@ -2,6 +2,7 @@
 
 namespace app\widgets\tailwind;
 
+use app\helpers\OrganizationUrl;
 use Yii;
 use yii\base\Widget;
 use yii\helpers\Html;
@@ -213,7 +214,7 @@ class SidebarMenu extends Widget
         }
 
         $html = Html::beginTag('a', [
-            'href' => Url::to($url),
+            'href' => OrganizationUrl::to($url),
             'class' => $linkClass,
         ]);
 

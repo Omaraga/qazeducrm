@@ -4,6 +4,7 @@
 /** @var app\models\Organizations $organization */
 /** @var app\models\OrganizationSubscriptionRequest[] $requests */
 
+use app\helpers\OrganizationUrl;
 use app\widgets\tailwind\Icon;
 use yii\helpers\Html;
 
@@ -14,7 +15,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
 <div class="max-w-4xl mx-auto">
     <div class="mb-6">
-        <a href="<?= \yii\helpers\Url::to(['index']) ?>" class="text-gray-500 hover:text-gray-700 inline-flex items-center gap-1">
+        <a href="<?= OrganizationUrl::to(['index']) ?>" class="text-gray-500 hover:text-gray-700 inline-flex items-center gap-1">
             <?= Icon::show('arrow-left', 'sm') ?>
             Назад к подписке
         </a>
@@ -29,7 +30,7 @@ $this->params['breadcrumbs'][] = $this->title;
             </div>
             <h3 class="text-lg font-medium text-gray-900 mb-2">Нет заявок</h3>
             <p class="text-gray-500 mb-4">Вы ещё не отправляли заявок на изменение подписки.</p>
-            <a href="<?= \yii\helpers\Url::to(['plans']) ?>" class="btn btn-primary">
+            <a href="<?= OrganizationUrl::to(['plans']) ?>" class="btn btn-primary">
                 Посмотреть тарифы
             </a>
         </div>

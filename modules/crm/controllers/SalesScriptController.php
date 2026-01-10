@@ -10,19 +10,18 @@ use app\models\SalesScript;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
-use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
 /**
  * SalesScriptController - управление скриптами продаж
  */
-class SalesScriptController extends Controller
+class SalesScriptController extends CrmBaseController
 {
     /**
      * {@inheritdoc}
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return array_merge(
             parent::behaviors(),

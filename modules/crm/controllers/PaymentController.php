@@ -14,7 +14,6 @@ use app\models\services\PupilService;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
-use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -22,12 +21,12 @@ use yii\filters\VerbFilter;
 /**
  * PaymentController implements the CRUD actions for Payment model.
  */
-class PaymentController extends Controller
+class PaymentController extends CrmBaseController
 {
     /**
      * @inheritDoc
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return array_merge(
             parent::behaviors(),

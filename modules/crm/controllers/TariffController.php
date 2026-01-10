@@ -11,13 +11,12 @@ use app\models\Tariff;
 use app\traits\FindModelTrait;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
-use yii\web\Controller;
 use yii\filters\VerbFilter;
 
 /**
  * TariffController implements the CRUD actions for Tariff model.
  */
-class TariffController extends Controller
+class TariffController extends CrmBaseController
 {
     use FindModelTrait;
 
@@ -27,7 +26,7 @@ class TariffController extends Controller
     /**
      * @inheritDoc
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return array_merge(
             parent::behaviors(),

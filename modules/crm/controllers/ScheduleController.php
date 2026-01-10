@@ -13,7 +13,6 @@ use app\models\Room;
 use app\models\services\ScheduleConflictService;
 use app\models\services\ScheduleService;
 use yii\filters\AccessControl;
-use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -21,12 +20,12 @@ use yii\filters\VerbFilter;
 /**
  * ScheduleController implements the CRUD actions for Lesson model.
  */
-class ScheduleController extends Controller
+class ScheduleController extends CrmBaseController
 {
     /**
      * @inheritDoc
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return array_merge(
             parent::behaviors(),

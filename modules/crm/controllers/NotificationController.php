@@ -8,18 +8,17 @@ use app\models\Notification;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
-use yii\web\Controller;
 use yii\web\Response;
 
 /**
  * NotificationController - управление уведомлениями
  */
-class NotificationController extends Controller
+class NotificationController extends CrmBaseController
 {
     /**
      * @inheritDoc
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return array_merge(
             parent::behaviors(),

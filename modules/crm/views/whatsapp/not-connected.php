@@ -1,5 +1,6 @@
 <?php
 
+use app\helpers\OrganizationUrl;
 use yii\helpers\Url;
 
 /** @var yii\web\View $this */
@@ -17,7 +18,7 @@ $this->params['breadcrumbs'][] = 'Чаты';
         </svg>
         <h2 class="text-2xl font-bold text-gray-900 mb-2">WhatsApp не подключен</h2>
         <p class="text-gray-500 mb-6">Подключите WhatsApp чтобы видеть чаты</p>
-        <a href="<?= Url::to(['index']) ?>" class="btn btn-success btn-lg">
+        <a href="<?= OrganizationUrl::to(['index']) ?>" class="btn btn-success btn-lg">
             Подключить WhatsApp
         </a>
     </div>

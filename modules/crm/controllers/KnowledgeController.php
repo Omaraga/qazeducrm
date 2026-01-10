@@ -6,18 +6,17 @@ use app\models\KnowledgeArticle;
 use app\models\KnowledgeCategory;
 use Yii;
 use yii\filters\AccessControl;
-use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 
 /**
  * KnowledgeController - база знаний для пользователей
  */
-class KnowledgeController extends Controller
+class KnowledgeController extends CrmBaseController
 {
     /**
      * @inheritDoc
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return array_merge(
             parent::behaviors(),

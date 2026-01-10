@@ -15,6 +15,7 @@ use app\widgets\tailwind\SidebarMenu;
 use app\widgets\tailwind\SubscriptionAlert;
 use app\widgets\tailwind\SubscriptionBadge;
 use app\widgets\tailwind\WhatsappWidget;
+use app\helpers\OrganizationUrl;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
@@ -280,7 +281,7 @@ endforeach;
        }">
     <!-- Brand -->
     <div class="flex items-center justify-between px-4 py-4 border-b border-gray-200">
-        <a href="<?= Url::to(['/crm']) ?>" class="flex items-center gap-2">
+        <a href="<?= OrganizationUrl::to(['/crm']) ?>" class="flex items-center gap-2">
             <img src="/images/logo-text-dark.svg" alt="Qazaq Education" class="h-8">
             <span class="text-white text-[10px] font-bold px-1.5 py-0.5 rounded" style="background: #FE8D00;">CRM</span>
         </a>

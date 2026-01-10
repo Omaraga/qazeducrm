@@ -22,7 +22,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
 $getLidUrl = OrganizationUrl::to(['lids/get-lid']);
 $updateUrl = OrganizationUrl::to(['lids/update-ajax']);
-$indexUrl = Url::to(['index']);
+$indexUrl = OrganizationUrl::to(['index']);
 ?>
 
 <!-- Alpine Store для лидов -->
@@ -202,14 +202,14 @@ document.addEventListener('alpine:init', () => {
                         ? ($colorClasses[$color]['active'] ?? $colorClasses['gray']['active']) . ' shadow-md ring-2 ring-offset-2 ring-' . $color . '-600'
                         : ($colorClasses[$color]['inactive'] ?? $colorClasses['gray']['inactive']);
                     ?>
-                    <a href="<?= Url::to(['index', 'LidsSearch[status]' => $status]) ?>"
+                    <a href="<?= OrganizationUrl::to(['index', 'LidsSearch[status]' => $status]) ?>"
                        class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all <?= $btnClass ?>">
                         <?= Html::encode($stat['label']) ?>
                         <?= StatusBadge::count($stat['count'], ['color' => $isActive ? 'gray' : $color]) ?>
                     </a>
                 <?php endforeach; ?>
                 <?php if ($searchModel->status): ?>
-                    <a href="<?= Url::to(['index']) ?>" class="inline-flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700">
+                    <a href="<?= OrganizationUrl::to(['index']) ?>" class="inline-flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700">
                         <?= Icon::show('x', 'sm') ?>
                         Сбросить
                     </a>

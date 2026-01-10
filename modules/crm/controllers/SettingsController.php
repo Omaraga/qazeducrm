@@ -11,19 +11,18 @@ use app\models\Organizations;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
-use yii\web\Controller;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
 /**
  * SettingsController - настройки организации
  */
-class SettingsController extends Controller
+class SettingsController extends CrmBaseController
 {
     /**
      * @inheritDoc
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return array_merge(
             parent::behaviors(),

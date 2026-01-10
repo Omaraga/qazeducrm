@@ -10,12 +10,10 @@ use Yii;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
-use yii\web\Controller;
-
 /**
  * PayMethodController - управление способами оплаты
  */
-class PayMethodController extends Controller
+class PayMethodController extends CrmBaseController
 {
     use FindModelTrait;
 
@@ -25,7 +23,7 @@ class PayMethodController extends Controller
     /**
      * @inheritDoc
      */
-    public function behaviors()
+    public function behaviors(): array
     {
         return array_merge(
             parent::behaviors(),
