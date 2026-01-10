@@ -64,12 +64,19 @@ class LidsSearch extends Lids
             return $dataProvider;
         }
 
-        // Фильтр по ФИО
+        // Фильтр по ФИО (также ищем по телефону и ФИО родителя)
         if ($this->fio && strlen($this->fio) > 0) {
-            $query->andFilterWhere(['like', 'LOWER(fio)', mb_strtolower(trim($this->fio), 'UTF-8')]);
+            $searchTerm = mb_strtolower(trim($this->fio), 'UTF-8');
+            $query->andWhere([
+                'or',
+                ['like', 'LOWER(fio)', $searchTerm],
+                ['like', 'LOWER(parent_fio)', $searchTerm],
+                ['like', 'phone', $this->fio],
+                ['like', 'parent_phone', $this->fio],
+            ]);
         }
 
-        // Фильтр по телефону
+        // Фильтр по телефону (отдельный)
         if ($this->phone && strlen($this->phone) > 0) {
             $query->andFilterWhere(['like', 'phone', $this->phone]);
         }

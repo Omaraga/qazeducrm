@@ -245,11 +245,11 @@ $teachersUrl = OrganizationUrl::to(['schedule/teachers']);
         </div>
         <div class="flex gap-3">
             <button type="button"
-                    @click="$dispatch('close-modal', '<?= $isEdit ? 'edit-lesson-modal' : 'create-lesson-modal' ?>'); initialized = false;"
-                    class="btn btn-secondary">
+                    @click="$dispatch('close-modal', '<?= $isEdit ? 'edit-lesson-modal' : 'create-lesson-modal' ?>'); initialized = false; <?= $isEdit ? "openViewModal(selectedEvent?.id);" : "" ?>"
+                    class="btn btn-secondary cursor-pointer">
                 Отмена
             </button>
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary cursor-pointer">
                 <?= $isEdit ? 'Сохранить' : 'Создать' ?>
             </button>
         </div>

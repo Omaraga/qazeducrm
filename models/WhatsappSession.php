@@ -234,4 +234,18 @@ class WhatsappSession extends ActiveRecord
             ->andWhere(['>', 'unread_count', 0])
             ->sum('unread_count') ?? 0;
     }
+
+    /**
+     * Получить время последнего сообщения
+     * @return string|null Дата последнего сообщения или null
+     */
+    public function getLastMessageTime(): ?string
+    {
+        $lastMessage = WhatsappMessage::find()
+            ->where(['session_id' => $this->id])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->one();
+
+        return $lastMessage ? $lastMessage->created_at : null;
+    }
 }

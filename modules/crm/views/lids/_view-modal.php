@@ -101,7 +101,9 @@ $lostReasons = [
                 });
                 const data = await response.json();
                 if (data.success) {
-                    // Update local state
+                    // Update local state - ensure custom_tags array exists
+                    if (!lid.custom_tags) lid.custom_tags = [];
+
                     if (data.hasTag) {
                         const tag = this.availableTags.find(t => t.id === tagId);
                         if (tag && !lid.custom_tags.some(t => t.id === tagId)) {

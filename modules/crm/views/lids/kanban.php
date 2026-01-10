@@ -28,7 +28,14 @@ $statusColors = [
     Lids::STATUS_ENROLLED => 'indigo',
     Lids::STATUS_PAID => 'green',
     Lids::STATUS_LOST => 'red',
+    Lids::STATUS_NOT_TARGET => 'slate',
+    Lids::STATUS_IN_TRAINING => 'purple',
 ];
+
+// URL для новых actions
+$markNotTargetUrl = OrganizationUrl::to(['lids/mark-not-target']);
+$markInTrainingUrl = OrganizationUrl::to(['lids/mark-in-training']);
+$linkToPupilUrl = OrganizationUrl::to(['lids/link-to-pupil']);
 
 $getLidUrl = OrganizationUrl::to(['lids/get-lid']);
 $changeStatusUrl = OrganizationUrl::to(['lids-funnel/change-status']);
@@ -83,7 +90,7 @@ document.addEventListener('alpine:init', () => {
 });
 </script>
 
-<div class="space-y-4" x-data="kanbanBoard()" x-cloak>
+<div class="space-y-4" x-data="{ showHelp: false, ...kanbanBoard() }" x-cloak>
     <!-- Header -->
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
@@ -91,6 +98,14 @@ document.addEventListener('alpine:init', () => {
             <p class="text-sm text-gray-500 mt-1">Перетаскивайте карточки для смены статуса</p>
         </div>
         <div class="flex items-center gap-3">
+            <!-- Help Button -->
+            <button type="button"
+                    @click="showHelp = !showHelp"
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
+                    :class="showHelp && 'bg-blue-50 text-blue-600 border-blue-200'"
+                    title="Подсказки">
+                <?= Icon::show('question-mark-circle', 'sm') ?>
+            </button>
             <!-- View Switcher -->
             <div class="inline-flex items-center rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-primary-50 text-primary-600" title="Kanban">
@@ -114,6 +129,59 @@ document.addEventListener('alpine:init', () => {
                 <?= Icon::show('plus', 'sm') ?>
                 Добавить лид
             </button>
+        </div>
+    </div>
+
+    <!-- Help Tips (Collapsible) -->
+    <div x-show="showHelp" x-collapse x-cloak>
+        <div class="card bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <div class="card-body">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <?= Icon::show('light-bulb', 'md', 'text-blue-600') ?>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-sm font-semibold text-blue-900 mb-2">Как работать с Kanban-доской</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-blue-800">
+                            <div>
+                                <p class="font-medium mb-1"><?= Icon::show('arrows-right-left', 'sm', 'inline') ?> Перетаскивание</p>
+                                <ul class="space-y-1 text-blue-700">
+                                    <li>Захватите карточку мышью</li>
+                                    <li>Перетащите в нужную колонку</li>
+                                    <li>Статус обновится автоматически</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <p class="font-medium mb-1"><?= Icon::show('cursor-arrow-rays', 'sm', 'inline') ?> Быстрые действия</p>
+                                <ul class="space-y-1 text-blue-700">
+                                    <li>Клик по карточке &mdash; детали</li>
+                                    <li>Hover &mdash; кнопки звонка/WA</li>
+                                    <li>Стрелка &mdash; быстрая смена статуса</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <p class="font-medium mb-1"><?= Icon::show('bell-alert', 'sm', 'inline') ?> Индикаторы</p>
+                                <ul class="space-y-1 text-blue-700">
+                                    <li><span class="inline-block w-2 h-2 rounded-full bg-danger-500"></span> Красный &mdash; просрочен</li>
+                                    <li><span class="inline-block w-2 h-2 rounded-full bg-warning-500"></span> Желтый &mdash; сегодня</li>
+                                    <li><span class="inline-block w-2 h-2 rounded-full bg-orange-400"></span> Оранж. &mdash; долго в статусе</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <p class="font-medium mb-1"><?= Icon::show('funnel', 'sm', 'inline') ?> Фильтры</p>
+                                <ul class="space-y-1 text-blue-700">
+                                    <li>Используйте чекбоксы выше</li>
+                                    <li>«Мои» &mdash; только ваши лиды</li>
+                                    <li>«Ещё» &mdash; расширенные фильтры</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" @click="showHelp = false" class="text-blue-400 hover:text-blue-600">
+                        <?= Icon::show('x', 'sm') ?>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -220,6 +288,12 @@ document.addEventListener('alpine:init', () => {
                             <a href="<?= OrganizationUrl::to(array_merge(['lids-funnel/kanban'], array_diff_key($filters, ['stale_only' => 1]))) ?>" class="hover:text-orange-900">&times;</a>
                         </span>
                     <?php endif; ?>
+                    <?php if (!empty($filters['show_not_target'])): ?>
+                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs">
+                            Нецелевые
+                            <a href="<?= OrganizationUrl::to(array_merge(['lids-funnel/kanban'], array_diff_key($filters, ['show_not_target' => 1]))) ?>" class="hover:text-slate-900">&times;</a>
+                        </span>
+                    <?php endif; ?>
                     <?php if (!empty($filters['manager_id'])): ?>
                         <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs">
                             <?= Html::encode($managers[$filters['manager_id']] ?? 'Менеджер') ?>
@@ -257,6 +331,14 @@ document.addEventListener('alpine:init', () => {
                                class="form-checkbox text-orange-500 w-3.5 h-3.5">
                         <?= Icon::show('clock', 'xs') ?>
                         <span>Долго в статусе</span>
+                    </label>
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer px-2.5 py-1.5 rounded-lg border text-xs transition-colors
+                        <?= !empty($filters['show_not_target']) ? 'bg-slate-100 border-slate-400 text-slate-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50' ?>">
+                        <input type="checkbox" name="show_not_target" value="1"
+                               <?= !empty($filters['show_not_target']) ? 'checked' : '' ?>
+                               class="form-checkbox text-slate-500 w-3.5 h-3.5">
+                        <?= Icon::show('x-circle', 'xs') ?>
+                        <span>Показать нецелевые</span>
                     </label>
                 </div>
 
@@ -339,10 +421,14 @@ document.addEventListener('alpine:init', () => {
     <div class="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4" style="min-height: calc(100vh - 320px);">
         <?php foreach ($columns as $status => $column): ?>
             <?php
-            // Пропускаем пустые архивные колонки, кроме Lost (она всегда показывается)
-            if (isset($column['archive']) && $column['archive'] && empty($column['items']) && $status !== Lids::STATUS_LOST) continue;
+            // Пропускаем пустые архивные колонки, кроме Lost и In Training (они всегда показываются)
+            $alwaysShowStatuses = [Lids::STATUS_LOST, Lids::STATUS_IN_TRAINING];
+            if (isset($column['archive']) && $column['archive'] && empty($column['items']) && !in_array($status, $alwaysShowStatuses)) continue;
+            // Специальные колонки (IN_TRAINING) показываем всегда если есть флаг special
+            if (empty($column['items']) && !isset($column['archive']) && !isset($column['special']) && $status > Lids::STATUS_ENROLLED) continue;
             $color = $statusColors[$status] ?? 'gray';
             $isCollapsible = !empty($column['collapsible']);
+            $isSpecial = !empty($column['special']);
             $itemCount = count($column['items']);
             ?>
 

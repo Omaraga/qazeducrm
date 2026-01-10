@@ -71,6 +71,9 @@ function scheduleCalendar(config) {
         selectedMinute: 0,
         selectedRoomId: null,
 
+        // Посещаемость
+        savingAttendance: null,
+
         // Drag & Drop
         dragging: null,
         dragOver: null,
@@ -1135,6 +1138,69 @@ function scheduleCalendar(config) {
             this.$dispatch('close-modal', 'view-lesson-modal');
             this.$dispatch('close-modal', 'edit-lesson-modal');
             this.$dispatch('close-modal', 'delete-lesson-modal');
+        },
+
+        // ========== ATTENDANCE (inline) ==========
+        async savePupilStatus(pupilId, status) {
+            if (this.savingAttendance) return;
+            if (!this.selectedEvent) return;
+
+            this.savingAttendance = pupilId;
+
+            try {
+                const response = await QazFetch.post(this.urls.saveAttendance, {
+                    lesson_id: this.selectedEvent.id,
+                    pupil_id: pupilId,
+                    status: status
+                });
+
+                if (response && response.success) {
+                    // Обновляем статус в selectedEvent (используем == для сравнения с разными типами)
+                    const pupil = this.selectedEvent.pupils.find(p => p.id == pupilId);
+                    if (pupil) {
+                        pupil.status = parseInt(response.status);
+                        pupil.status_label = response.status_label;
+                    }
+                } else {
+                    QazToast.error(response?.message || 'Ошибка сохранения');
+                }
+            } catch (error) {
+                console.error('Attendance save error:', error);
+                QazToast.error('Ошибка сохранения');
+            } finally {
+                this.savingAttendance = null;
+            }
+        },
+
+        async setAllPupilsStatus(status) {
+            if (this.savingAttendance) return;
+            if (!this.selectedEvent?.pupils?.length) return;
+
+            this.savingAttendance = 'all';
+
+            try {
+                for (const pupil of this.selectedEvent.pupils) {
+                    // Используем parseInt для корректного сравнения
+                    if (parseInt(pupil.status) !== status) {
+                        const response = await QazFetch.post(this.urls.saveAttendance, {
+                            lesson_id: this.selectedEvent.id,
+                            pupil_id: pupil.id,
+                            status: status
+                        });
+
+                        if (response && response.success) {
+                            pupil.status = parseInt(response.status);
+                            pupil.status_label = response.status_label;
+                        }
+                    }
+                }
+                QazToast.success('Посещаемость сохранена');
+            } catch (error) {
+                console.error('Attendance save error:', error);
+                QazToast.error('Ошибка сохранения');
+            } finally {
+                this.savingAttendance = null;
+            }
         },
 
         // ========== CRUD OPERATIONS ==========

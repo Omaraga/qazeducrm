@@ -1,0 +1,16 @@
+{
+  "name": "qazeducrm-screenshots",
+  "version": "1.0.0",
+  "description": "Playwright tests for generating documentation screenshots",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "generate": "playwright test && node utils/optimize.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "author": "",
+  "license": "ISC"
+}

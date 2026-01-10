@@ -11,7 +11,7 @@ return [
         'apiUrl' => 'http://localhost:8085',
         'apiKey' => 'qazeducrm-dev-api-key-2025',
         // Webhook URL (куда Evolution API будет слать события)
-        // Для Docker: http://host.docker.internal/webhook/whatsapp
+        // Для Docker + XAMPP с VirtualHost: http://host.docker.internal/webhook/whatsapp (+ Host header)
         // Для продакшена: https://yourdomain.com/webhook/whatsapp
         'webhookUrl' => 'http://host.docker.internal/webhook/whatsapp',
         // Host header для Apache VirtualHost

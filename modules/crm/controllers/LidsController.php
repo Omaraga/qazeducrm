@@ -2,6 +2,7 @@
 
 namespace app\modules\crm\controllers;
 
+use app\components\ActiveRecord;
 use app\helpers\ActivityLogger;
 use app\helpers\OrganizationRoles;
 use app\helpers\RoleChecker;
@@ -10,7 +11,9 @@ use app\models\Lids;
 use app\models\LidHistory;
 use app\models\search\LidsSearch;
 use app\models\services\LidService;
+use app\models\User;
 use Yii;
+use yii\helpers\ArrayHelper;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\NotFoundHttpException;
@@ -43,6 +46,9 @@ class LidsController extends CrmBaseController
                         'delete' => ['POST'],
                         'create-ajax' => ['POST'],
                         'update-ajax' => ['POST'],
+                        'link-to-pupil' => ['POST'],
+                        'mark-not-target' => ['POST'],
+                        'mark-in-training' => ['POST'],
                     ],
                 ],
                 'access' => [
@@ -81,10 +87,18 @@ class LidsController extends CrmBaseController
         $searchModel = new LidsSearch();
         $dataProvider = $searchModel->search($this->request->queryParams);
 
+        // Менеджеры для фильтра
+        $managers = User::find()
+            ->innerJoinWith(['currentUserOrganizations' => function($q) {
+                $q->andWhere(['<>', 'user_organization.is_deleted', ActiveRecord::DELETED]);
+            }])
+            ->all();
+
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
             'funnelStats' => Lids::getFunnelStats(),
+            'managers' => ArrayHelper::map($managers, 'id', 'fio'),
         ]);
     }
 
@@ -307,6 +321,36 @@ class LidsController extends CrmBaseController
                 ];
             }
 
+            // Получаем данные WhatsApp
+            $lastWhatsappMessage = $model->getLastIncomingWhatsappMessage();
+            $whatsappData = null;
+            if ($lastWhatsappMessage) {
+                $whatsappData = [
+                    'content' => mb_substr($lastWhatsappMessage->content ?? '', 0, 100, 'UTF-8'),
+                    'time' => Yii::$app->formatter->asRelativeTime($lastWhatsappMessage->created_at),
+                    'full_time' => Yii::$app->formatter->asDatetime($lastWhatsappMessage->created_at, 'php:d.m.Y H:i'),
+                ];
+            }
+
+            // Получаем потенциального связанного ученика
+            $potentialPupil = $model->findPotentialPupil();
+            $potentialPupilData = null;
+            if ($potentialPupil) {
+                $potentialPupilData = [
+                    'id' => $potentialPupil->id,
+                    'fio' => $potentialPupil->fio,
+                ];
+            }
+
+            // Связанный ученик (если уже привязан)
+            $linkedPupilData = null;
+            if ($model->pupil) {
+                $linkedPupilData = [
+                    'id' => $model->pupil->id,
+                    'fio' => $model->pupil->fio,
+                ];
+            }
+
             return [
                 'success' => true,
                 'lid' => [
@@ -321,6 +365,10 @@ class LidsController extends CrmBaseController
                     'class_id' => $model->class_id,
                     'status' => $model->status,
                     'status_label' => $model->getStatusLabel(),
+                    'status_color' => $model->getStatusColor(),
+                    'is_final_status' => $model->isFinalStatus(),
+                    'is_not_target' => $model->isNotTarget(),
+                    'is_in_training' => $model->isInTraining(),
                     'source' => $model->source,
                     'source_label' => $model->getSourceLabel(),
                     'manager_id' => $model->manager_id,
@@ -334,7 +382,18 @@ class LidsController extends CrmBaseController
                     'is_overdue' => $model->isOverdue(),
                     'is_stale' => $model->isStaleInStatus(),
                     'created_at' => $model->created_at ? Yii::$app->formatter->asDatetime($model->created_at, 'php:d.m.Y H:i') : null,
+                    'first_response_at' => $model->first_response_at ? Yii::$app->formatter->asDatetime($model->first_response_at, 'php:d.m.Y H:i') : null,
+                    // WhatsApp данные
                     'whatsapp_profile_picture' => $model->getWhatsappProfilePicture(),
+                    'has_whatsapp_chat' => $model->hasWhatsappChat(),
+                    'whatsapp_unread_count' => $model->getWhatsappUnreadCount(),
+                    'last_whatsapp_message' => $whatsappData,
+                    'initials' => $model->getInitials(),
+                    // Связи с учениками
+                    'pupil_id' => $model->pupil_id,
+                    'pupil' => $linkedPupilData,
+                    'potential_pupil' => $potentialPupilData,
+                    'related_lids_count' => $model->getRelatedLidsCount(),
                     'history' => $history,
                 ],
             ];
@@ -343,6 +402,130 @@ class LidsController extends CrmBaseController
                 'success' => false,
                 'message' => $e->getMessage(),
             ];
+        }
+    }
+
+    /**
+     * AJAX: Связать лида с учеником
+     *
+     * @return array
+     */
+    public function actionLinkToPupil()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $lidId = $this->request->post('lid_id');
+            $pupilId = $this->request->post('pupil_id');
+
+            if (!$lidId || !$pupilId) {
+                return ['success' => false, 'message' => 'Не указан ID лида или ученика'];
+            }
+
+            $model = $this->findModel($lidId);
+
+            if ($model->linkToPupil($pupilId)) {
+                $model->refresh();
+                return [
+                    'success' => true,
+                    'message' => 'Лид связан с учеником',
+                    'pupil' => [
+                        'id' => $model->pupil->id,
+                        'fio' => $model->pupil->fio,
+                    ],
+                ];
+            }
+
+            return ['success' => false, 'message' => 'Ученик не найден'];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * AJAX: Перевести лида в статус "Не целевой"
+     *
+     * @return array
+     */
+    public function actionMarkNotTarget()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $lidId = $this->request->post('lid_id');
+            $reason = $this->request->post('reason', 'other');
+
+            if (!$lidId) {
+                return ['success' => false, 'message' => 'Не указан ID лида'];
+            }
+
+            $model = $this->findModel($lidId);
+
+            // Формируем комментарий с причиной
+            $reasonLabels = Lids::getNotTargetReasonList();
+            $reasonLabel = $reasonLabels[$reason] ?? $reason;
+            $comment = "Причина: {$reasonLabel}";
+
+            $result = LidService::changeStatus($model, Lids::STATUS_NOT_TARGET, $comment);
+
+            if ($result['success']) {
+                return [
+                    'success' => true,
+                    'message' => 'Лид отмечен как нецелевой',
+                    'status' => Lids::STATUS_NOT_TARGET,
+                    'status_label' => 'Не целевой',
+                ];
+            }
+
+            return ['success' => false, 'message' => $result['message']];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * AJAX: Перевести лида в статус "В обучении"
+     *
+     * @return array
+     */
+    public function actionMarkInTraining()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $lidId = $this->request->post('lid_id');
+            $pupilId = $this->request->post('pupil_id');
+
+            if (!$lidId) {
+                return ['success' => false, 'message' => 'Не указан ID лида'];
+            }
+
+            $model = $this->findModel($lidId);
+
+            // Если указан ученик - связываем
+            if ($pupilId) {
+                $model->linkToPupil($pupilId);
+            }
+
+            $result = LidService::changeStatus($model, Lids::STATUS_IN_TRAINING, 'Перевод в "В обучении"');
+
+            if ($result['success']) {
+                $model->refresh();
+                return [
+                    'success' => true,
+                    'message' => 'Лид переведён в статус "В обучении"',
+                    'status' => Lids::STATUS_IN_TRAINING,
+                    'status_label' => 'В обучении',
+                    'pupil' => $model->pupil ? [
+                        'id' => $model->pupil->id,
+                        'fio' => $model->pupil->fio,
+                    ] : null,
+                ];
+            }
+
+            return ['success' => false, 'message' => $result['message']];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 

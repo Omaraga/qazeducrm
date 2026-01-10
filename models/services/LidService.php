@@ -258,13 +258,16 @@ class LidService
      */
     public static function getManagerStats(?string $dateFrom = null, ?string $dateTo = null): array
     {
+        $finalStatuses = implode(', ', Lids::getFinalStatusList());
         $query = Lids::find()
             ->select([
                 'manager_id',
                 'COUNT(*) as total',
                 'SUM(CASE WHEN status = ' . Lids::STATUS_PAID . ' THEN 1 ELSE 0 END) as converted',
                 'SUM(CASE WHEN status = ' . Lids::STATUS_LOST . ' THEN 1 ELSE 0 END) as lost',
-                'SUM(CASE WHEN status NOT IN (' . Lids::STATUS_PAID . ', ' . Lids::STATUS_LOST . ') THEN 1 ELSE 0 END) as active',
+                'SUM(CASE WHEN status = ' . Lids::STATUS_NOT_TARGET . ' THEN 1 ELSE 0 END) as not_target',
+                'SUM(CASE WHEN status = ' . Lids::STATUS_IN_TRAINING . ' THEN 1 ELSE 0 END) as in_training',
+                'SUM(CASE WHEN status NOT IN (' . $finalStatuses . ', ' . Lids::STATUS_IN_TRAINING . ') THEN 1 ELSE 0 END) as active',
             ])
             ->byOrganization()
             ->notDeleted()
@@ -384,15 +387,23 @@ class LidService
      * Получить лидов по статусу для Kanban
      *
      * @param array $filters Фильтры: search, source, manager_id, class_id, overdue_only, date_from, date_to,
-     *                       my_leads_only, contact_today, stale_only, tags
+     *                       my_leads_only, contact_today, stale_only, tags, show_not_target, show_in_training
      * @return array
      */
     public static function getKanbanData(array $filters = []): array
     {
+        $showNotTarget = !empty($filters['show_not_target']);
+        $showInTraining = $filters['show_in_training'] ?? true; // Показываем по умолчанию
+
         $query = Lids::find()
             ->byOrganization()
             ->notDeleted()
             ->with(['manager']);
+
+        // По умолчанию исключаем NOT_TARGET (показываем только если фильтр включен)
+        if (!$showNotTarget) {
+            $query->andWhere(['!=', 'status', Lids::STATUS_NOT_TARGET]);
+        }
 
         // Фильтр по поиску (ФИО или телефон)
         if (!empty($filters['search'])) {
@@ -451,7 +462,7 @@ class LidService
         if (!empty($filters['stale_only'])) {
             $query->andWhere(['<=', 'status_changed_at', DateHelper::relative('-7 days', true)]);
             // Исключаем финальные статусы
-            $query->andWhere(['not in', 'status', [Lids::STATUS_PAID, Lids::STATUS_LOST]]);
+            $query->andWhere(['not in', 'status', Lids::getFinalStatusList()]);
         }
 
         // Фильтр по тегам (JSON contains)
@@ -496,6 +507,29 @@ class LidService
             'collapsible' => true,
         ];
 
+        // Колонка "В обучении" (справа, всегда видна)
+        if ($showInTraining) {
+            $columns[Lids::STATUS_IN_TRAINING] = [
+                'status' => Lids::STATUS_IN_TRAINING,
+                'label' => 'В обучении',
+                'color' => 'purple',
+                'items' => [],
+                'special' => true,
+            ];
+        }
+
+        // Колонка "Не целевой" (только если фильтр включен)
+        if ($showNotTarget) {
+            $columns[Lids::STATUS_NOT_TARGET] = [
+                'status' => Lids::STATUS_NOT_TARGET,
+                'label' => 'Не целевой',
+                'color' => 'slate',
+                'items' => [],
+                'archive' => true,
+                'collapsible' => true,
+            ];
+        }
+
         foreach ($lids as $lid) {
             if (isset($columns[$lid->status])) {
                 $columns[$lid->status]['items'][] = $lid;
@@ -518,6 +552,8 @@ class LidService
             Lids::STATUS_ENROLLED => 'indigo',
             Lids::STATUS_PAID => 'green',
             Lids::STATUS_LOST => 'red',
+            Lids::STATUS_NOT_TARGET => 'slate',
+            Lids::STATUS_IN_TRAINING => 'purple',
         ];
         return $colors[$status] ?? 'gray';
     }
@@ -857,5 +893,197 @@ class LidService
     public static function getAllowedFields(): array
     {
         return self::ALLOWED_FIELDS;
+    }
+
+    // =========================================================================
+    // Автоназначение менеджера
+    // =========================================================================
+
+    /**
+     * Получить следующего менеджера для назначения (round-robin)
+     * Выбирает менеджера с наименьшим количеством активных лидов
+     *
+     * @return int|null ID менеджера или null если нет доступных
+     */
+    public static function getNextManager(): ?int
+    {
+        // Проверяем настройку организации
+        $org = Organizations::findOne(Organizations::getCurrentOrganizationId());
+        if (!$org || !$org->getSetting('auto_assign_leads', true)) {
+            return null;
+        }
+
+        // Получаем всех менеджеров организации
+        $managers = User::find()
+            ->joinWith('userOrganizations')
+            ->where(['user_organization.organization_id' => Organizations::getCurrentOrganizationId()])
+            ->andWhere(['user.is_deleted' => 0])
+            ->select(['user.id'])
+            ->asArray()
+            ->all();
+
+        if (empty($managers)) {
+            return null;
+        }
+
+        $managerIds = array_column($managers, 'id');
+
+        // Считаем активные лиды для каждого менеджера
+        $finalStatuses = Lids::getFinalStatusList();
+        $counts = Lids::find()
+            ->select(['manager_id', 'COUNT(*) as cnt'])
+            ->byOrganization()
+            ->notDeleted()
+            ->andWhere(['not in', 'status', $finalStatuses])
+            ->andWhere(['!=', 'status', Lids::STATUS_IN_TRAINING])
+            ->andWhere(['manager_id' => $managerIds])
+            ->groupBy('manager_id')
+            ->asArray()
+            ->all();
+
+        $countMap = [];
+        foreach ($counts as $row) {
+            $countMap[$row['manager_id']] = (int)$row['cnt'];
+        }
+
+        // Находим менеджера с минимальным количеством лидов
+        $minCount = PHP_INT_MAX;
+        $selectedManager = null;
+
+        foreach ($managerIds as $managerId) {
+            $count = $countMap[$managerId] ?? 0;
+            if ($count < $minCount) {
+                $minCount = $count;
+                $selectedManager = $managerId;
+            }
+        }
+
+        return $selectedManager;
+    }
+
+    /**
+     * Автоназначение менеджера для лида
+     *
+     * @param Lids $lid
+     * @return bool
+     */
+    public static function autoAssignManager(Lids $lid): bool
+    {
+        if ($lid->manager_id) {
+            return true; // Уже назначен
+        }
+
+        $managerId = self::getNextManager();
+        if (!$managerId) {
+            return false;
+        }
+
+        $lid->manager_id = $managerId;
+        return $lid->save(false, ['manager_id']);
+    }
+
+    // =========================================================================
+    // Время реакции
+    // =========================================================================
+
+    /**
+     * Записать время первого ответа
+     * Вызывается при отправке сообщения менеджером
+     *
+     * @param Lids $lid
+     * @return bool
+     */
+    public static function recordFirstResponse(Lids $lid): bool
+    {
+        // Если уже записано - не перезаписываем
+        if (!empty($lid->first_response_at)) {
+            return true;
+        }
+
+        $lid->first_response_at = DateHelper::now();
+        return $lid->save(false, ['first_response_at']);
+    }
+
+    /**
+     * Получить время реакции в минутах
+     *
+     * @param Lids $lid
+     * @return int|null Время в минутах или null если нет данных
+     */
+    public static function getResponseTimeMinutes(Lids $lid): ?int
+    {
+        if (empty($lid->first_response_at) || empty($lid->created_at)) {
+            return null;
+        }
+
+        $created = strtotime($lid->created_at);
+        $response = strtotime($lid->first_response_at);
+
+        if ($response <= $created) {
+            return 0;
+        }
+
+        return (int)round(($response - $created) / 60);
+    }
+
+    /**
+     * Получить среднее время реакции по менеджерам
+     *
+     * @param string|null $dateFrom
+     * @param string|null $dateTo
+     * @return array
+     */
+    public static function getResponseTimeStats(?string $dateFrom = null, ?string $dateTo = null): array
+    {
+        $query = Lids::find()
+            ->select([
+                'manager_id',
+                'AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as avg_response_minutes',
+                'COUNT(*) as total_with_response',
+            ])
+            ->byOrganization()
+            ->notDeleted()
+            ->andWhere(['is not', 'first_response_at', null])
+            ->andWhere(['is not', 'manager_id', null])
+            ->groupBy('manager_id');
+
+        if ($dateFrom) {
+            $query->andWhere(['>=', 'created_at', $dateFrom . ' 00:00:00']);
+        }
+        if ($dateTo) {
+            $query->andWhere(['<=', 'created_at', $dateTo . ' 23:59:59']);
+        }
+
+        $results = $query->asArray()->all();
+
+        // Добавляем имена менеджеров
+        $managerIds = array_column($results, 'manager_id');
+        $managers = User::find()
+            ->where(['id' => $managerIds])
+            ->indexBy('id')
+            ->all();
+
+        foreach ($results as &$result) {
+            $manager = $managers[$result['manager_id']] ?? null;
+            $result['manager_name'] = $manager ? $manager->fio : 'Неизвестный';
+            $result['avg_response_minutes'] = (int)$result['avg_response_minutes'];
+
+            // Форматируем в часы:минуты
+            $minutes = $result['avg_response_minutes'];
+            if ($minutes >= 60) {
+                $hours = floor($minutes / 60);
+                $mins = $minutes % 60;
+                $result['avg_response_formatted'] = "{$hours}ч {$mins}мин";
+            } else {
+                $result['avg_response_formatted'] = "{$minutes} мин";
+            }
+        }
+
+        // Сортировка по времени реакции (меньше = лучше)
+        usort($results, function($a, $b) {
+            return $a['avg_response_minutes'] <=> $b['avg_response_minutes'];
+        });
+
+        return $results;
     }
 }

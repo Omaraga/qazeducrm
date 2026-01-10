@@ -3,6 +3,7 @@
 namespace app\models;
 
 use app\helpers\DateHelper;
+use app\models\services\LidService;
 use app\traits\UpdateInsteadOfDeleteTrait;
 use Yii;
 use app\components\ActiveRecord;
@@ -22,6 +23,7 @@ use yii\db\Expression;
  * @property int|null $pupil_id
  * @property string|null $converted_at
  * @property string|null $status_changed_at
+ * @property string|null $first_response_at
  * @property string|null $date
  * @property string|null $manager_name
  * @property int|null $manager_id
@@ -55,6 +57,8 @@ class Lids extends ActiveRecord
     const STATUS_ENROLLED = 5;      // Записан
     const STATUS_PAID = 6;          // Оплатил
     const STATUS_LOST = 7;          // Потерян
+    const STATUS_NOT_TARGET = 8;    // Не целевой (спам, коллеги, ошибки)
+    const STATUS_IN_TRAINING = 9;   // В обучении (существующий клиент)
 
     // Источники лидов
     const SOURCE_INSTAGRAM = 'instagram';
@@ -159,6 +163,11 @@ class Lids extends ActiveRecord
         // При создании устанавливаем status_changed_at
         if ($insert) {
             $this->status_changed_at = DateHelper::now();
+
+            // Автоназначение менеджера при создании
+            if (!$this->manager_id) {
+                $this->manager_id = LidService::getNextManager();
+            }
         }
 
         return parent::beforeSave($insert);
@@ -329,6 +338,8 @@ class Lids extends ActiveRecord
             self::STATUS_ENROLLED => 'Записан',
             self::STATUS_PAID => 'Оплатил',
             self::STATUS_LOST => 'Потерян',
+            self::STATUS_NOT_TARGET => 'Не целевой',
+            self::STATUS_IN_TRAINING => 'В обучении',
         ];
     }
 
@@ -368,6 +379,8 @@ class Lids extends ActiveRecord
             self::STATUS_ENROLLED => 'bg-success',
             self::STATUS_PAID => 'bg-success',
             self::STATUS_LOST => 'bg-danger',
+            self::STATUS_NOT_TARGET => 'bg-secondary',
+            self::STATUS_IN_TRAINING => 'bg-purple',
         ];
         return $classes[$this->status] ?? 'bg-secondary';
     }
@@ -385,6 +398,8 @@ class Lids extends ActiveRecord
             self::STATUS_ENROLLED => 'indigo',
             self::STATUS_PAID => 'green',
             self::STATUS_LOST => 'red',
+            self::STATUS_NOT_TARGET => 'slate',
+            self::STATUS_IN_TRAINING => 'purple',
         ];
         return $colors[$this->status] ?? 'gray';
     }
@@ -445,14 +460,54 @@ class Lids extends ActiveRecord
     }
 
     /**
+     * Финальные статусы (из которых нельзя выйти)
+     */
+    public static function getFinalStatusList(): array
+    {
+        return [self::STATUS_PAID, self::STATUS_LOST, self::STATUS_NOT_TARGET];
+    }
+
+    /**
+     * Проверка на финальный статус
+     */
+    public function isFinalStatus(): bool
+    {
+        return in_array($this->status, self::getFinalStatusList());
+    }
+
+    /**
+     * Проверка на статус "Не целевой"
+     */
+    public function isNotTarget(): bool
+    {
+        return $this->status === self::STATUS_NOT_TARGET;
+    }
+
+    /**
+     * Проверка на статус "В обучении"
+     */
+    public function isInTraining(): bool
+    {
+        return $this->status === self::STATUS_IN_TRAINING;
+    }
+
+    /**
      * Можно ли перевести в указанный статус
      */
     public function canMoveToStatus($newStatus)
     {
-        // Из LOST и PAID нельзя переходить
-        if ($this->status == self::STATUS_LOST || $this->status == self::STATUS_PAID) {
+        // Из финальных статусов нельзя переходить
+        if ($this->isFinalStatus()) {
+            // Исключение: из "В обучении" можно вернуть в воронку
+            // (IN_TRAINING не финальный, но проверяем на всякий случай)
             return false;
         }
+
+        // Из "В обучении" можно перейти в любой статус
+        if ($this->status === self::STATUS_IN_TRAINING) {
+            return true;
+        }
+
         return true;
     }
 
@@ -539,21 +594,35 @@ class Lids extends ActiveRecord
         return self::find()
             ->byOrganization()
             ->notDeleted()
-            ->andWhere(['not in', 'status', [self::STATUS_PAID, self::STATUS_LOST]])
+            ->andWhere(['not in', 'status', self::getFinalStatusList()])
+            ->andWhere(['!=', 'status', self::STATUS_IN_TRAINING])
             ->andWhere(['<=', 'next_contact_date', DateHelper::today()])
             ->orderBy(['next_contact_date' => SORT_ASC]);
     }
 
     /**
-     * Активные лиды (не в финальных статусах)
+     * Активные лиды (не в финальных статусах и не "В обучении")
      */
     public static function findActive()
     {
         return self::find()
             ->byOrganization()
             ->notDeleted()
-            ->andWhere(['not in', 'status', [self::STATUS_PAID, self::STATUS_LOST]])
+            ->andWhere(['not in', 'status', self::getFinalStatusList()])
+            ->andWhere(['!=', 'status', self::STATUS_IN_TRAINING])
             ->orderBy(['next_contact_date' => SORT_ASC, 'created_at' => SORT_DESC]);
+    }
+
+    /**
+     * Лиды "В обучении" (существующие клиенты)
+     */
+    public static function findInTraining()
+    {
+        return self::find()
+            ->byOrganization()
+            ->notDeleted()
+            ->andWhere(['status' => self::STATUS_IN_TRAINING])
+            ->orderBy(['created_at' => SORT_DESC]);
     }
 
     /**
@@ -678,5 +747,165 @@ class Lids extends ActiveRecord
         }
 
         return count(self::findDuplicates($phone, $this->id)) > 0;
+    }
+
+    // ===================== WHATSAPP =====================
+
+    /**
+     * Есть ли WhatsApp чат с этим лидом
+     */
+    public function hasWhatsappChat(): bool
+    {
+        return $this->whatsappChat !== null;
+    }
+
+    /**
+     * Получить последнее входящее сообщение WhatsApp
+     * @return WhatsappMessage|null
+     */
+    public function getLastIncomingWhatsappMessage(): ?WhatsappMessage
+    {
+        if (!$this->hasWhatsappChat()) {
+            return null;
+        }
+
+        return WhatsappMessage::find()
+            ->where(['lid_id' => $this->id])
+            ->andWhere(['direction' => 'incoming'])
+            ->andWhere(['is_deleted' => 0])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->one();
+    }
+
+    /**
+     * Получить количество непрочитанных сообщений WhatsApp
+     */
+    public function getWhatsappUnreadCount(): int
+    {
+        return $this->whatsappChat?->unread_count ?? 0;
+    }
+
+    /**
+     * Получить все WhatsApp сообщения для лида
+     * @param int $limit
+     * @return WhatsappMessage[]
+     */
+    public function getWhatsappMessages(int $limit = 50): array
+    {
+        return WhatsappMessage::find()
+            ->where(['lid_id' => $this->id])
+            ->andWhere(['is_deleted' => 0])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->limit($limit)
+            ->all();
+    }
+
+    /**
+     * Получить инициалы для аватара
+     */
+    public function getInitials(): string
+    {
+        $name = $this->fio ?: $this->parent_fio ?: '';
+        $parts = explode(' ', trim($name));
+        $initials = '';
+
+        foreach (array_slice($parts, 0, 2) as $part) {
+            if (!empty($part)) {
+                // Поддержка кириллицы
+                $initials .= mb_substr($part, 0, 1, 'UTF-8');
+            }
+        }
+
+        return mb_strtoupper($initials, 'UTF-8') ?: '?';
+    }
+
+    // ===================== СВЯЗЬ С УЧЕНИКОМ (для IN_TRAINING) =====================
+
+    /**
+     * Найти потенциального связанного ученика по телефону
+     * @return Pupil|null
+     */
+    public function findPotentialPupil(): ?Pupil
+    {
+        $phones = array_filter([$this->phone, $this->parent_phone]);
+        if (empty($phones)) {
+            return null;
+        }
+
+        return Pupil::find()
+            ->byOrganization()
+            ->notDeleted()
+            ->andWhere([
+                'or',
+                ['phone' => $phones],
+                ['parent_phone' => $phones],
+            ])
+            ->one();
+    }
+
+    /**
+     * Связать лида с учеником
+     * @param int $pupilId
+     * @return bool
+     */
+    public function linkToPupil(int $pupilId): bool
+    {
+        $pupil = Pupil::find()
+            ->byOrganization()
+            ->notDeleted()
+            ->andWhere(['id' => $pupilId])
+            ->one();
+
+        if (!$pupil) {
+            return false;
+        }
+
+        $this->pupil_id = $pupilId;
+        return $this->save(false, ['pupil_id']);
+    }
+
+    /**
+     * Получить связанные лиды по телефону родителя (другие дети)
+     * @return Lids[]
+     */
+    public function getRelatedLids(): array
+    {
+        $parentPhone = $this->parent_phone;
+        if (!$parentPhone) {
+            return [];
+        }
+
+        return self::find()
+            ->byOrganization()
+            ->notDeleted()
+            ->andWhere(['parent_phone' => $parentPhone])
+            ->andWhere(['!=', 'id', $this->id])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->limit(5)
+            ->all();
+    }
+
+    /**
+     * Количество связанных лидов
+     */
+    public function getRelatedLidsCount(): int
+    {
+        return count($this->getRelatedLids());
+    }
+
+    // ===================== ПРИЧИНЫ ОТКАЗА (NOT_TARGET) =====================
+
+    /**
+     * Список причин для статуса "Не целевой"
+     */
+    public static function getNotTargetReasonList(): array
+    {
+        return [
+            'spam' => 'Спам',
+            'colleague' => 'Коллега написал',
+            'wrong_number' => 'Ошибочный номер',
+            'existing_client' => 'Существующий клиент (перевести в "В обучении")',
+            'other' => 'Другое',
+        ];
     }
 }

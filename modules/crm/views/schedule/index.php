@@ -28,6 +28,7 @@ $config = [
         'settings' => OrganizationUrl::to(['schedule/settings']),
         'saveSettings' => OrganizationUrl::to(['schedule/save-settings']),
         'createTemplateFromSchedule' => OrganizationUrl::to(['schedule-template/create-from-schedule']),
+        'saveAttendance' => OrganizationUrl::to(['attendance/save-status']),
     ],
     'initialData' => $initialData ?? null,
 ];

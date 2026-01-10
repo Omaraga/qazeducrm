@@ -115,7 +115,7 @@ class AttendanceService
                     'pupil_id' => $pupil->id,
                     'teacher_id' => $lesson->teacher_id,
                     'organization_id' => $lesson->organization_id,
-                    'status' => LessonAttendance::STATUS_PRESENT,
+                    'status' => LessonAttendance::STATUS_VISIT,
                     'is_deleted' => 0,
                 ];
             }

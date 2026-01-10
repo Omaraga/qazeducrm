@@ -152,7 +152,12 @@
       "Bash(\"C:\\\\xampp8\\\\mysql\\\\bin\\\\mysql.exe\":*)",
       "Bash(npm run build:*)",
       "Bash(more:*)",
-      "Bash(C:xampp8mysqlbinmysql -u root qazeducrm -e \"DESCRIBE whatsapp_message; SHOW INDEX FROM whatsapp_message; SELECT COUNT\\(*\\) as total_rows FROM whatsapp_message;\")"
+      "Bash(C:xampp8mysqlbinmysql -u root qazeducrm -e \"DESCRIBE whatsapp_message; SHOW INDEX FROM whatsapp_message; SELECT COUNT\\(*\\) as total_rows FROM whatsapp_message;\")",
+      "Bash(powershell:*)",
+      "WebFetch(domain:stripe.com)",
+      "WebFetch(domain:docs.github.com)",
+      "WebFetch(domain:docs.stripe.com)",
+      "Bash(npx playwright test:*)"
     ]
   }
 }

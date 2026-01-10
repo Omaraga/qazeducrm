@@ -6,6 +6,8 @@ use yii\helpers\Html;
 /** @var yii\web\View $this */
 /** @var WhatsappSession|null $session */
 /** @var bool $apiAvailable */
+/** @var array|null $webhookDiagnostic */
+/** @var string|null $disconnectReason */
 
 $this->title = 'WhatsApp';
 $this->params['breadcrumbs'][] = ['label' => 'CRM', 'url' => ['/crm']];
@@ -91,6 +93,24 @@ $this->params['breadcrumbs'][] = $this->title;
             </div>
 
         <?php elseif ($session->status === WhatsappSession::STATUS_CONNECTING): ?>
+            <!-- Сообщение о причине отключения -->
+            <?php if (!empty($disconnectReason) && $disconnectReason === 'device_removed'): ?>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <div class="flex">
+                        <svg class="w-5 h-5 text-yellow-500 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div>
+                            <h3 class="text-sm font-medium text-yellow-800">Устройство было отключено</h3>
+                            <p class="text-sm text-yellow-700 mt-1">
+                                Вы вышли из WhatsApp на телефоне или удалили связанное устройство.
+                                Отсканируйте QR-код чтобы переподключиться. Ваши чаты сохранены.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <!-- Ожидание сканирования QR -->
             <div class="bg-white border rounded-lg p-8 text-center">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Отсканируйте QR-код</h3>
@@ -131,6 +151,45 @@ $this->params['breadcrumbs'][] = $this->title;
                 <p class="text-sm text-gray-400 mt-4">
                     Статус обновляется автоматически каждые 5 секунд
                 </p>
+            </div>
+
+        <?php elseif ($session->status === WhatsappSession::STATUS_DISCONNECTED): ?>
+            <!-- Отключён - нужно переподключение -->
+            <div class="bg-white border rounded-lg p-8 text-center">
+                <?php if (!empty($disconnectReason) && $disconnectReason === 'device_removed'): ?>
+                    <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">WhatsApp отключен</h3>
+                    <p class="text-gray-500 mb-2">Вы вышли из WhatsApp на телефоне или удалили связанное устройство.</p>
+                    <p class="text-sm text-green-600 mb-6">Ваши чаты и история сообщений сохранены.</p>
+                <?php else: ?>
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">WhatsApp отключен</h3>
+                    <p class="text-gray-500 mb-6">Соединение было потеряно. Переподключитесь чтобы продолжить работу.</p>
+                <?php endif; ?>
+
+                <button @click="reconnect()" :disabled="loading" class="btn btn-success btn-lg">
+                    <span x-show="!loading">
+                        <svg class="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Переподключить
+                    </span>
+                    <span x-show="loading" class="flex items-center justify-center">
+                        <svg class="animate-spin -ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Подключение...
+                    </span>
+                </button>
             </div>
 
         <?php else: ?>
@@ -236,6 +295,11 @@ function whatsappConnection() {
             } finally {
                 this.loading = false;
             }
+        },
+
+        async reconnect() {
+            // Переподключение - то же что и connect
+            await this.connect();
         },
 
         async disconnect() {

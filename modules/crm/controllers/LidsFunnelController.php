@@ -86,6 +86,7 @@ class LidsFunnelController extends CrmBaseController
             'my_leads_only' => $this->request->get('my_leads_only', ''),
             'contact_today' => $this->request->get('contact_today', ''),
             'stale_only' => $this->request->get('stale_only', ''),
+            'show_not_target' => $this->request->get('show_not_target', ''),
             'tags' => $this->request->get('tags', []),
         ];
 

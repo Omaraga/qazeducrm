@@ -178,7 +178,7 @@ $statuses = LessonAttendance::getStatusList();
         </div>
 
         <!-- Actions -->
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between pb-20">
             <a href="<?= OrganizationUrl::to(['schedule/view', 'id' => $lesson->id]) ?>" class="btn btn-secondary">Отмена</a>
             <button type="submit" class="btn btn-primary">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

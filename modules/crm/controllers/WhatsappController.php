@@ -81,21 +81,49 @@ class WhatsappController extends CrmBaseController
 
         // Проверяем доступность API
         $apiAvailable = $service->checkConnection();
+        $webhookDiagnostic = null;
+        $disconnectReason = null;
 
         // Если есть сессия - обновляем статус
         if ($session && $apiAvailable) {
-            $service->getConnectionState($session);
+            $state = $service->getConnectionState($session);
             $session->refresh();
 
-            // Если уже подключен - редирект на чаты
+            // Если уже подключен - запускаем автодиагностику webhook
             if ($session->isConnected()) {
+                $webhookDiagnostic = $service->diagnoseAndFixWebhook($session);
+
+                // Если были исправлены проблемы - показываем flash сообщение
+                if (!empty($webhookDiagnostic['fixed'])) {
+                    Yii::$app->session->setFlash('success', 'Проблемы с подключением автоматически исправлены');
+                }
+
                 return $this->redirect(['chats']);
+            }
+
+            // Проверяем причину отключения
+            if (($state['disconnectionReasonCode'] ?? null) == 401) {
+                $disconnectReason = 'device_removed';
+            }
+
+            // Если сессия отключена и требует переподключения (device_removed)
+            // автоматически инициируем переподключение
+            if (($state['needsReconnect'] ?? false) || $session->status === WhatsappSession::STATUS_DISCONNECTED) {
+                // Пробуем получить новый QR код
+                $qrCode = $service->getQrCode($session);
+                if ($qrCode) {
+                    $session->status = WhatsappSession::STATUS_CONNECTING;
+                    $session->save(false);
+                    $session->refresh();
+                }
             }
         }
 
         return $this->render('index', [
             'session' => $session,
             'apiAvailable' => $apiAvailable,
+            'webhookDiagnostic' => $webhookDiagnostic,
+            'disconnectReason' => $disconnectReason,
         ]);
     }
 
@@ -208,6 +236,13 @@ class WhatsappController extends CrmBaseController
         $state = $service->getConnectionState($session);
         $session->refresh();
 
+        // Проверяем здоровье webhook если подключен
+        $webhookHealthy = null;
+        if ($session->isConnected()) {
+            $diagnostic = $service->diagnoseAndFixWebhook($session);
+            $webhookHealthy = $diagnostic['healthy'] ?? true;
+        }
+
         return [
             'success' => true,
             'connected' => $session->isConnected(),
@@ -215,6 +250,9 @@ class WhatsappController extends CrmBaseController
             'phone_number' => $session->phone_number,
             'qr_code' => $session->status === WhatsappSession::STATUS_CONNECTING ? $session->qr_code : null,
             'unread_count' => $session->getUnreadCount(),
+            'last_message_at' => $session->getLastMessageTime(),
+            'webhook_healthy' => $webhookHealthy,
+            'disconnect_reason' => ($state['disconnectionReasonCode'] ?? null) == 401 ? 'device_removed' : null,
         ];
     }
 
@@ -856,7 +894,7 @@ class WhatsappController extends CrmBaseController
      */
     public function actionReconfigureWebhook()
     {
-        $session = $this->getOrganizationSession();
+        $session = WhatsappSession::getCurrentSession();
 
         if (!$session) {
             Yii::$app->session->setFlash('error', 'Сессия WhatsApp не найдена');

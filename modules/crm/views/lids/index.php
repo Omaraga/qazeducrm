@@ -15,12 +15,14 @@ use yii\helpers\Url;
 /** @var app\models\search\LidsSearch $searchModel */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 /** @var array $funnelStats */
+/** @var array $managers */
 
 $this->title = 'Лиды';
 $this->params['breadcrumbs'][] = $this->title;
 
 $getLidUrl = OrganizationUrl::to(['lids/get-lid']);
 $updateUrl = OrganizationUrl::to(['lids/update-ajax']);
+$indexUrl = Url::to(['index']);
 ?>
 
 <!-- Alpine Store для лидов -->
@@ -65,7 +67,33 @@ document.addEventListener('alpine:init', () => {
 });
 </script>
 
-<div class="space-y-6" x-data x-cloak>
+<div class="space-y-6" x-data="{
+    showHelp: false,
+    search: '<?= Html::encode($searchModel->fio) ?>',
+    source: '<?= Html::encode($searchModel->source) ?>',
+    manager_id: '<?= Html::encode($searchModel->manager_id) ?>',
+    debounceTimer: null,
+
+    applyFilters() {
+        const params = new URLSearchParams();
+        if (this.search) params.set('LidsSearch[fio]', this.search);
+        if (this.source) params.set('LidsSearch[source]', this.source);
+        if (this.manager_id) params.set('LidsSearch[manager_id]', this.manager_id);
+        <?php if ($searchModel->status): ?>
+        params.set('LidsSearch[status]', '<?= $searchModel->status ?>');
+        <?php endif; ?>
+        window.location.href = '<?= $indexUrl ?>' + (params.toString() ? '?' + params.toString() : '');
+    },
+
+    debounceSearch() {
+        clearTimeout(this.debounceTimer);
+        this.debounceTimer = setTimeout(() => this.applyFilters(), 500);
+    },
+
+    clearFilters() {
+        window.location.href = '<?= $indexUrl ?>';
+    }
+}" x-cloak>
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -73,6 +101,14 @@ document.addEventListener('alpine:init', () => {
             <p class="text-gray-500 mt-1">Воронка продаж и управление лидами</p>
         </div>
         <div class="flex items-center gap-3">
+            <!-- Help Button -->
+            <button type="button"
+                    @click="showHelp = !showHelp"
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
+                    :class="showHelp && 'bg-blue-50 text-blue-600 border-blue-200'"
+                    title="Подсказки">
+                <?= Icon::show('question-mark-circle', 'sm') ?>
+            </button>
             <!-- View Switcher -->
             <div class="inline-flex items-center rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
                 <a href="<?= OrganizationUrl::to(['lids-funnel/kanban']) ?>"
@@ -96,6 +132,51 @@ document.addEventListener('alpine:init', () => {
                 <?= Icon::show('plus', 'sm') ?>
                 Добавить лид
             </button>
+        </div>
+    </div>
+
+    <!-- Help Tips (Collapsible) -->
+    <div x-show="showHelp" x-collapse x-cloak>
+        <div class="card bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <div class="card-body">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                        <?= Icon::show('light-bulb', 'md', 'text-blue-600') ?>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-sm font-semibold text-blue-900 mb-2">Краткая инструкция по работе с лидами</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-blue-800">
+                            <div>
+                                <p class="font-medium mb-1"><?= Icon::show('funnel', 'sm', 'inline') ?> Воронка продаж</p>
+                                <ul class="space-y-1 text-blue-700">
+                                    <li>Новый &rarr; Связались &rarr; Пробное</li>
+                                    <li>Думает &rarr; Записан &rarr; Оплатил</li>
+                                    <li>Нажмите на статус для фильтрации</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <p class="font-medium mb-1"><?= Icon::show('cursor-arrow-rays', 'sm', 'inline') ?> Быстрые действия</p>
+                                <ul class="space-y-1 text-blue-700">
+                                    <li>Клик по строке &mdash; карточка лида</li>
+                                    <li>Звонок/WhatsApp &mdash; иконки справа</li>
+                                    <li>Kanban-доска &mdash; переключатель вверху</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <p class="font-medium mb-1"><?= Icon::show('bell-alert', 'sm', 'inline') ?> Индикаторы</p>
+                                <ul class="space-y-1 text-blue-700">
+                                    <li><span class="text-danger-600">Красная строка</span> &mdash; просрочен контакт</li>
+                                    <li><span class="text-warning-600">Желтая строка</span> &mdash; контакт сегодня</li>
+                                    <li>Фильтры применяются автоматически</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" @click="showHelp = false" class="text-blue-400 hover:text-blue-600">
+                        <?= Icon::show('x', 'sm') ?>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -132,6 +213,49 @@ document.addEventListener('alpine:init', () => {
                         <?= Icon::show('x', 'sm') ?>
                         Сбросить
                     </a>
+                <?php endif; ?>
+            </div>
+
+            <!-- Filters Row -->
+            <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-100">
+                <!-- Search -->
+                <div class="relative flex-1 min-w-[200px] max-w-xs">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <?= Icon::show('magnifying-glass', 'sm', 'text-gray-400') ?>
+                    </div>
+                    <input type="text"
+                           x-model="search"
+                           @input="debounceSearch()"
+                           @keydown.enter.prevent="applyFilters()"
+                           class="form-input pl-10 py-2 text-sm"
+                           placeholder="ФИО или телефон...">
+                </div>
+
+                <!-- Source Filter -->
+                <select x-model="source" @change="applyFilters()" class="form-select py-2 text-sm min-w-[140px]">
+                    <option value="">Все источники</option>
+                    <?php foreach (Lids::getSourceList() as $value => $label): ?>
+                        <option value="<?= Html::encode($value) ?>"><?= Html::encode($label) ?></option>
+                    <?php endforeach; ?>
+                </select>
+
+                <!-- Manager Filter -->
+                <select x-model="manager_id" @change="applyFilters()" class="form-select py-2 text-sm min-w-[160px]">
+                    <option value="">Все менеджеры</option>
+                    <?php foreach ($managers as $id => $name): ?>
+                        <option value="<?= Html::encode($id) ?>"><?= Html::encode($name) ?></option>
+                    <?php endforeach; ?>
+                </select>
+
+                <!-- Clear Filters -->
+                <?php $hasFilters = $searchModel->fio || $searchModel->source || $searchModel->manager_id || $searchModel->status; ?>
+                <?php if ($hasFilters): ?>
+                <button type="button"
+                        @click="clearFilters()"
+                        class="inline-flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                    <?= Icon::show('x-circle', 'sm') ?>
+                    Сбросить всё
+                </button>
                 <?php endif; ?>
             </div>
         </div>

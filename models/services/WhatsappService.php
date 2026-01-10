@@ -146,13 +146,45 @@ class WhatsappService extends Component
             ->one();
 
         if ($existing) {
-            // Если сессия уже есть - пробуем получить новый QR
+            // Проверяем реальное состояние инстанса в API
+            $instanceState = $this->fetchInstanceState($existing->instance_name);
+
+            // Если инстанс отключен (device_removed, logout и т.д.) - нужно переподключить
+            if ($instanceState && $instanceState['connectionStatus'] === 'close') {
+                Yii::info("Instance {$existing->instance_name} is closed, reconnecting...", 'whatsapp');
+
+                // Проверяем причину отключения
+                $disconnectCode = $instanceState['disconnectionReasonCode'] ?? null;
+
+                // 401 = device_removed (пользователь вышел из WhatsApp на телефоне)
+                // В этом случае нужно перезапустить инстанс
+                if ($disconnectCode == 401) {
+                    Yii::info("Device was removed, restarting instance...", 'whatsapp');
+                    $this->restartInstance($existing);
+                }
+            }
+
+            // Пробуем получить новый QR через connect endpoint
             $qrCode = $this->getQrCodeFromApi($existing->instance_name);
             if ($qrCode) {
                 $existing->qr_code = $qrCode;
                 $existing->qr_code_updated_at = date('Y-m-d H:i:s');
                 $existing->status = WhatsappSession::STATUS_CONNECTING;
                 $existing->save(false);
+            } else {
+                // Если QR не получен - возможно инстанс нужно перезапустить
+                Yii::warning("Could not get QR code, trying to restart instance...", 'whatsapp');
+                $this->restartInstance($existing);
+
+                // Повторная попытка получить QR
+                sleep(1); // Небольшая задержка для перезапуска
+                $qrCode = $this->getQrCodeFromApi($existing->instance_name);
+                if ($qrCode) {
+                    $existing->qr_code = $qrCode;
+                    $existing->qr_code_updated_at = date('Y-m-d H:i:s');
+                    $existing->status = WhatsappSession::STATUS_CONNECTING;
+                    $existing->save(false);
+                }
             }
             return $existing;
         }
@@ -190,6 +222,12 @@ class WhatsappService extends Component
         }
 
         if ($session->save()) {
+            // Мигрируем чаты с предыдущих (удалённых) сессий этой организации
+            $migratedChats = $this->migrateChatsToSession($organizationId, $session->id);
+            if ($migratedChats > 0) {
+                Yii::info("Auto-migrated {$migratedChats} chats to new session {$session->id}", 'whatsapp');
+            }
+
             // Настраиваем webhook для получения сообщений
             $this->setupWebhook($instanceName);
 
@@ -251,6 +289,98 @@ class WhatsappService extends Component
     }
 
     /**
+     * Получить текущие настройки webhook из Evolution API
+     * @param string $instanceName
+     * @return array|null
+     */
+    public function getWebhookSettings(string $instanceName): ?array
+    {
+        return $this->request('GET', "/webhook/find/{$instanceName}");
+    }
+
+    /**
+     * Диагностировать и автоматически исправить проблемы с webhook
+     * @param WhatsappSession $session
+     * @return array Результат диагностики: ['healthy' => bool, 'problems' => [], 'fixed' => []]
+     */
+    public function diagnoseAndFixWebhook(WhatsappSession $session): array
+    {
+        $problems = [];
+        $fixed = [];
+
+        // 1. Получить текущие настройки webhook из Evolution API
+        $webhookSettings = $this->getWebhookSettings($session->instance_name);
+
+        // Ожидаемый URL
+        $expectedUrl = Yii::$app->params['whatsapp']['webhookUrl'] ?? 'http://host.docker.internal/webhook/whatsapp';
+
+        // 2. Проверить что webhook существует и URL правильный
+        if (!$webhookSettings || ($webhookSettings['url'] ?? '') !== $expectedUrl) {
+            $problems[] = 'webhook_url_wrong';
+            Yii::info("Webhook URL mismatch, fixing...", 'whatsapp');
+
+            // Исправить автоматически
+            if ($this->setupWebhook($session->instance_name)) {
+                $fixed[] = 'webhook_url';
+            }
+        }
+
+        // 3. Проверить что webhook включен
+        if ($webhookSettings && !($webhookSettings['enabled'] ?? false)) {
+            $problems[] = 'webhook_disabled';
+            Yii::info("Webhook disabled, enabling...", 'whatsapp');
+
+            if ($this->setupWebhook($session->instance_name)) {
+                $fixed[] = 'webhook_enabled';
+            }
+        }
+
+        return [
+            'healthy' => empty($problems) || count($fixed) === count($problems),
+            'problems' => $problems,
+            'fixed' => $fixed,
+        ];
+    }
+
+    /**
+     * Мигрировать чаты и сообщения на новую сессию
+     * Используется при переподключении чтобы не потерять историю
+     * @param int $organizationId
+     * @param int $newSessionId
+     * @return int Количество мигрированных чатов
+     */
+    public function migrateChatsToSession(int $organizationId, int $newSessionId): int
+    {
+        // Найти все чаты организации (кроме тех что уже на этой сессии)
+        $chatCount = WhatsappChat::updateAll(
+            ['session_id' => $newSessionId],
+            [
+                'and',
+                ['organization_id' => $organizationId],
+                ['is_deleted' => 0],
+                ['!=', 'session_id', $newSessionId],
+            ]
+        );
+
+        // То же для сообщений
+        $messageCount = WhatsappMessage::updateAll(
+            ['session_id' => $newSessionId],
+            [
+                'and',
+                ['organization_id' => $organizationId],
+                ['is_deleted' => 0],
+                ['!=', 'session_id', $newSessionId],
+            ]
+        );
+
+        if ($chatCount > 0 || $messageCount > 0) {
+            Yii::info("Migrated {$chatCount} chats and {$messageCount} messages to session {$newSessionId}", 'whatsapp');
+        }
+
+        return $chatCount;
+    }
+
+    /**
      * Получить QR-код из API
      * @param string $instanceName
      * @return string|null Base64 QR код
@@ -277,6 +407,21 @@ class WhatsappService extends Component
      */
     public function getQrCode(WhatsappSession $session): ?string
     {
+        // Сначала проверим состояние инстанса
+        $instanceState = $this->fetchInstanceState($session->instance_name);
+
+        // Если инстанс отключен с кодом 401 (device_removed) - перезапускаем
+        if ($instanceState) {
+            $connectionStatus = $instanceState['connectionStatus'] ?? 'close';
+            $disconnectCode = $instanceState['disconnectionReasonCode'] ?? null;
+
+            if ($connectionStatus === 'close' && $disconnectCode == 401) {
+                Yii::info("Instance needs restart due to device_removed, restarting...", 'whatsapp');
+                $this->restartInstance($session);
+                sleep(1); // Даём время на перезапуск
+            }
+        }
+
         $qrCode = $this->getQrCodeFromApi($session->instance_name);
 
         if ($qrCode) {
@@ -287,7 +432,37 @@ class WhatsappService extends Component
             return $qrCode;
         }
 
+        // Если QR не получен - пробуем перезапустить и получить снова
+        if (!$qrCode && $instanceState && ($instanceState['connectionStatus'] ?? '') === 'close') {
+            Yii::warning("Could not get QR, trying restart...", 'whatsapp');
+            $this->restartInstance($session);
+            sleep(1);
+            $qrCode = $this->getQrCodeFromApi($session->instance_name);
+            if ($qrCode) {
+                $session->qr_code = $qrCode;
+                $session->qr_code_updated_at = date('Y-m-d H:i:s');
+                $session->save(false);
+                return $qrCode;
+            }
+        }
+
         return $session->qr_code;
+    }
+
+    /**
+     * Получить состояние инстанса из API (без обновления БД)
+     * @param string $instanceName
+     * @return array|null Данные инстанса или null
+     */
+    public function fetchInstanceState(string $instanceName): ?array
+    {
+        $result = $this->request('GET', '/instance/fetchInstances?instanceName=' . $instanceName);
+
+        if (!is_array($result) || empty($result)) {
+            return null;
+        }
+
+        return $result[0] ?? null;
     }
 
     /**
@@ -297,16 +472,7 @@ class WhatsappService extends Component
      */
     public function getConnectionState(WhatsappSession $session): array
     {
-        $result = $this->request('GET', '/instance/fetchInstances?instanceName=' . $session->instance_name);
-
-        if (!is_array($result) || empty($result)) {
-            return [
-                'status' => $session->status,
-                'state' => 'unknown',
-            ];
-        }
-
-        $instanceData = $result[0] ?? null;
+        $instanceData = $this->fetchInstanceState($session->instance_name);
 
         if (!$instanceData) {
             return [
@@ -324,6 +490,16 @@ class WhatsappService extends Component
         ];
 
         $newStatus = $statusMap[$connectionStatus] ?? WhatsappSession::STATUS_DISCONNECTED;
+
+        // Проверяем причину отключения
+        $disconnectCode = $instanceData['disconnectionReasonCode'] ?? null;
+        $needsReconnect = false;
+
+        // 401 = device_removed (пользователь вышел из WhatsApp на телефоне)
+        if ($connectionStatus === 'close' && $disconnectCode == 401) {
+            Yii::info("Device was removed for instance {$session->instance_name}", 'whatsapp');
+            $needsReconnect = true;
+        }
 
         if ($session->status !== $newStatus) {
             $additionalData = [];
@@ -346,6 +522,8 @@ class WhatsappService extends Component
             'state' => $connectionStatus,
             'ownerJid' => $instanceData['ownerJid'] ?? null,
             'profileName' => $instanceData['profileName'] ?? null,
+            'needsReconnect' => $needsReconnect,
+            'disconnectionReasonCode' => $disconnectCode,
         ];
     }
 

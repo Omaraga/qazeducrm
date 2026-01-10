@@ -218,10 +218,14 @@ class UserController extends Controller
      */
     protected function findModel($id)
     {
+        $organizationId = \app\models\Organizations::getCurrentOrganizationId();
+
+        // User не имеет organization_id, связь через user_organization
         $model = User::find()
-            ->byOrganization()
-            ->andWhere(['id' => $id])
-            ->notDeleted()
+            ->innerJoin('user_organization', 'user_organization.related_id = user.id')
+            ->andWhere(['user_organization.target_id' => $organizationId])
+            ->andWhere(['user.id' => $id])
+            ->andWhere(['!=', 'user.status', User::STATUS_DELETED])
             ->one();
 
         if ($model === null) {

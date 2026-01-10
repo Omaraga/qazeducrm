@@ -84,6 +84,9 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                // Webhook endpoints (без авторизации)
+                'webhook/whatsapp' => 'webhook/whatsapp',
+
                 // Публичные страницы
                 '' => 'landing/index',
                 'pricing' => 'landing/pricing',
@@ -92,6 +95,12 @@ $config = [
                 'login' => 'site/login',
                 'logout' => 'site/logout',
                 'register' => 'registration/index',
+
+                // Публичная документация
+                'docs' => 'docs/index',
+                'docs/search' => 'docs/search',
+                'docs/<slug:[\w-]+>' => 'docs/chapter',
+                'docs/<chapter:[\w-]+>/<slug:[\w-]+>' => 'docs/section',
 
                 // Legacy routes с organization id (должны быть первыми для правильной генерации URL с oid)
                 '<oid:\d+>/<controller:[\w-]+>/<action:[\w-]+>/<id:\d+>' => 'crm/<controller>/<action>',

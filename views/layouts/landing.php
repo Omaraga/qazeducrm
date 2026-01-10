@@ -83,6 +83,7 @@ $canonicalUrl = Yii::$app->request->absoluteUrl;
                 <a href="<?= Url::to(['/']) ?>" class="text-gray-600 hover:text-orange-500 font-medium text-sm transition-colors <?= $currentAction === 'index' ? 'text-orange-500' : '' ?>">Главная</a>
                 <a href="<?= Url::to(['/features']) ?>" class="text-gray-600 hover:text-orange-500 font-medium text-sm transition-colors <?= $currentAction === 'features' ? 'text-orange-500' : '' ?>">Возможности</a>
                 <a href="<?= Url::to(['/pricing']) ?>" class="text-gray-600 hover:text-orange-500 font-medium text-sm transition-colors <?= $currentAction === 'pricing' ? 'text-orange-500' : '' ?>">Тарифы</a>
+                <a href="<?= Url::to(['/docs']) ?>" class="text-gray-600 hover:text-orange-500 font-medium text-sm transition-colors">Документация</a>
                 <a href="<?= Url::to(['/contact']) ?>" class="text-gray-600 hover:text-orange-500 font-medium text-sm transition-colors <?= $currentAction === 'contact' ? 'text-orange-500' : '' ?>">Контакты</a>
             </div>
 
@@ -134,6 +135,7 @@ $canonicalUrl = Yii::$app->request->absoluteUrl;
         <a href="<?= Url::to(['/']) ?>" class="block py-3 text-gray-700 hover:text-orange-500 font-medium <?= $currentAction === 'index' ? 'text-orange-500' : '' ?>">Главная</a>
         <a href="<?= Url::to(['/features']) ?>" class="block py-3 text-gray-700 hover:text-orange-500 font-medium <?= $currentAction === 'features' ? 'text-orange-500' : '' ?>">Возможности</a>
         <a href="<?= Url::to(['/pricing']) ?>" class="block py-3 text-gray-700 hover:text-orange-500 font-medium <?= $currentAction === 'pricing' ? 'text-orange-500' : '' ?>">Тарифы</a>
+        <a href="<?= Url::to(['/docs']) ?>" class="block py-3 text-gray-700 hover:text-orange-500 font-medium">Документация</a>
         <a href="<?= Url::to(['/contact']) ?>" class="block py-3 text-gray-700 hover:text-orange-500 font-medium <?= $currentAction === 'contact' ? 'text-orange-500' : '' ?>">Контакты</a>
         <?php if ($isGuest): ?>
         <div class="flex gap-3 mt-4 pt-4 border-t border-gray-200">
@@ -189,6 +191,7 @@ $canonicalUrl = Yii::$app->request->absoluteUrl;
                 <ul class="space-y-2 text-sm">
                     <li><a href="<?= Url::to(['/features']) ?>" class="hover:text-orange-500 transition-colors">Возможности</a></li>
                     <li><a href="<?= Url::to(['/pricing']) ?>" class="hover:text-orange-500 transition-colors">Тарифы</a></li>
+                    <li><a href="<?= Url::to(['/docs']) ?>" class="hover:text-orange-500 transition-colors">Документация</a></li>
                 </ul>
             </div>
 

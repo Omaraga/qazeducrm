@@ -174,13 +174,13 @@ $canResetPassword = RoleChecker::canResetPasswords() && $model->id !== Yii::$app
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Создан</dt>
                                 <dd class="mt-1 text-sm text-gray-900">
-                                    <?= $model->created_at ? date('d.m.Y H:i', $model->created_at) : '—' ?>
+                                    <?= $model->created_at ? date('d.m.Y H:i', strtotime($model->created_at)) : '—' ?>
                                 </dd>
                             </div>
                             <div>
                                 <dt class="text-sm font-medium text-gray-500">Обновлен</dt>
                                 <dd class="mt-1 text-sm text-gray-900">
-                                    <?= $model->updated_at ? date('d.m.Y H:i', $model->updated_at) : '—' ?>
+                                    <?= $model->updated_at ? date('d.m.Y H:i', strtotime($model->updated_at)) : '—' ?>
                                 </dd>
                             </div>
                         </dl>
