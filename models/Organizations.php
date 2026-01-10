@@ -198,6 +198,20 @@ class Organizations extends ActiveRecord
             $id = null;
             if (!Yii::$app->request->isConsoleRequest) {
                 $id = Yii::$app->request->getHeaders()->get('X-SERVER-ID') ?: Yii::$app->request->get('oid');
+
+                // Security: проверяем что пользователь принадлежит к запрашиваемой организации
+                if ($id && !Yii::$app->user->isGuest && !Yii::$app->user->can("SUPER")) {
+                    $isMember = UserOrganization::find()
+                        ->where(['target_id' => $id, 'related_id' => Yii::$app->user->id])
+                        ->andWhere(['!=', 'is_deleted', 1])
+                        ->exists();
+
+                    if (!$isMember) {
+                        // Пользователь не состоит в этой организации - используем его активную организацию
+                        $id = Yii::$app->user->identity->active_organization_id;
+                    }
+                }
+
                 if (!$id and Yii::$app->user->id and !Yii::$app->user->can("SUPER") and Yii::$app->user->identity->active_organization_id) {
                     $id = Yii::$app->user->identity->active_organization_id;
                 }

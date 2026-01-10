@@ -329,10 +329,17 @@ class PupilController extends CrmBaseController
      */
     protected function findModel($id)
     {
-        if (($model = Pupil::findOne(['id' => $id])) !== null) {
+        // Security: проверка organization_id и is_deleted
+        $model = Pupil::find()
+            ->where(['id' => $id])
+            ->byOrganization()
+            ->notDeleted()
+            ->one();
+
+        if ($model !== null) {
             return $model;
         }
 
-        throw new NotFoundHttpException('The requested page does not exist.');
+        throw new NotFoundHttpException(\Yii::t('main', 'Ученик не найден.'));
     }
 }

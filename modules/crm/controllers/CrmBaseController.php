@@ -5,10 +5,13 @@ namespace app\modules\crm\controllers;
 use app\helpers\OrganizationRoles;
 use app\helpers\OrganizationUrl;
 use app\helpers\SystemRoles;
+use app\models\Organizations;
+use app\models\relations\UserOrganization;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
+use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 
 /**
@@ -35,6 +38,31 @@ abstract class CrmBaseController extends Controller
      * Дополнительные действия требующие POST запрос
      */
     protected array $postActions = ['delete'];
+
+    /**
+     * @inheritDoc
+     */
+    public function beforeAction($action): bool
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+
+        // Security: проверяем что пользователь принадлежит к запрашиваемой организации
+        $requestedOid = Yii::$app->request->get('oid');
+        if ($requestedOid && !Yii::$app->user->isGuest && !Yii::$app->user->can(SystemRoles::SUPER)) {
+            $isMember = UserOrganization::find()
+                ->where(['target_id' => $requestedOid, 'related_id' => Yii::$app->user->id])
+                ->andWhere(['!=', 'is_deleted', 1])
+                ->exists();
+
+            if (!$isMember) {
+                throw new ForbiddenHttpException(Yii::t('main', 'У вас нет доступа к этой организации.'));
+            }
+        }
+
+        return true;
+    }
 
     /**
      * @inheritDoc
