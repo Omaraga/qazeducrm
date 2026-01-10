@@ -315,9 +315,41 @@ class TeacherSalary extends ActiveRecord
                         $lessonAmount = $rate->rate_value;
                         break;
                     case TeacherRate::RATE_PERCENT:
-                        // Для процентной ставки нужно знать сумму оплаты учеников
-                        // Пока используем упрощённый расчёт
-                        $lessonAmount = $paidAttendances * $rate->rate_value;
+                        // Процент от стоимости занятия для каждого ученика
+                        // Получаем стоимость одного занятия из тарифа ученика
+                        $lessonAmount = 0;
+                        $attendances = LessonAttendance::find()
+                            ->andWhere([
+                                'lesson_id' => $lesson->id,
+                                'teacher_id' => $teacherId,
+                            ])
+                            ->andWhere(['in', 'status', [
+                                LessonAttendance::STATUS_VISIT,
+                                LessonAttendance::STATUS_MISS_WITH_PAY
+                            ]])
+                            ->notDeleted()
+                            ->all();
+
+                        foreach ($attendances as $attendance) {
+                            // Находим активное обучение ученика в этой группе
+                            $education = PupilEducation::find()
+                                ->innerJoin('education_group eg', 'eg.education_id = pupil_education.id')
+                                ->andWhere(['eg.group_id' => $lesson->group_id])
+                                ->andWhere(['eg.pupil_id' => $attendance->pupil_id])
+                                ->andWhere(['eg.is_deleted' => 0])
+                                ->andWhere(['pupil_education.is_deleted' => 0])
+                                ->one();
+
+                            if ($education && $education->tariff) {
+                                $tariff = $education->tariff;
+                                // Стоимость одного занятия = total_price / lesson_amount
+                                $lessonPrice = $tariff->lesson_amount > 0
+                                    ? $education->total_price / $tariff->lesson_amount
+                                    : 0;
+                                // Процент от стоимости занятия
+                                $lessonAmount += $lessonPrice * $rate->rate_value / 100;
+                            }
+                        }
                         break;
                 }
             }
@@ -437,7 +469,37 @@ class TeacherSalary extends ActiveRecord
                         $lessonAmount = $rate->rate_value;
                         break;
                     case TeacherRate::RATE_PERCENT:
-                        $lessonAmount = $paidAttendances * $rate->rate_value;
+                        // Процент от стоимости занятия для каждого ученика
+                        $lessonAmount = 0;
+                        $attendances = LessonAttendance::find()
+                            ->andWhere([
+                                'lesson_id' => $lesson->id,
+                                'teacher_id' => $this->teacher_id,
+                            ])
+                            ->andWhere(['in', 'status', [
+                                LessonAttendance::STATUS_VISIT,
+                                LessonAttendance::STATUS_MISS_WITH_PAY
+                            ]])
+                            ->notDeleted()
+                            ->all();
+
+                        foreach ($attendances as $attendance) {
+                            $education = PupilEducation::find()
+                                ->innerJoin('education_group eg', 'eg.education_id = pupil_education.id')
+                                ->andWhere(['eg.group_id' => $lesson->group_id])
+                                ->andWhere(['eg.pupil_id' => $attendance->pupil_id])
+                                ->andWhere(['eg.is_deleted' => 0])
+                                ->andWhere(['pupil_education.is_deleted' => 0])
+                                ->one();
+
+                            if ($education && $education->tariff) {
+                                $tariff = $education->tariff;
+                                $lessonPrice = $tariff->lesson_amount > 0
+                                    ? $education->total_price / $tariff->lesson_amount
+                                    : 0;
+                                $lessonAmount += $lessonPrice * $rate->rate_value / 100;
+                            }
+                        }
                         break;
                 }
             }

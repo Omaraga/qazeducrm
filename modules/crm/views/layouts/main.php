@@ -115,7 +115,8 @@ $menuConfig = [
             ['label' => 'Тарифы', 'icon' => 'tag', 'url' => ['/crm/tariff/index'], 'controller' => 'tariff', 'visible' => $isDirector],
             ['label' => 'Кабинеты', 'icon' => 'building-office', 'url' => ['/crm/room/index'], 'controller' => 'room'],
             ['label' => 'Способы оплаты', 'icon' => 'card', 'url' => ['/crm/pay-method/index'], 'controller' => 'pay-method', 'visible' => $isDirector],
-            ['label' => 'Права доступа', 'icon' => 'shield-check', 'url' => ['/crm/settings/access'], 'controller' => 'settings', 'visible' => $isDirector],
+            ['label' => 'Настройки', 'icon' => 'settings', 'url' => ['/crm/settings/organization'], 'visible' => $isDirector],
+            ['label' => 'Права доступа', 'icon' => 'shield-check', 'url' => ['/crm/settings/access'], 'visible' => $isDirector],
             ['label' => 'Подписка', 'icon' => 'credit-card', 'url' => ['/crm/subscription/index'], 'controller' => 'subscription'],
         ]
     ],

@@ -157,7 +157,9 @@
       "WebFetch(domain:stripe.com)",
       "WebFetch(domain:docs.github.com)",
       "WebFetch(domain:docs.stripe.com)",
-      "Bash(npx playwright test:*)"
+      "Bash(npx playwright test:*)",
+      "Bash(npx playwright:*)",
+      "Bash(copy:*)"
     ]
   }
 }

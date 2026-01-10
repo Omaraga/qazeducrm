@@ -24,19 +24,19 @@ $currentChapter = $this->params['currentChapter'] ?? null;
 $currentSection = $this->params['currentSection'] ?? null;
 $headings = $this->params['headings'] ?? [];
 
-// Иконки для глав
+// Иконки для глав (FontAwesome Free)
 $chapterIcons = [
     'rocket' => 'fa-rocket',
     'users' => 'fa-users',
-    'user-group' => 'fa-user-group',
+    'user-group' => 'fa-users',           // fa-user-group не существует в FA Free
     'user-tie' => 'fa-user-tie',
-    'calendar' => 'fa-calendar-days',
+    'calendar' => 'fa-calendar',          // fa-calendar-days может не работать
     'clipboard-check' => 'fa-clipboard-check',
     'credit-card' => 'fa-credit-card',
     'money-bill' => 'fa-money-bill-wave',
     'funnel' => 'fa-filter',
     'comments' => 'fa-comments',
-    'cog' => 'fa-gear',
+    'cog' => 'fa-cog',                    // fa-gear может не работать, fa-cog стандартная
     'book' => 'fa-book',
 ];
 ?>

@@ -65,6 +65,15 @@ if (!empty($searchModel->status)) $activeFilters++;
                         <span><strong>Утверждена</strong> — готова к выплате</span>
                         <span><strong>Выплачена</strong> — зарплата выдана</span>
                     </div>
+                    <div class="mt-3 pt-3 border-t border-blue-200">
+                        <a href="<?= \yii\helpers\Url::to(['/docs/section', 'chapter' => 'salary', 'slug' => 'setup-rates']) ?>"
+                           target="_blank"
+                           class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium">
+                            <?= Icon::show('book-open', 'sm') ?>
+                            Подробная документация по расчёту зарплаты
+                            <?= Icon::show('external-link', 'xs') ?>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

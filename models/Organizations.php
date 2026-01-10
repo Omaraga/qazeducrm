@@ -77,8 +77,29 @@ class Organizations extends ActiveRecord
     public function attributesToInfo()
     {
         return [
+            // Расписание
             'schedule_grid_interval', // Интервал сетки расписания: 10, 15, 30, 60 минут
             'schedule_view_mode',     // Режим отображения расписания: day, week, month
+
+            // Социальные сети
+            'instagram',              // Ссылка или username
+            'whatsapp',               // Номер телефона или ссылка wa.me
+            'telegram',               // Ссылка на канал или username
+
+            // Региональные настройки
+            'currency',               // Валюта: KZT, RUB, USD
+            'date_format',            // Формат даты: d.m.Y, Y-m-d, m/d/Y
+
+            // Рабочее время
+            'work_hours_start',       // Начало рабочего дня: 09:00
+            'work_hours_end',         // Конец рабочего дня: 18:00
+            'working_days',           // Рабочие дни: [1,2,3,4,5]
+            'first_day_of_week',      // Первый день недели: 1 (пн) или 7 (вс)
+
+            // Настройки занятий
+            'default_lesson_duration',      // Продолжительность занятия: 30, 45, 60, 90, 120
+            'auto_deduct_enabled',          // Автоматическое списание за занятия
+            'lesson_notifications_enabled', // Уведомления о занятиях
         ];
     }
 
