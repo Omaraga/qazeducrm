@@ -77,7 +77,7 @@ class TelegramVerificationService
 
         // Отправляем в Telegram
         $org = Organizations::findOne($orgId);
-        $orgName = $org ? $org->name : 'QazEduCRM';
+        $orgName = $org ? $org->name : 'Education CRM';
 
         $message = Yii::t('app', "Код для входа в {org_name}:\n\n*{code}*\n\nКод действителен 5 минут.", [
             'org_name' => $orgName,
@@ -179,14 +179,14 @@ class TelegramVerificationService
             } else {
                 $this->bot->sendMessage(
                     $chatId,
-                    Yii::t('app', "Добро пожаловать в QazEduCRM!\n\nДля получения кодов входа нажмите кнопку ниже:"),
+                    Yii::t('app', "Добро пожаловать в Education CRM!\n\nДля получения кодов входа нажмите кнопку ниже:"),
                     $this->bot->getContactKeyboard()
                 );
             }
         } elseif ($text === '/help') {
             $this->bot->sendMessage(
                 $chatId,
-                Yii::t('app', "Этот бот отправляет коды для входа в личный кабинет QazEduCRM.\n\n" .
+                Yii::t('app', "Этот бот отправляет коды для входа в личный кабинет Education CRM.\n\n" .
                     "Команды:\n" .
                     "/start - Начать работу\n" .
                     "/help - Помощь")

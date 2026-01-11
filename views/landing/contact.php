@@ -88,7 +88,7 @@ $social = SettingsHelper::getSocialLinks();
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Телефон *</label>
-                            <input type="tel" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors" placeholder="+7 777 123 4567" required>
+                            <input type="tel" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors" placeholder="+7 (777) 123-45-67" x-mask-phone required>
                         </div>
                     </div>
 

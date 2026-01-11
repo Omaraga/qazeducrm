@@ -5,7 +5,7 @@ $db = require __DIR__ . '/db.php';
 
 $config = [
     'id' => 'basic',
-    'name' => 'Qazaq Education CRM',
+    'name' => 'Education CRM',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log', 'urlManager'],
     'language' => 'ru-RU',

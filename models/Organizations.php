@@ -5,6 +5,7 @@ namespace app\models;
 use app\traits\AttributesToInfoTrait;
 use app\traits\UpdateInsteadOfDeleteTrait;
 use app\components\ActiveRecord;
+use app\components\PhoneNumberValidator;
 use app\helpers\OrganizationHelper;
 use app\helpers\OrganizationRoles;
 use app\models\relations\UserOrganization;
@@ -121,6 +122,7 @@ class Organizations extends ActiveRecord
     {
         return [
             [['name', 'phone', 'address', 'email', 'bin', 'legal_name', 'logo', 'verification_token'], 'string'],
+            [['phone'], PhoneNumberValidator::class],
             [['status', 'type', 'timezone', 'locale'], 'string', 'max' => 50],
             [['email'], 'email'],
             [['bin'], 'string', 'max' => 12],

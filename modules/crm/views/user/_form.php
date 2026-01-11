@@ -2,11 +2,12 @@
 
 use app\helpers\Lists;
 use app\helpers\OrganizationUrl;
+use app\models\forms\EmployeeForm;
 use app\models\User;
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
-/** @var app\models\forms\TeacherForm $model */
+/** @var app\models\forms\EmployeeForm $model */
 
 // Convert date format for HTML5 date input
 $birthDate = '';
@@ -26,6 +27,47 @@ $formAction = empty($model->id)
 <form action="<?= $formAction ?>" method="post" class="space-y-6">
     <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
 
+    <!-- Role Selection -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="text-lg font-semibold text-gray-900"><?= Yii::t('main', 'Должность') ?></h3>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <?php foreach (EmployeeForm::getRolesList() as $roleValue => $roleLabel): ?>
+                <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none <?= $model->role === $roleValue ? 'border-primary-500 ring-2 ring-primary-500' : 'border-gray-300' ?>">
+                    <input type="radio"
+                           name="EmployeeForm[role]"
+                           value="<?= $roleValue ?>"
+                           class="sr-only"
+                           <?= $model->role === $roleValue ? 'checked' : '' ?>
+                           onchange="this.closest('form').querySelectorAll('label.relative').forEach(l => l.classList.remove('border-primary-500', 'ring-2', 'ring-primary-500')); this.closest('label').classList.add('border-primary-500', 'ring-2', 'ring-primary-500');">
+                    <span class="flex flex-1">
+                        <span class="flex flex-col">
+                            <span class="block text-sm font-medium text-gray-900"><?= $roleLabel ?></span>
+                            <span class="mt-1 flex items-center text-sm text-gray-500">
+                                <?php if ($roleValue === 'teacher'): ?>
+                                    Проводит занятия и отмечает посещаемость
+                                <?php elseif ($roleValue === 'admin'): ?>
+                                    Управляет учениками, группами и платежами
+                                <?php elseif ($roleValue === 'director'): ?>
+                                    Полный доступ к управлению филиалом
+                                <?php endif; ?>
+                            </span>
+                        </span>
+                    </span>
+                    <svg class="h-5 w-5 text-primary-600 <?= $model->role === $roleValue ? '' : 'hidden' ?>" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.46L7.86 10.23a.75.75 0 10-1.22.875l2.02 2.82a.75.75 0 001.22.004l3.977-5.98z" clip-rule="evenodd" />
+                    </svg>
+                </label>
+                <?php endforeach; ?>
+            </div>
+            <?php if ($model->hasErrors('role')): ?>
+                <p class="mt-2 text-sm text-danger-600"><?= $model->getFirstError('role') ?></p>
+            <?php endif; ?>
+        </div>
+    </div>
+
     <!-- Basic Info -->
     <div class="card">
         <div class="card-header">
@@ -34,10 +76,10 @@ $formAction = empty($model->id)
         <div class="card-body">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="form-label" for="teacherform-username">Логин <span class="text-danger-500">*</span></label>
+                    <label class="form-label" for="employeeform-username">Логин <span class="text-danger-500">*</span></label>
                     <?= Html::activeTextInput($model, 'username', [
                         'class' => 'form-input',
-                        'id' => 'teacherform-username',
+                        'id' => 'employeeform-username',
                         'placeholder' => 'Введите логин'
                     ]) ?>
                     <?php if ($model->hasErrors('username')): ?>
@@ -45,10 +87,10 @@ $formAction = empty($model->id)
                     <?php endif; ?>
                 </div>
                 <div>
-                    <label class="form-label" for="teacherform-iin">ИИН</label>
+                    <label class="form-label" for="employeeform-iin">ИИН</label>
                     <?= Html::activeTextInput($model, 'iin', [
                         'class' => 'form-input',
-                        'id' => 'teacherform-iin',
+                        'id' => 'employeeform-iin',
                         'placeholder' => '000000000000',
                         'maxlength' => 12
                     ]) ?>
@@ -59,46 +101,43 @@ $formAction = empty($model->id)
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="form-label" for="teacherform-last_name">Фамилия <span class="text-danger-500">*</span></label>
+                    <label class="form-label" for="employeeform-last_name">Фамилия <span class="text-danger-500">*</span></label>
                     <?= Html::activeTextInput($model, 'last_name', [
                         'class' => 'form-input',
-                        'id' => 'teacherform-last_name',
-                        'placeholder' => 'Иванов'
+                        'id' => 'employeeform-last_name'
                     ]) ?>
                     <?php if ($model->hasErrors('last_name')): ?>
                         <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('last_name') ?></p>
                     <?php endif; ?>
                 </div>
                 <div>
-                    <label class="form-label" for="teacherform-first_name">Имя <span class="text-danger-500">*</span></label>
+                    <label class="form-label" for="employeeform-first_name">Имя <span class="text-danger-500">*</span></label>
                     <?= Html::activeTextInput($model, 'first_name', [
                         'class' => 'form-input',
-                        'id' => 'teacherform-first_name',
-                        'placeholder' => 'Иван'
+                        'id' => 'employeeform-first_name'
                     ]) ?>
                     <?php if ($model->hasErrors('first_name')): ?>
                         <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('first_name') ?></p>
                     <?php endif; ?>
                 </div>
                 <div>
-                    <label class="form-label" for="teacherform-middle_name">Отчество</label>
+                    <label class="form-label" for="employeeform-middle_name">Отчество</label>
                     <?= Html::activeTextInput($model, 'middle_name', [
                         'class' => 'form-input',
-                        'id' => 'teacherform-middle_name',
-                        'placeholder' => 'Иванович'
+                        'id' => 'employeeform-middle_name'
                     ]) ?>
                 </div>
                 <div>
-                    <label class="form-label" for="teacherform-sex">Пол</label>
+                    <label class="form-label" for="employeeform-sex">Пол</label>
                     <?= Html::activeDropDownList($model, 'sex', Lists::getGenders(), [
                         'class' => 'form-select',
-                        'id' => 'teacherform-sex',
+                        'id' => 'employeeform-sex',
                         'prompt' => 'Выберите пол'
                     ]) ?>
                 </div>
                 <div>
-                    <label class="form-label" for="teacherform-birth_date">Дата рождения</label>
-                    <input type="date" name="TeacherForm[birth_date]" id="teacherform-birth_date" class="form-input" value="<?= $birthDate ?>" autocomplete="off">
+                    <label class="form-label" for="employeeform-birth_date">Дата рождения</label>
+                    <input type="date" name="EmployeeForm[birth_date]" id="employeeform-birth_date" class="form-input" value="<?= $birthDate ?>" autocomplete="off">
                     <?php if ($model->hasErrors('birth_date')): ?>
                         <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('birth_date') ?></p>
                     <?php endif; ?>
@@ -115,10 +154,10 @@ $formAction = empty($model->id)
         <div class="card-body">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="form-label" for="teacherform-email">Email</label>
+                    <label class="form-label" for="employeeform-email">Email <span class="text-danger-500">*</span></label>
                     <?= Html::activeTextInput($model, 'email', [
                         'class' => 'form-input',
-                        'id' => 'teacherform-email',
+                        'id' => 'employeeform-email',
                         'type' => 'email',
                         'placeholder' => 'example@mail.com'
                     ]) ?>
@@ -127,32 +166,34 @@ $formAction = empty($model->id)
                     <?php endif; ?>
                 </div>
                 <div>
-                    <label class="form-label" for="teacherform-phone">Телефон</label>
+                    <label class="form-label" for="employeeform-phone">Телефон <span class="text-danger-500">*</span></label>
                     <?= Html::activeTextInput($model, 'phone', [
                         'class' => 'form-input',
-                        'id' => 'teacherform-phone',
+                        'id' => 'employeeform-phone',
                         'type' => 'tel',
-                        'placeholder' => '77001234567'
+                        'placeholder' => '+7 (700) 123-45-67',
+                        'x-mask-phone' => true
                     ]) ?>
                     <?php if ($model->hasErrors('phone')): ?>
                         <p class="mt-1 text-sm text-danger-600"><?= $model->getFirstError('phone') ?></p>
                     <?php endif; ?>
                 </div>
                 <div>
-                    <label class="form-label" for="teacherform-home_phone">Домашний телефон</label>
+                    <label class="form-label" for="employeeform-home_phone">Домашний телефон</label>
                     <?= Html::activeTextInput($model, 'home_phone', [
                         'class' => 'form-input',
-                        'id' => 'teacherform-home_phone',
+                        'id' => 'employeeform-home_phone',
                         'type' => 'tel',
-                        'placeholder' => '77272345678'
+                        'placeholder' => '+7 (727) 234-56-78',
+                        'x-mask-phone' => true
                     ]) ?>
                 </div>
             </div>
             <div class="mt-4">
-                <label class="form-label" for="teacherform-address">Адрес</label>
+                <label class="form-label" for="employeeform-address">Адрес</label>
                 <?= Html::activeTextInput($model, 'address', [
                     'class' => 'form-input',
-                    'id' => 'teacherform-address',
+                    'id' => 'employeeform-address',
                     'placeholder' => 'г. Алматы, ул. Примерная, д. 1'
                 ]) ?>
             </div>
@@ -167,10 +208,10 @@ $formAction = empty($model->id)
         <div class="card-body">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="form-label" for="teacherform-status">Статус</label>
+                    <label class="form-label" for="employeeform-status">Статус</label>
                     <?= Html::activeDropDownList($model, 'status', User::getStatusList(), [
                         'class' => 'form-select',
-                        'id' => 'teacherform-status'
+                        'id' => 'employeeform-status'
                     ]) ?>
                 </div>
             </div>

@@ -1,5 +1,5 @@
-# Robots.txt for Qazaq Education CRM
-# https://qazedu.kz
+# Robots.txt for Education CRM
+# https://crm.education
 
 User-agent: *
 Allow: /
@@ -20,7 +20,7 @@ Allow: /js/
 Allow: /images/
 
 # Sitemap location
-Sitemap: https://qazedu.kz/sitemap.xml
+Sitemap: https://crm.education/sitemap.xml
 
 # Crawl-delay (optional, for polite crawlers)
 Crawl-delay: 1

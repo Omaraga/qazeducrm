@@ -5,6 +5,7 @@ namespace app\modules\cabinet\models;
 use app\models\Pupil;
 use app\modules\cabinet\Module;
 use app\services\verification\TelegramVerificationService;
+use app\components\PhoneNumberValidator;
 use Yii;
 use yii\base\Model;
 
@@ -60,6 +61,7 @@ class LoginForm extends Model
             // Шаг 1: Ввод телефона
             [['phone', 'organization_id'], 'required', 'on' => self::SCENARIO_PHONE],
             ['phone', 'string', 'min' => 10, 'max' => 20, 'on' => self::SCENARIO_PHONE],
+            ['phone', PhoneNumberValidator::class, 'on' => self::SCENARIO_PHONE],
             ['phone', 'validatePhone', 'on' => self::SCENARIO_PHONE],
 
             // Шаг 2: Ввод кода из Telegram

@@ -5,6 +5,7 @@ namespace app\models;
 use app\helpers\DateHelper;
 use app\models\services\LidService;
 use app\traits\UpdateInsteadOfDeleteTrait;
+use app\components\PhoneNumberValidator;
 use Yii;
 use app\components\ActiveRecord;
 use yii\db\Expression;
@@ -107,6 +108,7 @@ class Lids extends ActiveRecord
             [['class_id', 'sale', 'total_sum', 'total_point', 'is_deleted', 'status', 'manager_id', 'pupil_id'], 'integer'],
             [['date', 'created_at', 'updated_at', 'next_contact_date', 'converted_at', 'status_changed_at'], 'safe'],
             [['phone', 'school', 'manager_name', 'source', 'parent_fio', 'parent_phone'], 'string', 'max' => 255],
+            [['phone', 'parent_phone'], PhoneNumberValidator::class],
             ['status', 'default', 'value' => self::STATUS_NEW],
             ['status', 'in', 'range' => array_keys(self::getStatusList())],
             ['source', 'in', 'range' => array_keys(self::getSourceList())],

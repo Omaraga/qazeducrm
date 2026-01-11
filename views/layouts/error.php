@@ -16,7 +16,7 @@ TailwindAsset::register($this);
     <meta charset="<?= Yii::$app->charset ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <?php $this->registerCsrfMetaTags() ?>
-    <title><?= Html::encode($this->title) ?> — Qazaq Education CRM</title>
+    <title><?= Html::encode($this->title) ?> — Education CRM</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -33,9 +33,8 @@ TailwindAsset::register($this);
     <header class="bg-white border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <a href="<?= Url::to(['/']) ?>" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                    <img src="<?= Yii::$app->request->baseUrl ?>/images/logo-text-dark.svg" alt="Qazaq Education" class="h-7">
-                    <span class="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded">CRM</span>
+                <a href="<?= Url::to(['/']) ?>" class="flex items-center hover:opacity-80 transition-opacity">
+                    <img src="<?= Yii::$app->request->baseUrl ?>/images/logo-text-dark.svg" alt="Education CRM" class="h-8">
                 </a>
                 <a href="<?= Url::to(['/']) ?>" class="text-sm text-gray-600 hover:text-orange-500 transition-colors">
                     <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +54,7 @@ TailwindAsset::register($this);
     <!-- Footer -->
     <footer class="bg-gray-50 border-t border-gray-200 py-4">
         <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
-            &copy; <?= date('Y') ?> Qazaq Education CRM. Все права защищены.
+            &copy; <?= date('Y') ?> Education CRM. Все права защищены.
         </div>
     </footer>
 </div>

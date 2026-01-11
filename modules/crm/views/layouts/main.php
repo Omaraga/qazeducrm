@@ -139,7 +139,7 @@ $menuConfig = [
     <meta charset="<?= Yii::$app->charset ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <?php $this->registerCsrfMetaTags() ?>
-    <title><?= Html::encode($this->title) ?> — Qazaq Education CRM</title>
+    <title><?= Html::encode($this->title) ?> — Education CRM</title>
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <?php $this->head() ?>
@@ -286,9 +286,8 @@ endforeach;
        }">
     <!-- Brand -->
     <div class="flex items-center justify-between px-4 py-4 border-b border-gray-200">
-        <a href="<?= OrganizationUrl::to(['/crm']) ?>" class="flex items-center gap-2">
-            <img src="/images/logo-text-dark.svg" alt="Qazaq Education" class="h-8">
-            <span class="text-white text-[10px] font-bold px-1.5 py-0.5 rounded" style="background: #FE8D00;">CRM</span>
+        <a href="<?= OrganizationUrl::to(['/crm']) ?>" class="flex items-center">
+            <img src="/images/logo-text-dark.svg" alt="Education CRM" class="h-9">
         </a>
         <!-- Collapse button (desktop only) -->
         <button @click="toggleSidebar()" class="hidden lg:flex p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors" title="Свернуть меню">

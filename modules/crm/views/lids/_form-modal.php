@@ -164,6 +164,7 @@ $checkDuplicatesUrl = OrganizationUrl::to(['lids-interaction/check-duplicates'])
             <label class="form-label">Телефон ребёнка</label>
             <input type="tel" name="Lids[phone]" class="form-input"
                    placeholder="+7 (XXX) XXX-XX-XX"
+                   x-mask-phone
                    @input="checkDuplicates($event.target.value)"
                    <?= $isEdit ? ':value="$store.lids.editingLid?.phone || \'\'"' : '' ?>>
         </div>
@@ -181,6 +182,7 @@ $checkDuplicatesUrl = OrganizationUrl::to(['lids-interaction/check-duplicates'])
             <label class="form-label">Телефон родителя</label>
             <input type="tel" name="Lids[parent_phone]" class="form-input"
                    placeholder="+7 (XXX) XXX-XX-XX"
+                   x-mask-phone
                    @input="checkDuplicates($event.target.value)"
                    <?= $isEdit ? ':value="$store.lids.editingLid?.parent_phone || \'\'"' : '' ?>>
         </div>

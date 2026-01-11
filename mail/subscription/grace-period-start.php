@@ -77,11 +77,11 @@ $graceEndDate = date('d.m.Y', strtotime("+{$graceDays} days"));
                 Все ваши данные сохранены и будут доступны после продления.
             </p>
 
-            <p>С уважением,<br>Команда QazEduCRM</p>
+            <p>С уважением,<br>Команда Education CRM</p>
         </div>
 
         <div class="footer">
-            <p>© <?= date('Y') ?> QazEduCRM. Все права защищены.</p>
+            <p>© <?= date('Y') ?> Education CRM. Все права защищены.</p>
             <p>Это автоматическое уведомление. Пожалуйста, не отвечайте на это письмо.</p>
         </div>
     </div>

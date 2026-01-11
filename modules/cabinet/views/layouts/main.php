@@ -99,7 +99,7 @@ $this->params['cabinetSettings'] = $cabinetSettings;
     </style>
     <?php endif; ?>
 </head>
-<body class="min-h-full bg-gray-50 flex flex-col antialiased">
+<body class="min-h-full bg-gray-50 flex flex-col antialiased" x-data>
 <?php $this->beginBody() ?>
 
 <?php if ($isLoggedIn && $organization): ?>

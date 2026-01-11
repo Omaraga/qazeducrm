@@ -380,7 +380,7 @@ class SubscriptionNotificationService
 
         try {
             $sent = Yii::$app->mailer->compose()
-                ->setFrom([Yii::$app->params['senderEmail'] ?? 'noreply@example.com' => Yii::$app->params['senderName'] ?? 'QazEduCRM'])
+                ->setFrom([Yii::$app->params['senderEmail'] ?? 'noreply@example.com' => Yii::$app->params['senderName'] ?? 'Education CRM'])
                 ->setTo($email)
                 ->setSubject($subject)
                 ->setHtmlBody($message)

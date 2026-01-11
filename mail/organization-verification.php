@@ -13,7 +13,7 @@ use yii\helpers\Html;
         <!-- Header -->
         <div style="background: #1a1a2e; padding: 32px; text-align: center;">
             <h1 style="color: #fff; margin: 0; font-size: 24px; font-weight: 600;">
-                Qazaq Education <span style="color: #FE8D00;">CRM</span>
+                <span style="color: #7b79de;">education</span> <span style="color: #FE8D00;">CRM</span>
             </h1>
             <p style="color: rgba(255,255,255,0.7); margin: 8px 0 0; font-size: 14px;">Система управления учебным центром</p>
         </div>
@@ -58,7 +58,7 @@ use yii\helpers\Html;
         <!-- Footer -->
         <div style="background: #f8fafc; padding: 20px 32px; border-top: 1px solid #e2e8f0;">
             <p style="color: #94a3b8; font-size: 12px; margin: 0; text-align: center;">
-                &copy; <?= date('Y') ?> Qazaq Education CRM. Все права защищены.
+                &copy; <?= date('Y') ?> Education CRM. Все права защищены.
             </p>
         </div>
     </div>

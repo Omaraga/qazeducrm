@@ -50,8 +50,14 @@ class UserSearch extends User
      */
     public function search($params)
     {
+        // Показываем всех сотрудников организации (учителей, админов, директоров филиалов)
         $query = User::find()->innerJoinWith(['currentUserOrganizations' => function($q){
-            $q->andWhere(['<>','user_organization.is_deleted', ActiveRecord::DELETED])->andWhere(['in', 'user_organization.role', [OrganizationRoles::TEACHER]]);
+            $q->andWhere(['<>','user_organization.is_deleted', ActiveRecord::DELETED])
+              ->andWhere(['in', 'user_organization.role', [
+                  OrganizationRoles::TEACHER,
+                  OrganizationRoles::ADMIN,
+                  OrganizationRoles::DIRECTOR
+              ]]);
         }]);
 
         // add conditions that should always apply here

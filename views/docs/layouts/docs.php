@@ -16,7 +16,7 @@ TailwindAsset::register($this);
 $isGuest = Yii::$app->user->isGuest;
 $user = $isGuest ? null : Yii::$app->user->identity;
 $isSuperAdmin = $user && $user->system_role === SystemRoles::SUPER;
-$siteName = SettingsHelper::getSiteName() ?: 'Qazaq Education CRM';
+$siteName = SettingsHelper::getSiteName() ?: 'Education CRM';
 
 // Получаем главы для sidebar (если не переданы через view)
 $chapters = $this->params['chapters'] ?? DocsChapter::getActiveChaptersWithSections();
@@ -48,8 +48,8 @@ $chapterIcons = [
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    <meta name="description" content="Документация QazEduCRM - полное руководство по работе с системой">
-    <meta name="theme-color" content="#FE8D00">
+    <meta name="description" content="Документация Education CRM - полное руководство по работе с системой">
+    <meta name="theme-color" content="#2563ea">
 
     <?php $this->registerCsrfMetaTags() ?>
     <title><?= Html::encode($this->title) ?> — Документация <?= Html::encode($siteName) ?></title>
@@ -179,8 +179,8 @@ $chapterIcons = [
             </button>
 
             <!-- Logo -->
-            <a href="<?= Url::to(['/']) ?>" class="flex items-center gap-2">
-                <img src="<?= Yii::$app->request->baseUrl ?>/images/logo-text-dark.svg" alt="QazEduCRM" class="h-6">
+            <a href="<?= Url::to(['/']) ?>" class="flex items-center">
+                <img src="<?= Yii::$app->request->baseUrl ?>/images/logo-text-dark.svg" alt="Education CRM" class="h-7">
             </a>
 
             <span class="text-gray-300">|</span>

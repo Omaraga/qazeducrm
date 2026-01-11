@@ -237,6 +237,7 @@ $cabinetUrl = Yii::$app->urlManager->createAbsoluteUrl(['/cabinet/default/login'
                     <input type="tel" class="form-input w-full"
                            x-model="fields.phone"
                            @blur="saveField('phone', fields.phone)"
+                           x-mask-phone
                            placeholder="+7 (777) 123-45-67">
                     <p class="mt-1 text-sm text-gray-500">Основной номер для связи</p>
                 </div>

@@ -67,7 +67,7 @@ $menuItems = [
     <meta charset="<?= Yii::$app->charset ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <?php $this->registerCsrfMetaTags() ?>
-    <title><?= Html::encode($this->title) ?> | Qazaq Education CRM</title>
+    <title><?= Html::encode($this->title) ?> | Education CRM</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="/css/theme.css" rel="stylesheet">
     <?php $this->head() ?>
@@ -362,8 +362,7 @@ $menuItems = [
 <!-- Sidebar -->
 <aside class="superadmin-sidebar">
     <div class="sidebar-brand">
-        <img src="/images/logo-text.svg" alt="Qazaq Education" style="height: 28px;">
-        <span>ADMIN</span>
+        <img src="/images/logo-text.svg" alt="Education CRM" style="height: 32px;">
     </div>
     <ul class="nav-menu">
         <?php foreach ($menuItems as $item): ?>

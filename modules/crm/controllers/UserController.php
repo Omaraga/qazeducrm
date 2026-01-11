@@ -5,7 +5,7 @@ namespace app\modules\crm\controllers;
 use app\helpers\OrganizationRoles;
 use app\helpers\RoleChecker;
 use app\helpers\SystemRoles;
-use app\models\forms\TeacherForm;
+use app\models\forms\EmployeeForm;
 use app\models\search\UserSearch;
 use app\models\User;
 use app\services\SubscriptionLimitService;
@@ -37,19 +37,20 @@ class UserController extends CrmBaseController
                 'access' => [
                     'class' => AccessControl::class,
                     'rules' => [
-                        // Сброс пароля - только для директоров и выше
+                        // Создание, редактирование, удаление сотрудников - только для директоров
                         [
                             'allow' => true,
-                            'actions' => ['reset-password'],
+                            'actions' => ['create', 'update', 'delete', 'reset-password'],
                             'roles' => [
                                 SystemRoles::SUPER,
                                 OrganizationRoles::DIRECTOR,
                                 OrganizationRoles::GENERAL_DIRECTOR,
                             ]
                         ],
-                        // Остальные действия - для всех админов и выше
+                        // Просмотр списка и карточки - для всех админов и выше
                         [
                             'allow' => true,
+                            'actions' => ['index', 'view'],
                             'roles' => [
                                 SystemRoles::SUPER,
                                 OrganizationRoles::ADMIN,
@@ -103,19 +104,19 @@ class UserController extends CrmBaseController
      */
     public function actionCreate()
     {
-        // Проверка лимита учителей тарифного плана
+        // Проверка лимита сотрудников тарифного плана
         $limitService = SubscriptionLimitService::forCurrentOrganization();
         if ($limitService && !$limitService->canAddTeacher()) {
             Yii::$app->session->setFlash('error', SubscriptionLimitService::getLimitErrorMessage('teacher'));
             return $this->redirect(['index']);
         }
 
-        $model = new TeacherForm();
+        $model = new EmployeeForm();
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
+                Yii::$app->session->setFlash('success', Yii::t('main', 'Сотрудник успешно добавлен'));
                 return $this->redirect(['view', 'id' => $model->id]);
-
             }
         } else {
             $model->loadDefaultValues();
@@ -134,9 +135,10 @@ class UserController extends CrmBaseController
      */
     public function actionUpdate($id)
     {
-        $model = new TeacherForm();
+        $model = new EmployeeForm();
 
         if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
+            Yii::$app->session->setFlash('success', Yii::t('main', 'Сотрудник успешно обновлен'));
             return $this->redirect(['view', 'id' => $model->id]);
         }
 

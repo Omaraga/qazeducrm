@@ -22,7 +22,7 @@ $currentOrg = $isGuest ? null : Organizations::getCurrentOrganization();
 $metaTitle = SettingsHelper::getMetaTitle();
 $metaDescription = SettingsHelper::getMetaDescription();
 $social = SettingsHelper::getSocialLinks();
-$siteName = SettingsHelper::getSiteName() ?: 'Qazaq Education CRM';
+$siteName = SettingsHelper::getSiteName() ?: 'Education CRM';
 $canonicalUrl = Yii::$app->request->absoluteUrl;
 ?>
 <?php $this->beginPage() ?>
@@ -52,7 +52,7 @@ $canonicalUrl = Yii::$app->request->absoluteUrl;
     <meta name="twitter:image" content="/images/og-image.png">
 
     <!-- Mobile App Meta -->
-    <meta name="theme-color" content="#FE8D00">
+    <meta name="theme-color" content="#2563ea">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -73,9 +73,8 @@ $canonicalUrl = Yii::$app->request->absoluteUrl;
     <div class="container mx-auto px-4">
         <div class="flex items-center justify-between h-16">
             <!-- Brand -->
-            <a href="<?= Url::to(['/landing/index']) ?>" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <img src="<?= Yii::$app->request->baseUrl ?>/images/logo-text-dark.svg" alt="Qazaq Education" class="h-7">
-                <span class="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">CRM</span>
+            <a href="<?= Url::to(['/landing/index']) ?>" class="flex items-center hover:opacity-80 transition-opacity">
+                <img src="<?= Yii::$app->request->baseUrl ?>/images/logo-text-dark.svg" alt="Education CRM" class="h-8">
             </a>
 
             <!-- Desktop Navigation -->
@@ -159,9 +158,8 @@ $canonicalUrl = Yii::$app->request->absoluteUrl;
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
             <!-- Brand -->
             <div class="md:col-span-2 lg:col-span-1">
-                <div class="flex items-center gap-2 mb-4">
-                    <img src="<?= Yii::$app->request->baseUrl ?>/images/logo-text-dark.svg" alt="Qazaq Education" class="h-6">
-                    <span class="bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">CRM</span>
+                <div class="flex items-center mb-4">
+                    <img src="<?= Yii::$app->request->baseUrl ?>/images/logo-text-dark.svg" alt="Education CRM" class="h-7">
                 </div>
                 <p class="text-sm leading-relaxed mb-4 max-w-[280px]">
                     Современная система управления учебным центром. Автоматизируйте рутину и сосредоточьтесь на главном.
@@ -218,7 +216,7 @@ $canonicalUrl = Yii::$app->request->absoluteUrl;
 
         <!-- Bottom -->
         <div class="border-t border-gray-200 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p class="text-sm text-gray-500">&copy; <?= date('Y') ?> Qazaq Education CRM. Все права защищены.</p>
+            <p class="text-sm text-gray-500">&copy; <?= date('Y') ?> Education CRM. Все права защищены.</p>
         </div>
     </div>
 </footer>

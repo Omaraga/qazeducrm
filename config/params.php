@@ -3,7 +3,7 @@
 return [
     'adminEmail' => 'admin@example.com',
     'senderEmail' => 'noreply@example.com',
-    'senderName' => 'Example.com mailer',
+    'senderName' => 'Education CRM',
     'bsVersion' => '4.x',
 
     // Telegram Bot для авторизации в личном кабинете

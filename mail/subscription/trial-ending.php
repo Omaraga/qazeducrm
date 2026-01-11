@@ -44,7 +44,7 @@ use yii\helpers\Html;
 
             <p>Пробный период для организации <strong><?= Html::encode($organization->name) ?></strong> заканчивается через <?= $daysRemaining ?> <?= $daysRemaining == 1 ? 'день' : ($daysRemaining < 5 ? 'дня' : 'дней') ?>.</p>
 
-            <p>Надеемся, что вам понравилась система QazEduCRM! Чтобы продолжить использование всех функций, выберите подходящий тарифный план:</p>
+            <p>Надеемся, что вам понравилась система Education CRM! Чтобы продолжить использование всех функций, выберите подходящий тарифный план:</p>
 
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
                 <tr>
@@ -97,11 +97,11 @@ use yii\helpers\Html;
                 При годовой оплате — 2 месяца в подарок!
             </p>
 
-            <p>С уважением,<br>Команда QazEduCRM</p>
+            <p>С уважением,<br>Команда Education CRM</p>
         </div>
 
         <div class="footer">
-            <p>© <?= date('Y') ?> QazEduCRM. Все права защищены.</p>
+            <p>© <?= date('Y') ?> Education CRM. Все права защищены.</p>
             <p>Это автоматическое уведомление. Пожалуйста, не отвечайте на это письмо.</p>
         </div>
     </div>

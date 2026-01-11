@@ -42,14 +42,14 @@ $this->title = Yii::t('app', 'Личный кабинет');
                 ]); ?>
 
                 <div class="mb-6">
-                    <?= $form->field($model, 'phone', [
-                        'inputOptions' => [
-                            'class' => 'input-ios text-lg',
-                            'placeholder' => '+7 (___) ___-__-__',
-                            'autofocus' => true,
-                            'inputmode' => 'tel',
-                        ],
-                    ])->textInput(['maxlength' => true]) ?>
+                    <?= $form->field($model, 'phone')->textInput([
+                        'class' => 'input-ios text-lg',
+                        'placeholder' => '+7 (___) ___-__-__',
+                        'autofocus' => true,
+                        'inputmode' => 'tel',
+                        'x-mask-phone' => true,
+                        'maxlength' => true,
+                    ]) ?>
                 </div>
 
                 <?= Html::hiddenInput('LoginForm[organization_id]', $model->organization_id) ?>
@@ -60,15 +60,6 @@ $this->title = Yii::t('app', 'Личный кабинет');
                 </button>
 
                 <?php ActiveForm::end(); ?>
-
-                <!-- Back Link -->
-                <div class="text-center mt-6">
-                    <a href="<?= Url::to(['/cabinet/default/select-organization']) ?>"
-                       class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-indigo-600 transition-colors touch-target justify-center">
-                        <?= Icon::show('arrow-left', 'sm') ?>
-                        <?= Yii::t('app', 'Выбрать другой центр') ?>
-                    </a>
-                </div>
             </div>
         </div>
 

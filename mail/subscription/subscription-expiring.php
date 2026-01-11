@@ -40,7 +40,7 @@ $expiresDate = Yii::$app->formatter->asDate($expiresAt, 'long');
         <div class="content">
             <p>Здравствуйте!</p>
 
-            <p>Напоминаем, что подписка организации <strong><?= Html::encode($organization->name) ?></strong> на систему QazEduCRM истекает <strong><?= $expiresDate ?></strong>.</p>
+            <p>Напоминаем, что подписка организации <strong><?= Html::encode($organization->name) ?></strong> на систему Education CRM истекает <strong><?= $expiresDate ?></strong>.</p>
 
             <div class="warning-box">
                 <strong>Что произойдёт после истечения:</strong>
@@ -74,11 +74,11 @@ $expiresDate = Yii::$app->formatter->asDate($expiresAt, 'long');
 
             <p>Если у вас есть вопросы, свяжитесь с нашей службой поддержки.</p>
 
-            <p>С уважением,<br>Команда QazEduCRM</p>
+            <p>С уважением,<br>Команда Education CRM</p>
         </div>
 
         <div class="footer">
-            <p>© <?= date('Y') ?> QazEduCRM. Все права защищены.</p>
+            <p>© <?= date('Y') ?> Education CRM. Все права защищены.</p>
             <p>Это автоматическое уведомление. Пожалуйста, не отвечайте на это письмо.</p>
         </div>
     </div>

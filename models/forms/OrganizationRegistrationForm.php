@@ -9,6 +9,7 @@ use app\models\OrganizationSubscription;
 use app\models\OrganizationActivityLog;
 use app\models\relations\UserOrganization;
 use app\helpers\OrganizationRoles;
+use app\components\PhoneNumberValidator;
 use Yii;
 use yii\base\Model;
 
@@ -67,6 +68,7 @@ class OrganizationRegistrationForm extends Model
             [['org_email'], 'email', 'message' => 'Введите корректный email'],
             [['org_email'], 'validateUniqueOrgEmail'],
             [['org_phone'], 'string', 'max' => 20],
+            [['org_phone'], PhoneNumberValidator::class],
             [['org_bin'], 'string', 'max' => 12],
             [['org_bin'], 'match', 'pattern' => '/^\d{12}$/', 'message' => 'БИН должен состоять из 12 цифр', 'skipOnEmpty' => true],
             [['org_address'], 'string', 'max' => 500],
@@ -76,6 +78,7 @@ class OrganizationRegistrationForm extends Model
             [['admin_email'], 'email', 'message' => 'Введите корректный email'],
             [['admin_email'], 'validateUniqueAdminEmail'],
             [['admin_phone'], 'string', 'max' => 20],
+            [['admin_phone'], PhoneNumberValidator::class],
             [['admin_password'], 'string', 'min' => 8, 'message' => 'Пароль должен содержать минимум 8 символов'],
             [['admin_password_repeat'], 'compare', 'compareAttribute' => 'admin_password', 'message' => 'Пароли не совпадают'],
 
