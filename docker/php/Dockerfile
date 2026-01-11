@@ -48,9 +48,9 @@ RUN echo "opcache.enable=1" > /usr/local/etc/php/conf.d/opcache.ini \
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy entrypoint script
+# Copy entrypoint script and fix Windows line endings
 COPY docker/php/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 # Create runtime directories with proper permissions
 RUN mkdir -p /var/www/html/runtime /var/www/html/web/assets \
