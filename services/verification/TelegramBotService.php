@@ -39,15 +39,23 @@ class TelegramBotService
 
     /**
      * Установить webhook
+     * @return array ['success' => bool, 'error' => string|null]
      */
-    public function setWebhook(string $url): bool
+    public function setWebhook(string $url): array
     {
         $result = $this->request('setWebhook', [
             'url' => $url,
             'allowed_updates' => ['message'],
         ]);
 
-        return $result !== null && ($result['ok'] ?? false);
+        if ($result !== null && ($result['ok'] ?? false)) {
+            return ['success' => true, 'error' => null];
+        }
+
+        return [
+            'success' => false,
+            'error' => $result['description'] ?? 'Unknown error',
+        ];
     }
 
     /**

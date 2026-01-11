@@ -94,10 +94,10 @@ class TelegramWebhookController extends Controller
         $service = new \app\services\verification\TelegramBotService($token);
         $result = $service->setWebhook($webhookUrl);
 
-        if ($result) {
+        if ($result['success']) {
             return ['status' => 'ok', 'webhook_url' => $webhookUrl];
         }
 
-        return ['status' => 'error', 'message' => 'Failed to set webhook'];
+        return ['status' => 'error', 'message' => $result['error'], 'attempted_url' => $webhookUrl];
     }
 }

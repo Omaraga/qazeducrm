@@ -8,21 +8,18 @@ return [
 
     // Telegram Bot для авторизации в личном кабинете
     'telegramBot' => [
-        'token' => '', // Получите у @BotFather
-        'username' => '', // Username бота без @
+        'token' => '8336436870:AAFvZgtMPfllwq5KhHPG9rs3H3kZeAoqSQU',
+        'username' => 'qazeducrmbot',
         'webhookUrl' => '', // Будет сгенерирован автоматически если пусто
     ],
 
     // WhatsApp интеграция (Evolution API)
     'whatsapp' => [
-        'apiUrl' => 'http://localhost:8085',
-        'apiKey' => 'qazeducrm-dev-api-key-2025',
+        'apiUrl' => getenv('EVOLUTION_API_URL') ?: 'http://evolution-api:8080',
+        'apiKey' => getenv('EVOLUTION_API_KEY') ?: 'qazeducrm-dev-api-key-2025',
         // Webhook URL (куда Evolution API будет слать события)
-        // Для Docker + XAMPP с VirtualHost: http://host.docker.internal/webhook/whatsapp (+ Host header)
-        // Для продакшена: https://yourdomain.com/webhook/whatsapp
-        'webhookUrl' => 'http://host.docker.internal/webhook/whatsapp',
-        // Host header для Apache VirtualHost
-        'webhookHost' => 'educrm.loc',
+        'webhookUrl' => 'http://nginx/1/whatsapp/webhook',
+        'webhookHost' => 'crm.qazaq.education',
         'autoCreateLids' => true, // Автоматически создавать лидов из новых контактов
     ],
 ];

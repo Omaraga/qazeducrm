@@ -26,7 +26,7 @@ class WhatsappController extends CrmBaseController
     /**
      * @inheritDoc
      */
-    public function beforeAction($action)
+    public function beforeAction($action): bool
     {
         // Отключаем CSRF для webhook - он вызывается извне
         if ($action->id === 'webhook') {
