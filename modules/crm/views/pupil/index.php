@@ -198,16 +198,16 @@ $hasAdvancedFilters = $searchModel->status !== null && $searchModel->status !== 
                         </td>
                         <td class="text-gray-500">
                             <?php if ($model->phone): ?>
-                                <div>+<?= Html::encode($model->phone) ?></div>
+                                <div><?= Html::encode(\app\components\PhoneNumberValidator::format($model->phone)) ?></div>
                             <?php endif; ?>
                             <?php if ($model->home_phone): ?>
-                                <div class="text-gray-400">+<?= Html::encode($model->home_phone) ?></div>
+                                <div class="text-gray-400"><?= Html::encode(\app\components\PhoneNumberValidator::format($model->home_phone)) ?></div>
                             <?php endif; ?>
                         </td>
                         <td class="text-gray-500">
                             <?php if ($model->parent_fio): ?>
                                 <div><?= Html::encode($model->parent_fio) ?></div>
-                                <div class="text-gray-400">+<?= Html::encode($model->parent_phone) ?></div>
+                                <div class="text-gray-400"><?= Html::encode(\app\components\PhoneNumberValidator::format($model->parent_phone)) ?></div>
                             <?php endif; ?>
                         </td>
                         <td>

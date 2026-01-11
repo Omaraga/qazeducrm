@@ -117,7 +117,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         <dt class="text-sm font-medium text-gray-500">Телефон</dt>
                         <dd class="text-sm text-gray-900 col-span-2">
                             <?php if ($model->phone): ?>
-                                <a href="tel:+<?= Html::encode($model->phone) ?>" class="text-primary-600 hover:underline">+<?= Html::encode($model->phone) ?></a>
+                                <a href="tel:+<?= \app\components\PhoneNumberValidator::clean($model->phone) ?>" class="text-primary-600 hover:underline"><?= Html::encode(\app\components\PhoneNumberValidator::format($model->phone)) ?></a>
                             <?php else: ?>
                                 —
                             <?php endif; ?>
@@ -127,7 +127,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         <dt class="text-sm font-medium text-gray-500">Домашний телефон</dt>
                         <dd class="text-sm text-gray-900 col-span-2">
                             <?php if ($model->home_phone): ?>
-                                <a href="tel:+<?= Html::encode($model->home_phone) ?>" class="text-primary-600 hover:underline">+<?= Html::encode($model->home_phone) ?></a>
+                                <a href="tel:+<?= \app\components\PhoneNumberValidator::clean($model->home_phone) ?>" class="text-primary-600 hover:underline"><?= Html::encode(\app\components\PhoneNumberValidator::format($model->home_phone)) ?></a>
                             <?php else: ?>
                                 —
                             <?php endif; ?>
@@ -181,7 +181,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         <dt class="text-sm font-medium text-gray-500">Телефон родителя</dt>
                         <dd class="text-sm text-gray-900 col-span-2">
                             <?php if ($model->parent_phone): ?>
-                                <a href="tel:+<?= Html::encode($model->parent_phone) ?>" class="text-primary-600 hover:underline">+<?= Html::encode($model->parent_phone) ?></a>
+                                <a href="tel:+<?= \app\components\PhoneNumberValidator::clean($model->parent_phone) ?>" class="text-primary-600 hover:underline"><?= Html::encode(\app\components\PhoneNumberValidator::format($model->parent_phone)) ?></a>
                             <?php else: ?>
                                 —
                             <?php endif; ?>

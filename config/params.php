@@ -6,6 +6,13 @@ return [
     'senderName' => 'Example.com mailer',
     'bsVersion' => '4.x',
 
+    // Telegram Bot для авторизации в личном кабинете
+    'telegramBot' => [
+        'token' => '', // Получите у @BotFather
+        'username' => '', // Username бота без @
+        'webhookUrl' => '', // Будет сгенерирован автоматически если пусто
+    ],
+
     // WhatsApp интеграция (Evolution API)
     'whatsapp' => [
         'apiUrl' => 'http://localhost:8085',
