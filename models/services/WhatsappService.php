@@ -192,11 +192,32 @@ class WhatsappService extends Component
         // Генерируем уникальное имя инстанса
         $instanceName = 'org_' . $organizationId;
 
-        // Создаём инстанс в Evolution API
+        // URL и Host для webhook
+        $webhookUrl = Yii::$app->params['whatsapp']['webhookUrl'] ?? 'http://nginx/webhook/whatsapp';
+        $webhookHost = Yii::$app->params['whatsapp']['webhookHost'] ?? 'crm.qazaq.education';
+
+        // Создаём инстанс в Evolution API с настройками webhook
         $result = $this->request('POST', '/instance/create', [
             'instanceName' => $instanceName,
             'qrcode' => true,
             'integration' => 'WHATSAPP-BAILEYS',
+            // Настройки webhook сразу при создании
+            'webhook' => [
+                'url' => $webhookUrl,
+                'headers' => ['Host' => $webhookHost],
+                'byEvents' => false,
+                'base64' => false,
+                'events' => [
+                    'APPLICATION_STARTUP',
+                    'CONNECTION_UPDATE',
+                    'QRCODE_UPDATED',
+                    'MESSAGES_SET',
+                    'MESSAGES_UPSERT',
+                    'MESSAGES_UPDATE',
+                    'MESSAGES_DELETE',
+                    'SEND_MESSAGE',
+                ],
+            ],
         ]);
 
         if (!$result || !isset($result['instance'])) {
@@ -246,9 +267,9 @@ class WhatsappService extends Component
     public function setupWebhook(string $instanceName): bool
     {
         // URL и Host для webhook
-        // Для Docker: используем host.docker.internal с Host header
-        $webhookUrl = Yii::$app->params['whatsapp']['webhookUrl'] ?? 'http://host.docker.internal/webhook/whatsapp';
-        $webhookHost = Yii::$app->params['whatsapp']['webhookHost'] ?? 'educrm.loc';
+        // Для Docker: используем внутреннее имя nginx контейнера с Host header
+        $webhookUrl = Yii::$app->params['whatsapp']['webhookUrl'] ?? 'http://nginx/webhook/whatsapp';
+        $webhookHost = Yii::$app->params['whatsapp']['webhookHost'] ?? 'crm.qazaq.education';
 
         $webhookConfig = [
             'webhook' => [
@@ -256,6 +277,7 @@ class WhatsappService extends Component
                 'url' => $webhookUrl,
                 'webhookByEvents' => false,
                 'webhookBase64' => false,
+                // События Evolution API v2 (MESSAGE_ACK не существует, используем MESSAGES_UPDATE)
                 'events' => [
                     'APPLICATION_STARTUP',
                     'CONNECTION_UPDATE',
@@ -265,12 +287,11 @@ class WhatsappService extends Component
                     'MESSAGES_UPDATE',
                     'MESSAGES_DELETE',
                     'SEND_MESSAGE',
-                    'MESSAGE_ACK',
                 ],
             ],
         ];
 
-        // Добавляем Host header для правильной маршрутизации Apache
+        // Добавляем Host header для правильной маршрутизации nginx
         if ($webhookHost) {
             $webhookConfig['webhook']['headers'] = [
                 'Host' => $webhookHost,
@@ -279,12 +300,13 @@ class WhatsappService extends Component
 
         $result = $this->request('POST', "/webhook/set/{$instanceName}", $webhookConfig);
 
-        if ($result) {
+        // Проверяем что webhook настроен успешно (result содержит id или url)
+        if ($result && (isset($result['id']) || isset($result['url']))) {
             Yii::info("Webhook configured for {$instanceName}: {$webhookUrl} (Host: {$webhookHost})", 'whatsapp');
             return true;
         }
 
-        Yii::error("Failed to setup webhook for {$instanceName}", 'whatsapp');
+        Yii::error("Failed to setup webhook for {$instanceName}: " . json_encode($result), 'whatsapp');
         return false;
     }
 
@@ -501,6 +523,8 @@ class WhatsappService extends Component
             $needsReconnect = true;
         }
 
+        $previousStatus = $session->status;
+
         if ($session->status !== $newStatus) {
             $additionalData = [];
 
@@ -515,6 +539,11 @@ class WhatsappService extends Component
             }
 
             $session->updateConnectionStatus($newStatus, $additionalData);
+        }
+
+        // Если сессия подключена - убеждаемся что webhook настроен
+        if ($newStatus === WhatsappSession::STATUS_CONNECTED) {
+            $this->ensureWebhookConfigured($session->instance_name);
         }
 
         return [
@@ -891,8 +920,42 @@ class WhatsappService extends Component
         ];
 
         $newStatus = $statusMap[$state] ?? $session->status;
+        $previousStatus = $session->status;
 
-        return $session->updateConnectionStatus($newStatus);
+        $result = $session->updateConnectionStatus($newStatus);
+
+        // Если сессия только что подключилась - убеждаемся что webhook настроен
+        if ($newStatus === WhatsappSession::STATUS_CONNECTED && $previousStatus !== WhatsappSession::STATUS_CONNECTED) {
+            Yii::info("Session {$session->instance_name} connected, ensuring webhook is configured", 'whatsapp');
+            $this->ensureWebhookConfigured($session->instance_name);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Убедиться что webhook настроен правильно
+     * @param string $instanceName
+     * @return bool
+     */
+    public function ensureWebhookConfigured(string $instanceName): bool
+    {
+        $expectedUrl = Yii::$app->params['whatsapp']['webhookUrl'] ?? 'http://nginx/webhook/whatsapp';
+
+        // Проверяем текущие настройки
+        $currentSettings = $this->getWebhookSettings($instanceName);
+
+        // Если webhook не настроен или URL неправильный - настраиваем
+        if (!$currentSettings ||
+            !($currentSettings['enabled'] ?? false) ||
+            ($currentSettings['url'] ?? '') !== $expectedUrl) {
+
+            Yii::info("Webhook needs configuration for {$instanceName}, setting up...", 'whatsapp');
+            return $this->setupWebhook($instanceName);
+        }
+
+        Yii::info("Webhook already configured correctly for {$instanceName}", 'whatsapp');
+        return true;
     }
 
     /**
@@ -1271,7 +1334,7 @@ class WhatsappService extends Component
         $history = new LidHistory();
         $history->lid_id = $lidId;
         $history->organization_id = $lid->organization_id;
-        $history->user_id = Yii::$app->user->id ?? null;
+        $history->user_id = (Yii::$app->has('user') && !Yii::$app->user->isGuest) ? Yii::$app->user->id : null;
         $history->type = LidHistory::TYPE_WHATSAPP;
         $history->comment = mb_substr($comment, 0, 1000);
         $history->save(false);

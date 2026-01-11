@@ -187,7 +187,7 @@ class WhatsappChat extends ActiveRecord
      */
     public function markAllAsRead(?int $userId = null): int
     {
-        $userId = $userId ?? Yii::$app->user->id;
+        $userId = $userId ?? (Yii::$app->has('user') && !Yii::$app->user->isGuest ? Yii::$app->user->id : null);
 
         $count = WhatsappMessage::updateAll(
             [

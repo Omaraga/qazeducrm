@@ -114,7 +114,7 @@ class LidHistory extends ActiveRecord
             if (!$this->organization_id) {
                 $this->organization_id = Organizations::getCurrentOrganizationId();
             }
-            if (!$this->user_id && !Yii::$app->user->isGuest) {
+            if (!$this->user_id && Yii::$app->has('user') && !Yii::$app->user->isGuest) {
                 $this->user_id = Yii::$app->user->id;
             }
         }
@@ -221,6 +221,7 @@ class LidHistory extends ActiveRecord
     {
         $history = new self();
         $history->lid_id = $lid->id;
+        $history->organization_id = $lid->organization_id;
         $history->type = self::TYPE_CREATED;
         $history->comment = 'Лид создан';
         return $history->save();

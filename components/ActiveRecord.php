@@ -20,13 +20,13 @@ class ActiveRecord extends yii\db\ActiveRecord
 
         if (in_array("organization_id", $this->attributes()) && $this->isNewRecord && empty($this->organization_id) AND Organizations::getCurrentOrganizationId()) {
             $this->organization_id = Organizations::getCurrentOrganizationId();
-        } else if (isset(\Yii::$app->user) && in_array("organization_id", $this->attributes()) && $this->isNewRecord && empty($this->organization_id) && \Yii::$app->user->can("SUPER")) {
+        } else if (\Yii::$app->has('user') && !\Yii::$app->user->isGuest && in_array("organization_id", $this->attributes()) && $this->isNewRecord && empty($this->organization_id) && \Yii::$app->user->can("SUPER")) {
             $this->organization_id = static::$ORGANIZATION_ID_DEFAULT_VALUE;
         }
 
 
         if (in_array("user_id", $this->attributes()) && $this->isNewRecord && empty($this->user_id)) {
-            $this->user_id = isset(\Yii::$app->user) ? \Yii::$app->user->id : -1;
+            $this->user_id = (\Yii::$app->has('user') && !\Yii::$app->user->isGuest) ? \Yii::$app->user->id : null;
         }
 
         return parent::beforeSave($insert);

@@ -101,7 +101,7 @@ DB_PASS=your_secure_mysql_password
 MYSQL_ROOT_PASSWORD=your_secure_root_password
 POSTGRES_PASSWORD=your_secure_postgres_password
 EVOLUTION_API_KEY=your_random_api_key_here
-EVOLUTION_SERVER_URL=https://crm.yourdomain.com/whatsapp
+EVOLUTION_SERVER_URL=https://evo.yourdomain.com
 ```
 
 **Generate secure passwords:**
@@ -206,7 +206,7 @@ docker compose exec -T mysql mysql -u root -p$MYSQL_ROOT_PASSWORD qazeducrm < qa
 | Nginx | qazeducrm-nginx | 80, 443 | `http://yourdomain.com` |
 | PHP-FPM | qazeducrm-php | 9000 | internal |
 | MySQL | qazeducrm-mysql | 3306 | internal |
-| Evolution API | qazeducrm-evolution | 8080 | `http://yourdomain.com/whatsapp/` |
+| Evolution API | qazeducrm-evolution | 8080 | `https://evo.yourdomain.com/` |
 | PostgreSQL | qazeducrm-postgres | 5432 | internal |
 | Redis | qazeducrm-redis | 6379 | internal |
 
@@ -292,13 +292,14 @@ docker compose exec php php yii cache/flush-all
 
 ### Access Evolution API
 
-- **API**: `https://yourdomain.com/whatsapp/`
-- **Swagger Docs**: `https://yourdomain.com/whatsapp/docs`
+- **API**: `https://evo.yourdomain.com/`
+- **Swagger Docs**: `https://evo.yourdomain.com/docs`
+- **Manager**: `https://evo.yourdomain.com/manager`
 
 ### Create WhatsApp instance
 
 ```bash
-curl -X POST 'https://yourdomain.com/whatsapp/instance/create' \
+curl -X POST 'https://evo.yourdomain.com/instance/create' \
   -H 'apikey: YOUR_API_KEY' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -311,7 +312,7 @@ curl -X POST 'https://yourdomain.com/whatsapp/instance/create' \
 ### Get QR code
 
 ```bash
-curl -X GET 'https://yourdomain.com/whatsapp/instance/qrcode/main' \
+curl -X GET 'https://evo.yourdomain.com/instance/qrcode/main' \
   -H 'apikey: YOUR_API_KEY'
 ```
 

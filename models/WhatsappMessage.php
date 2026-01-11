@@ -356,7 +356,7 @@ class WhatsappMessage extends ActiveRecord
 
         $this->is_read = true;
         $this->read_at = new Expression('NOW()');
-        $this->read_by = $userId ?? Yii::$app->user->id;
+        $this->read_by = $userId ?? (Yii::$app->has('user') && !Yii::$app->user->isGuest ? Yii::$app->user->id : null);
 
         return $this->save(false);
     }

@@ -130,9 +130,6 @@ NGINXEOF
 # Replace domain placeholder
 sed -i "s/DOMAIN_PLACEHOLDER/$DOMAIN/g" docker/nginx/default.conf
 
-# Update .env with domain
-sed -i "s/EVOLUTION_SERVER_URL=.*/EVOLUTION_SERVER_URL=https:\/\/$DOMAIN\/whatsapp/" .env
-
 # Start nginx
 docker compose up -d nginx
 

@@ -172,7 +172,8 @@
       "WebFetch(domain:educrm.loc)",
       "Bash(where:*)",
       "Bash(where convert:*)",
-      "Bash(npx --yes svg-to-ico:*)"
+      "Bash(npx --yes svg-to-ico:*)",
+      "Bash(sudo docker run:*)"
     ]
   }
 }
