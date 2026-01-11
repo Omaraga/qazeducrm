@@ -11,6 +11,7 @@ use app\helpers\SystemRoles;
 use app\models\Organizations;
 use app\models\search\DateSearch;
 use app\models\User;
+use app\models\services\AnalyticsService;
 use yii\filters\AccessControl;
 use yii\web\NotFoundHttpException;
 use yii\web\ForbiddenHttpException;
@@ -45,6 +46,16 @@ class ReportsController extends CrmBaseController
                         'roles' => [
                             SystemRoles::SUPER,
                             OrganizationRoles::ADMIN,
+                            OrganizationRoles::DIRECTOR,
+                            OrganizationRoles::GENERAL_DIRECTOR,
+                        ]
+                    ],
+                    // Аналитика - только директора
+                    [
+                        'actions' => ['analytics'],
+                        'allow' => true,
+                        'roles' => [
+                            SystemRoles::SUPER,
                             OrganizationRoles::DIRECTOR,
                             OrganizationRoles::GENERAL_DIRECTOR,
                         ]
@@ -206,6 +217,39 @@ class ReportsController extends CrmBaseController
             'dataArray' => $dataArray,
             'searchModel' => $searchModel,
             'type' => $searchModel->type,
+        ]);
+    }
+
+    /**
+     * Расширенная аналитика (KPI Dashboard)
+     */
+    public function actionAnalytics()
+    {
+        $analyticsService = new AnalyticsService();
+        $metrics = $analyticsService->getAllMetrics();
+
+        // Получаем имена менеджеров для отчёта по конверсии
+        $managerIds = array_column($metrics['lead_conversion_by_manager'], 'manager_id');
+        $managers = User::find()
+            ->select(['id', 'first_name', 'last_name'])
+            ->where(['id' => $managerIds])
+            ->indexBy('id')
+            ->asArray()
+            ->all();
+
+        // Получаем имена учеников для топ LTV
+        $pupilIds = array_column($metrics['ltv']['top_pupils'] ?? [], 'pupil_id');
+        $pupils = \app\models\Pupil::find()
+            ->select(['id', 'fio', 'first_name', 'last_name'])
+            ->where(['id' => $pupilIds])
+            ->indexBy('id')
+            ->asArray()
+            ->all();
+
+        return $this->render('analytics', [
+            'metrics' => $metrics,
+            'managers' => $managers,
+            'pupils' => $pupils,
         ]);
     }
 

@@ -86,6 +86,9 @@ $config = [
             'rules' => [
                 // Webhook endpoints (без авторизации)
                 'webhook/whatsapp' => 'webhook/whatsapp',
+                'telegram-webhook' => 'telegram-webhook/index',
+                'telegram-webhook/status' => 'telegram-webhook/status',
+                'telegram-webhook/set-webhook' => 'telegram-webhook/set-webhook',
 
                 // Публичные страницы
                 '' => 'landing/index',
@@ -120,6 +123,18 @@ $config = [
                 'superadmin/<controller:[\w-]+>/<action:[\w-]+>' => 'superadmin/<controller>/<action>',
                 'superadmin/<controller:[\w-]+>/<action:[\w-]+>/<id:\d+>' => 'superadmin/<controller>/<action>',
 
+                // Cabinet модуль (личный кабинет родителя) - с ID организации для брендирования
+                'cabinet' => 'cabinet/default/select-organization',
+                'cabinet/<org:\d+>' => 'cabinet/default/login',
+                'cabinet/<org:\d+>/login' => 'cabinet/default/login',
+                'cabinet/<org:\d+>/verify' => 'cabinet/default/verify',
+                'cabinet/<org:\d+>/logout' => 'cabinet/default/logout',
+                'cabinet/<org:\d+>/resend-code' => 'cabinet/default/resend-code',
+                'cabinet/<org:\d+>/check-linked' => 'cabinet/default/check-linked',
+                'cabinet/<org:\d+>/<controller:[\w-]+>' => 'cabinet/<controller>/index',
+                'cabinet/<org:\d+>/<controller:[\w-]+>/<action:[\w-]+>' => 'cabinet/<controller>/<action>',
+                'cabinet/<org:\d+>/<controller:[\w-]+>/<action:[\w-]+>/<id:\d+>' => 'cabinet/<controller>/<action>',
+
                 // Общие правила
                 '<controller:\w+-\w+|\w+>' => '<controller>',
                 '<controller:\w+-\w+|\w+>/<action:\w+-\w+|\w+>' => '<controller>/<action>',
@@ -133,6 +148,9 @@ $config = [
         ],
         'superadmin' => [
             'class' => 'app\modules\superadmin\Module',
+        ],
+        'cabinet' => [
+            'class' => 'app\modules\cabinet\Module',
         ],
     ],
     'params' => $params,

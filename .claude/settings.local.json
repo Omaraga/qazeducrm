@@ -159,7 +159,16 @@
       "WebFetch(domain:docs.stripe.com)",
       "Bash(npx playwright test:*)",
       "Bash(npx playwright:*)",
-      "Bash(copy:*)"
+      "Bash(copy:*)",
+      "Bash(wc:*)",
+      "Bash(for file in modules/superadmin/controllers/*.php)",
+      "Bash(vendor/bin/codecept run:*)",
+      "Bash(composer show:*)",
+      "Bash(if not exist \"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\web\\\\uploads\\\\docs\" mkdir \"C:\\\\xampp8\\\\htdocs\\\\qazeducrm\\\\web\\\\uploads\\\\docs\")",
+      "Bash(node tests/e2e/take-screenshots.js:*)",
+      "Bash(node tests/e2e/verify-docs.js:*)",
+      "Bash(node:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

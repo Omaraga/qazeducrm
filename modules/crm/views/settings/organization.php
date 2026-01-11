@@ -92,7 +92,20 @@ $fieldsData = [
     'default_lesson_duration' => $organization->default_lesson_duration ?? 60,
     'auto_deduct_enabled' => (bool)($organization->auto_deduct_enabled ?? false),
     'lesson_notifications_enabled' => (bool)($organization->lesson_notifications_enabled ?? true),
+    // Личный кабинет
+    'cabinet_enabled' => (bool)($organization->cabinet_enabled ?? true),
+    'cabinet_primary_color' => $organization->cabinet_primary_color ?? '#6366f1',
+    'cabinet_welcome_message' => $organization->cabinet_welcome_message ?? '',
+    'cabinet_show_balance' => (bool)($organization->cabinet_show_balance ?? true),
+    'cabinet_show_schedule' => (bool)($organization->cabinet_show_schedule ?? true),
+    'cabinet_show_attendance' => (bool)($organization->cabinet_show_attendance ?? true),
+    'cabinet_show_payments' => (bool)($organization->cabinet_show_payments ?? true),
+    'cabinet_show_homework' => (bool)($organization->cabinet_show_homework ?? true),
+    'cabinet_footer_text' => $organization->cabinet_footer_text ?? '',
 ];
+
+// Ссылка на кабинет
+$cabinetUrl = Yii::$app->urlManager->createAbsoluteUrl(['/cabinet/default/login', 'org' => $organization->id]);
 ?>
 
 <div class="space-y-6" x-data="organizationSettings()">
@@ -122,35 +135,6 @@ $fieldsData = [
                 <h1 class="text-2xl font-bold text-gray-900"><?= Html::encode($this->title) ?></h1>
                 <p class="text-gray-500 mt-1">Общие настройки вашей организации</p>
             </div>
-        </div>
-        <!-- Статус сохранения -->
-        <div x-show="saveStatus" x-transition class="flex items-center gap-2 text-sm px-3 py-1.5 rounded-full"
-             :class="{
-                'bg-gray-100 text-gray-600': saveStatus === 'saving',
-                'bg-success-100 text-success-700': saveStatus === 'success',
-                'bg-danger-100 text-danger-700': saveStatus === 'error'
-             }">
-            <template x-if="saveStatus === 'saving'">
-                <span class="flex items-center gap-2">
-                    <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Сохранение...
-                </span>
-            </template>
-            <template x-if="saveStatus === 'success'">
-                <span class="flex items-center gap-2">
-                    <?= Icon::show('check', 'sm') ?>
-                    Сохранено
-                </span>
-            </template>
-            <template x-if="saveStatus === 'error'">
-                <span class="flex items-center gap-2">
-                    <?= Icon::show('x-mark', 'sm') ?>
-                    Ошибка
-                </span>
-            </template>
         </div>
     </div>
 
@@ -559,6 +543,224 @@ $fieldsData = [
             </div>
         </div>
     </div>
+
+    <!-- Группа 6: Личный кабинет родителя -->
+    <div class="card">
+        <div class="card-header border-b border-gray-200">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                    <?= Icon::show('device-phone-mobile', 'md', 'text-white') ?>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-lg font-semibold text-gray-900">Личный кабинет родителя</h2>
+                    <p class="text-sm text-gray-500">Настройки мобильного кабинета для родителей</p>
+                </div>
+                <!-- Ссылка на кабинет -->
+                <div class="hidden sm:block">
+                    <a href="<?= $cabinetUrl ?>" target="_blank"
+                       class="btn btn-outline btn-sm flex items-center gap-2">
+                        <?= Icon::show('arrow-top-right-on-square', 'sm') ?>
+                        Открыть кабинет
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <!-- Включение кабинета -->
+            <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50/50 to-purple-50/50">
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-medium text-gray-900">Личный кабинет включен</div>
+                        <p class="text-sm text-gray-500 mt-0.5">Родители смогут входить в кабинет по номеру телефона</p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <div class="inline-flex rounded-lg border border-gray-200 p-0.5 bg-gray-100">
+                            <button type="button"
+                                    @click="saveField('cabinet_enabled', false); fields.cabinet_enabled = false"
+                                    class="px-3 py-1 text-xs font-medium rounded-md transition-all duration-150"
+                                    :class="!fields.cabinet_enabled
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'">
+                                Выкл
+                            </button>
+                            <button type="button"
+                                    @click="saveField('cabinet_enabled', true); fields.cabinet_enabled = true"
+                                    class="px-3 py-1 text-xs font-medium rounded-md transition-all duration-150"
+                                    :class="fields.cabinet_enabled
+                                        ? 'bg-primary-600 text-white shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'">
+                                Вкл
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ссылка на кабинет -->
+            <div class="px-6 py-4 border-b border-gray-100" x-data="{ copied: false }">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-medium text-gray-900 mb-1">Ссылка для родителей</div>
+                        <div class="flex items-center gap-2">
+                            <input type="text" readonly
+                                   class="form-input text-sm bg-gray-50 flex-1"
+                                   value="<?= Html::encode($cabinetUrl) ?>"
+                                   x-ref="cabinetUrlInput">
+                            <button type="button"
+                                    @click="navigator.clipboard.writeText($refs.cabinetUrlInput.value); copied = true; setTimeout(() => copied = false, 2000)"
+                                    class="btn btn-secondary btn-sm whitespace-nowrap">
+                                <template x-if="!copied">
+                                    <span class="flex items-center gap-1">
+                                        <?= Icon::show('copy', 'sm') ?>
+                                        Копировать
+                                    </span>
+                                </template>
+                                <template x-if="copied">
+                                    <span class="flex items-center gap-1 text-green-600">
+                                        <?= Icon::show('check', 'sm') ?>
+                                        Скопировано
+                                    </span>
+                                </template>
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">Поделитесь этой ссылкой с родителями учеников</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Основной цвет -->
+            <div class="px-6 py-4 border-b border-gray-100">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-medium text-gray-900">Основной цвет</div>
+                        <p class="text-sm text-gray-500 mt-0.5">Цвет кнопок и акцентов в кабинете</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <!-- Предустановленные цвета -->
+                        <div class="flex gap-2">
+                            <?php
+                            $presetColors = [
+                                '#6366f1' => 'Индиго',
+                                '#8b5cf6' => 'Фиолетовый',
+                                '#ec4899' => 'Розовый',
+                                '#14b8a6' => 'Бирюзовый',
+                                '#22c55e' => 'Зелёный',
+                                '#f59e0b' => 'Оранжевый',
+                                '#3b82f6' => 'Синий',
+                            ];
+                            foreach ($presetColors as $color => $name): ?>
+                                <button type="button"
+                                        @click="fields.cabinet_primary_color = '<?= $color ?>'; saveField('cabinet_primary_color', '<?= $color ?>')"
+                                        class="w-8 h-8 rounded-lg border-2 transition-all hover:scale-110"
+                                        :class="fields.cabinet_primary_color === '<?= $color ?>' ? 'border-gray-900 ring-2 ring-offset-2 ring-gray-400' : 'border-transparent'"
+                                        style="background-color: <?= $color ?>"
+                                        title="<?= $name ?>">
+                                </button>
+                            <?php endforeach; ?>
+                        </div>
+                        <!-- Кастомный цвет -->
+                        <div class="relative">
+                            <input type="color"
+                                   x-model="fields.cabinet_primary_color"
+                                   @change="saveField('cabinet_primary_color', fields.cabinet_primary_color)"
+                                   class="w-8 h-8 rounded-lg cursor-pointer border border-gray-300">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Приветственное сообщение -->
+            <div class="px-6 py-4 border-b border-gray-100">
+                <div class="flex flex-col gap-2">
+                    <div class="text-sm font-medium text-gray-900">Приветственное сообщение</div>
+                    <input type="text" class="form-input w-full"
+                           x-model="fields.cabinet_welcome_message"
+                           @blur="saveField('cabinet_welcome_message', fields.cabinet_welcome_message)"
+                           placeholder="Добро пожаловать в личный кабинет!">
+                    <p class="text-sm text-gray-500">Показывается на главной странице кабинета (необязательно)</p>
+                </div>
+            </div>
+
+            <!-- Разделы кабинета -->
+            <div class="px-6 py-4 border-b border-gray-100">
+                <div class="text-sm font-medium text-gray-900 mb-4">Разделы кабинета</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Баланс -->
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                           :class="fields.cabinet_show_balance ? 'border-primary-300 bg-primary-50' : ''">
+                        <input type="checkbox" class="form-checkbox"
+                               x-model="fields.cabinet_show_balance"
+                               @change="saveField('cabinet_show_balance', fields.cabinet_show_balance)">
+                        <div class="flex items-center gap-2">
+                            <?= Icon::show('banknotes', 'sm', 'text-green-600') ?>
+                            <span class="text-sm font-medium text-gray-900">Баланс</span>
+                        </div>
+                    </label>
+
+                    <!-- Расписание -->
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                           :class="fields.cabinet_show_schedule ? 'border-primary-300 bg-primary-50' : ''">
+                        <input type="checkbox" class="form-checkbox"
+                               x-model="fields.cabinet_show_schedule"
+                               @change="saveField('cabinet_show_schedule', fields.cabinet_show_schedule)">
+                        <div class="flex items-center gap-2">
+                            <?= Icon::show('calendar', 'sm', 'text-indigo-600') ?>
+                            <span class="text-sm font-medium text-gray-900">Расписание</span>
+                        </div>
+                    </label>
+
+                    <!-- Посещаемость -->
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                           :class="fields.cabinet_show_attendance ? 'border-primary-300 bg-primary-50' : ''">
+                        <input type="checkbox" class="form-checkbox"
+                               x-model="fields.cabinet_show_attendance"
+                               @change="saveField('cabinet_show_attendance', fields.cabinet_show_attendance)">
+                        <div class="flex items-center gap-2">
+                            <?= Icon::show('check-circle', 'sm', 'text-purple-600') ?>
+                            <span class="text-sm font-medium text-gray-900">Посещаемость</span>
+                        </div>
+                    </label>
+
+                    <!-- Платежи -->
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                           :class="fields.cabinet_show_payments ? 'border-primary-300 bg-primary-50' : ''">
+                        <input type="checkbox" class="form-checkbox"
+                               x-model="fields.cabinet_show_payments"
+                               @change="saveField('cabinet_show_payments', fields.cabinet_show_payments)">
+                        <div class="flex items-center gap-2">
+                            <?= Icon::show('wallet', 'sm', 'text-amber-600') ?>
+                            <span class="text-sm font-medium text-gray-900">Платежи</span>
+                        </div>
+                    </label>
+
+                    <!-- Домашние задания -->
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                           :class="fields.cabinet_show_homework ? 'border-primary-300 bg-primary-50' : ''">
+                        <input type="checkbox" class="form-checkbox"
+                               x-model="fields.cabinet_show_homework"
+                               @change="saveField('cabinet_show_homework', fields.cabinet_show_homework)">
+                        <div class="flex items-center gap-2">
+                            <?= Icon::show('book-open', 'sm', 'text-rose-600') ?>
+                            <span class="text-sm font-medium text-gray-900">Домашние задания</span>
+                        </div>
+                    </label>
+                </div>
+                <p class="text-sm text-gray-500 mt-3">Выберите, какие разделы будут доступны родителям</p>
+            </div>
+
+            <!-- Текст в подвале -->
+            <div class="px-6 py-4">
+                <div class="flex flex-col gap-2">
+                    <div class="text-sm font-medium text-gray-900">Текст в подвале</div>
+                    <input type="text" class="form-input w-full"
+                           x-model="fields.cabinet_footer_text"
+                           @blur="saveField('cabinet_footer_text', fields.cabinet_footer_text)"
+                           placeholder="© 2024 Ваша организация. Все права защищены.">
+                    <p class="text-sm text-gray-500">Отображается внизу страницы входа (необязательно)</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -566,12 +768,8 @@ function organizationSettings() {
     return {
         fields: <?= Json::encode($fieldsData) ?>,
         logoUrl: <?= Json::encode($organization->logo) ?>,
-        saveStatus: null,
-        saveTimeout: null,
 
         async saveField(field, value) {
-            this.saveStatus = 'saving';
-
             try {
                 const response = await fetch('<?= $saveUrl ?>', {
                     method: 'POST',
@@ -589,25 +787,14 @@ function organizationSettings() {
                 const data = await response.json();
 
                 if (data.success) {
-                    this.saveStatus = 'success';
+                    toastr.success('Сохранено');
                 } else {
-                    this.saveStatus = 'error';
-                    if (typeof Alpine !== 'undefined' && Alpine.store('toast')) {
-                        Alpine.store('toast').error(data.message || 'Ошибка сохранения');
-                    }
+                    toastr.error(data.message || 'Ошибка сохранения');
                 }
             } catch (error) {
                 console.error('Error saving field:', error);
-                this.saveStatus = 'error';
-                if (typeof Alpine !== 'undefined' && Alpine.store('toast')) {
-                    Alpine.store('toast').error('Ошибка сети');
-                }
+                toastr.error('Ошибка сети');
             }
-
-            clearTimeout(this.saveTimeout);
-            this.saveTimeout = setTimeout(() => {
-                this.saveStatus = null;
-            }, 2000);
         },
 
         toggleWorkingDay(day) {
@@ -631,8 +818,6 @@ function organizationSettings() {
             const file = event.target.files[0];
             if (!file) return;
 
-            this.saveStatus = 'saving';
-
             const formData = new FormData();
             formData.append('logo', file);
             formData.append('<?= Yii::$app->request->csrfParam ?>', '<?= Yii::$app->request->csrfToken ?>');
@@ -646,29 +831,14 @@ function organizationSettings() {
 
                 if (data.success) {
                     this.logoUrl = data.url;
-                    this.saveStatus = 'success';
+                    toastr.success('Логотип загружен');
                 } else {
-                    this.saveStatus = 'error';
-                    if (typeof Alpine !== 'undefined' && Alpine.store('toast')) {
-                        Alpine.store('toast').error(data.message || 'Ошибка загрузки');
-                    } else {
-                        alert(data.message);
-                    }
+                    toastr.error(data.message || 'Ошибка загрузки');
                 }
             } catch (error) {
                 console.error('Error uploading logo:', error);
-                this.saveStatus = 'error';
-                if (typeof Alpine !== 'undefined' && Alpine.store('toast')) {
-                    Alpine.store('toast').error('Ошибка загрузки');
-                } else {
-                    alert('Ошибка загрузки');
-                }
+                toastr.error('Ошибка загрузки');
             }
-
-            clearTimeout(this.saveTimeout);
-            this.saveTimeout = setTimeout(() => {
-                this.saveStatus = null;
-            }, 2000);
 
             // Очищаем input
             event.target.value = '';
@@ -676,8 +846,6 @@ function organizationSettings() {
 
         async deleteLogo() {
             if (!confirm('Удалить логотип?')) return;
-
-            this.saveStatus = 'saving';
 
             try {
                 const response = await fetch('<?= $deleteLogoUrl ?>', {
@@ -693,19 +861,14 @@ function organizationSettings() {
 
                 if (data.success) {
                     this.logoUrl = null;
-                    this.saveStatus = 'success';
+                    toastr.success('Логотип удалён');
                 } else {
-                    this.saveStatus = 'error';
+                    toastr.error('Ошибка удаления');
                 }
             } catch (error) {
                 console.error('Error deleting logo:', error);
-                this.saveStatus = 'error';
+                toastr.error('Ошибка удаления');
             }
-
-            clearTimeout(this.saveTimeout);
-            this.saveTimeout = setTimeout(() => {
-                this.saveStatus = null;
-            }, 2000);
         }
     };
 }

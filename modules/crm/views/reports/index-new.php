@@ -23,6 +23,12 @@ $this->params['breadcrumbs'][] = $this->title;
                 <p class="text-gray-500 mt-1">Аналитика и статистика вашей организации</p>
             </div>
             <div class="flex gap-2">
+                <?php if (\app\helpers\RoleChecker::isDirector()): ?>
+                <a href="<?= OrganizationUrl::to(['reports/analytics']) ?>" class="btn btn-primary">
+                    <?= Icon::show('chart', 'sm') ?>
+                    KPI Аналитика
+                </a>
+                <?php endif; ?>
                 <a href="<?= OrganizationUrl::to(['reports/day']) ?>" class="btn btn-outline">
                     <?= Icon::show('calendar', 'sm') ?>
                     Дневной отчет

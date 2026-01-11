@@ -100,6 +100,17 @@ class Organizations extends ActiveRecord
             'default_lesson_duration',      // Продолжительность занятия: 30, 45, 60, 90, 120
             'auto_deduct_enabled',          // Автоматическое списание за занятия
             'lesson_notifications_enabled', // Уведомления о занятиях
+
+            // Личный кабинет родителя
+            'cabinet_enabled',              // Включен ли личный кабинет: true/false
+            'cabinet_primary_color',        // Основной цвет кабинета: hex (#6366f1)
+            'cabinet_welcome_message',      // Приветственное сообщение на главной
+            'cabinet_show_balance',         // Показывать баланс: true/false
+            'cabinet_show_schedule',        // Показывать расписание: true/false
+            'cabinet_show_attendance',      // Показывать посещаемость: true/false
+            'cabinet_show_payments',        // Показывать платежи: true/false
+            'cabinet_show_homework',        // Показывать домашние задания: true/false
+            'cabinet_footer_text',          // Текст в подвале кабинета
         ];
     }
 

@@ -171,6 +171,10 @@ class SettingsController extends CrmBaseController
             'currency', 'date_format',
             'work_hours_start', 'work_hours_end', 'working_days', 'first_day_of_week',
             'default_lesson_duration', 'auto_deduct_enabled', 'lesson_notifications_enabled',
+            // Личный кабинет
+            'cabinet_enabled', 'cabinet_primary_color', 'cabinet_welcome_message',
+            'cabinet_show_balance', 'cabinet_show_schedule', 'cabinet_show_attendance',
+            'cabinet_show_payments', 'cabinet_show_homework', 'cabinet_footer_text',
         ];
 
         $allowedFields = array_merge($dbFields, $infoFields);
@@ -182,7 +186,12 @@ class SettingsController extends CrmBaseController
         $organization = Organizations::getCurrentOrganization();
 
         // Декодируем JSON если это массив или boolean
-        if (is_string($value) && in_array($field, ['working_days', 'auto_deduct_enabled', 'lesson_notifications_enabled'])) {
+        $booleanFields = [
+            'working_days', 'auto_deduct_enabled', 'lesson_notifications_enabled',
+            'cabinet_enabled', 'cabinet_show_balance', 'cabinet_show_schedule',
+            'cabinet_show_attendance', 'cabinet_show_payments', 'cabinet_show_homework',
+        ];
+        if (is_string($value) && in_array($field, $booleanFields)) {
             $decoded = json_decode($value, true);
             if (json_last_error() === JSON_ERROR_NONE) {
                 $value = $decoded;

@@ -9,7 +9,7 @@ use app\helpers\OrganizationRoles;
 use app\models\Lesson;
 use app\models\LessonAttendance;
 use app\models\User;
-use app\models\TeacherGroup;
+use app\models\relations\TeacherGroup;
 use app\models\PupilEducation;
 use app\models\Tariff;
 use app\models\Organizations;

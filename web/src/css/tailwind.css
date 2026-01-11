@@ -955,6 +955,512 @@
       @apply hidden;
     }
   }
+
+  /* ========== iOS/APPLE STYLE COMPONENTS (Cabinet Module) ========== */
+
+  /* iOS-style Glass Card with blur */
+  .card-glass {
+    @apply bg-white/80 rounded-2xl;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+
+  .card-glass-solid {
+    @apply bg-white rounded-2xl;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+
+  /* iOS-style Buttons - each fully self-contained for Tailwind v4 */
+  .btn-ios-primary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-3 font-semibold rounded-xl transition-all duration-200 text-white;
+    min-height: 44px;
+    min-width: 44px;
+    background: linear-gradient(to bottom, #6366f1, #4f46e5);
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+  }
+
+  .btn-ios-primary:hover {
+    background: linear-gradient(to bottom, #4f46e5, #4338ca);
+  }
+
+  .btn-ios-primary:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+  }
+
+  .btn-ios-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-3 font-semibold rounded-xl transition-all duration-200 bg-gray-100 text-gray-900;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .btn-ios-secondary:hover {
+    @apply bg-gray-200;
+  }
+
+  .btn-ios-secondary:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+  }
+
+  .btn-ios-danger {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-3 font-semibold rounded-xl transition-all duration-200 text-white;
+    min-height: 44px;
+    min-width: 44px;
+    background: linear-gradient(to bottom, #ef4444, #dc2626);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  }
+
+  .btn-ios-danger:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+  }
+
+  .btn-ios-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-3 font-semibold rounded-xl transition-all duration-200 bg-transparent text-indigo-600;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .btn-ios-ghost:hover {
+    @apply bg-indigo-50;
+  }
+
+  .btn-ios-ghost:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+  }
+
+  /* iOS-style Header with blur */
+  .header-ios {
+    @apply sticky top-0 z-50 bg-white/80;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .header-ios-gradient {
+    @apply sticky top-0 z-50;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #7c3aed 100%);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* iOS-style Bottom Navigation */
+  .bottom-nav-ios {
+    @apply fixed bottom-0 left-0 right-0 z-50 bg-white/90;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .bottom-nav-item {
+    @apply flex flex-col items-center justify-center py-2 px-3 flex-1 transition-colors;
+    min-height: 50px;
+  }
+
+  .bottom-nav-item .nav-icon {
+    @apply w-6 h-6 mb-0.5 text-gray-400 transition-colors;
+  }
+
+  .bottom-nav-item .nav-label {
+    @apply text-[10px] font-medium text-gray-400 transition-colors;
+  }
+
+  .bottom-nav-item.active .nav-icon {
+    @apply text-indigo-600;
+  }
+
+  .bottom-nav-item.active .nav-label {
+    @apply text-indigo-600;
+  }
+
+  .bottom-nav-item:active {
+    @apply bg-gray-100/50;
+  }
+
+  /* iOS-style Segment Control */
+  .segment-control {
+    @apply inline-flex p-1 rounded-xl bg-gray-100;
+  }
+
+  .segment-item {
+    @apply px-4 py-2 text-sm font-medium rounded-lg transition-all text-gray-600;
+    min-height: 32px;
+  }
+
+  .segment-item:hover:not(.active) {
+    @apply text-gray-900;
+  }
+
+  .segment-item.active {
+    @apply bg-white text-gray-900;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  /* iOS-style List Items */
+  .list-item-ios {
+    @apply flex items-center gap-4 px-4 py-3 bg-white transition-colors;
+    min-height: 56px;
+  }
+
+  .list-item-ios:not(:last-child) {
+    @apply border-b border-gray-100;
+  }
+
+  .list-item-ios:active {
+    @apply bg-gray-100;
+  }
+
+  .list-group-ios {
+    @apply rounded-2xl overflow-hidden bg-white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+
+  /* iOS-style Touch Target (minimum 44x44px) */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    @apply flex items-center justify-center;
+  }
+
+  /* iOS-style Input */
+  .input-ios {
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-base transition-all;
+    min-height: 48px;
+  }
+
+  .input-ios:focus {
+    @apply border-indigo-500 bg-white ring-2 ring-indigo-100 outline-none;
+  }
+
+  .input-ios::placeholder {
+    @apply text-gray-400;
+  }
+
+  /* iOS-style Stats Card */
+  .stat-ios {
+    @apply text-center p-4;
+  }
+
+  .stat-ios-value {
+    @apply text-3xl font-bold text-gray-900;
+  }
+
+  .stat-ios-label {
+    @apply text-xs text-gray-500 mt-1;
+  }
+
+  /* iOS-style Badge/Pill - self-contained for Tailwind v4 */
+  .badge-ios {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-ios-success {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700;
+  }
+
+  .badge-ios-danger {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700;
+  }
+
+  .badge-ios-warning {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700;
+  }
+
+  .badge-ios-info {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700;
+  }
+
+  .badge-ios-gray {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700;
+  }
+
+  /* iOS-style Avatar - self-contained for Tailwind v4 */
+  .avatar-ios-sm {
+    @apply rounded-full flex items-center justify-center font-semibold text-white w-8 h-8 text-xs;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  }
+
+  .avatar-ios-md {
+    @apply rounded-full flex items-center justify-center font-semibold text-white w-10 h-10 text-sm;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  }
+
+  .avatar-ios-lg {
+    @apply rounded-full flex items-center justify-center font-semibold text-white w-12 h-12 text-base;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  }
+
+  .avatar-ios-xl {
+    @apply rounded-full flex items-center justify-center font-semibold text-white w-16 h-16 text-xl;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  }
+
+  /* iOS-style Quick Action Card */
+  .quick-action-ios {
+    @apply flex flex-col items-center justify-center p-4 bg-white rounded-2xl transition-all;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+
+  .quick-action-ios:active {
+    transform: scale(0.96);
+    @apply bg-gray-50;
+  }
+
+  .quick-action-ios-icon {
+    @apply w-12 h-12 rounded-2xl flex items-center justify-center mb-2;
+  }
+
+  .quick-action-ios-label {
+    @apply text-xs font-medium text-gray-700;
+  }
+
+  /* iOS-style Divider */
+  .divider-ios {
+    @apply h-px bg-gray-200 my-4;
+  }
+
+  .divider-ios-inset {
+    @apply h-px bg-gray-200 my-0 ml-16;
+  }
+
+  /* iOS-style Empty State */
+  .empty-ios {
+    @apply flex flex-col items-center justify-center py-12 text-center;
+  }
+
+  .empty-ios-icon {
+    @apply w-16 h-16 text-gray-300 mb-4;
+  }
+
+  .empty-ios-title {
+    @apply text-lg font-semibold text-gray-900 mb-2;
+  }
+
+  .empty-ios-text {
+    @apply text-sm text-gray-500;
+  }
+
+  /* Safe Area Utilities */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-area-padding {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 70px);
+  }
+
+  /* Pull-to-refresh indicator style */
+  .pull-indicator {
+    @apply flex items-center justify-center py-4 text-gray-400;
+  }
+
+  /* iOS-style Section Header */
+  .section-header-ios {
+    @apply px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50;
+  }
+
+  /* iOS-style Alert Card - self-contained for Tailwind v4 */
+  .alert-ios-success {
+    @apply p-4 rounded-2xl flex items-start gap-3 bg-green-50 text-green-800;
+  }
+
+  .alert-ios-danger {
+    @apply p-4 rounded-2xl flex items-start gap-3 bg-red-50 text-red-800;
+  }
+
+  .alert-ios-warning {
+    @apply p-4 rounded-2xl flex items-start gap-3 bg-amber-50 text-amber-800;
+  }
+
+  .alert-ios-info {
+    @apply p-4 rounded-2xl flex items-start gap-3 bg-blue-50 text-blue-800;
+  }
+
+  /* iOS-style Progress Ring */
+  .progress-ring-ios {
+    @apply relative inline-flex items-center justify-center;
+  }
+
+  .progress-ring-ios svg {
+    transform: rotate(-90deg);
+  }
+
+  .progress-ring-ios-value {
+    @apply absolute text-lg font-bold text-gray-900;
+  }
+
+  /* ========== DESKTOP ENHANCEMENTS (Cabinet Module) ========== */
+
+  /* Desktop sidebar navigation */
+  .desktop-sidebar {
+    @apply hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:w-64 lg:flex-col;
+    @apply bg-white border-r border-gray-200;
+  }
+
+  .desktop-sidebar-brand {
+    @apply flex items-center gap-3 px-6 py-5 border-b border-gray-100;
+  }
+
+  .desktop-sidebar-nav {
+    @apply flex-1 overflow-y-auto py-4;
+  }
+
+  .desktop-sidebar-link {
+    @apply flex items-center gap-3 mx-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200;
+    @apply text-gray-600 hover:bg-gray-100 hover:text-gray-900;
+  }
+
+  .desktop-sidebar-link.active {
+    @apply bg-indigo-50 text-indigo-600;
+  }
+
+  .desktop-sidebar-link svg {
+    @apply w-5 h-5 flex-shrink-0;
+  }
+
+  /* Desktop content with sidebar offset */
+  .desktop-content-with-sidebar {
+    @apply lg:ml-64;
+  }
+
+  /* Desktop card grid layouts */
+  .pupil-cards-grid {
+    @apply grid gap-5;
+    @apply grid-cols-1 lg:grid-cols-2;
+  }
+
+  .stats-grid-desktop {
+    @apply grid gap-4;
+    @apply grid-cols-2 sm:grid-cols-3 lg:grid-cols-4;
+  }
+
+  .quick-actions-grid {
+    @apply grid gap-3;
+    @apply grid-cols-3 sm:grid-cols-4 lg:grid-cols-6;
+  }
+
+  /* Desktop-specific list item with hover effect */
+  .list-item-ios-desktop {
+    @apply flex items-center gap-4 px-4 py-3 bg-white transition-all duration-200;
+    min-height: 56px;
+  }
+
+  .list-item-ios-desktop:not(:last-child) {
+    @apply border-b border-gray-100;
+  }
+
+  .list-item-ios-desktop:hover {
+    @apply bg-gray-50;
+  }
+
+  .list-item-ios-desktop:active {
+    @apply bg-gray-100;
+  }
+
+  /* Desktop card with hover shadow */
+  .card-glass-solid-desktop {
+    @apply bg-white rounded-2xl transition-all duration-200;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+
+  .card-glass-solid-desktop:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+    transform: translateY(-2px);
+  }
+
+  /* Desktop quick action with hover */
+  .quick-action-ios-desktop {
+    @apply flex flex-col items-center justify-center p-4 bg-white rounded-2xl transition-all duration-200;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+
+  .quick-action-ios-desktop:hover {
+    @apply bg-gray-50;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .quick-action-ios-desktop:active {
+    transform: scale(0.98) translateY(0);
+  }
+
+  /* Desktop button with better hover states */
+  .btn-ios-primary-desktop {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-3 font-semibold rounded-xl transition-all duration-200 text-white;
+    min-height: 44px;
+    min-width: 44px;
+    background: linear-gradient(to bottom, #6366f1, #4f46e5);
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+  }
+
+  .btn-ios-primary-desktop:hover {
+    background: linear-gradient(to bottom, #4f46e5, #4338ca);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.5);
+    transform: translateY(-1px);
+  }
+
+  .btn-ios-primary-desktop:active {
+    transform: scale(0.98) translateY(0);
+    opacity: 0.95;
+  }
+
+  /* Two-column layout for desktop */
+  .desktop-two-column {
+    @apply lg:grid lg:grid-cols-3 lg:gap-8;
+  }
+
+  .desktop-main-column {
+    @apply lg:col-span-2;
+  }
+
+  .desktop-side-column {
+    @apply lg:col-span-1;
+  }
+
+  /* Desktop table improvements */
+  .table-desktop {
+    @apply hidden lg:block;
+  }
+
+  .cards-mobile {
+    @apply lg:hidden;
+  }
+
+  /* Wider container for desktop */
+  .container-desktop {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Desktop header with more spacing */
+  @media (min-width: 1024px) {
+    .header-ios {
+      @apply py-2;
+    }
+
+    .header-ios .flex {
+      @apply h-16;
+    }
+  }
+
+  /* Desktop stats with larger values */
+  @media (min-width: 1024px) {
+    .stat-ios-value {
+      @apply text-4xl;
+    }
+
+    .stat-ios-label {
+      @apply text-sm;
+    }
+  }
 }
 
 /* Utility classes */

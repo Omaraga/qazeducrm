@@ -3,10 +3,10 @@ const { test, expect } = require('@playwright/test');
 
 const BASE_URL = 'http://educrm.loc';
 
-// Test credentials - update if needed
+// Test credentials
 const TEST_USER = {
-  email: 'admin@example.com',
-  password: 'password123'
+  email: 'admin@admin.kz',
+  password: '123456789'
 };
 
 test.describe('Public Pages', () => {
@@ -77,6 +77,8 @@ test.describe('CRM Pages - No PHP Errors', () => {
       '/crm/subject',
       '/crm/tariff',
       '/crm/room',
+      '/crm/trial',
+      '/crm/homework',
     ];
 
     for (const route of routes) {
@@ -141,6 +143,126 @@ test.describe('SuperAdmin Pages', () => {
       expect(content, `Route ${route} has Compile Error`).not.toContain('Compile Error');
       expect(content, `Route ${route} has Declaration error`).not.toContain('Declaration of');
     }
+  });
+
+});
+
+// Helper function to login
+async function login(page) {
+  await page.goto(BASE_URL + '/login');
+  await page.fill('input[name="LoginForm[username]"]', TEST_USER.email);
+  await page.fill('input[name="LoginForm[password]"]', TEST_USER.password);
+  await page.click('button[name="login-button"]');
+  await page.waitForLoadState('networkidle');
+}
+
+test.describe('Trial Lessons Module', () => {
+
+  test('Trial index page loads without errors', async ({ page }) => {
+    await login(page);
+
+    // Navigate to trial lessons
+    await page.goto(BASE_URL + '/1/trial');
+    const content = await page.content();
+
+    expect(content).not.toContain('Fatal error');
+    expect(content).not.toContain('ErrorException');
+    expect(content).not.toContain('Class "yii\\bootstrap5');
+    expect(content).toContain('Пробные занятия');
+  });
+
+  test('Trial create page loads without errors', async ({ page }) => {
+    await login(page);
+
+    await page.goto(BASE_URL + '/1/trial/create');
+    const content = await page.content();
+
+    expect(content).not.toContain('Fatal error');
+    expect(content).not.toContain('ErrorException');
+    expect(content).not.toContain('Class "yii\\bootstrap5');
+  });
+
+  test('Trial index shows statistics', async ({ page }) => {
+    await login(page);
+
+    await page.goto(BASE_URL + '/1/trial');
+
+    // Check that statistics are displayed (use specific selector to avoid dropdown options)
+    await expect(page.locator('.text-xs.uppercase:has-text("Всего")')).toBeVisible();
+    await expect(page.locator('.text-xs.uppercase:has-text("Проведено")')).toBeVisible();
+    await expect(page.locator('.text-xs.uppercase:has-text("Конвертировано")')).toBeVisible();
+  });
+
+  test('Trial filter form works', async ({ page }) => {
+    await login(page);
+
+    await page.goto(BASE_URL + '/1/trial');
+
+    // Check filter form elements exist
+    await expect(page.locator('select[name="TrialLessonSearch[status]"]')).toBeVisible();
+    await expect(page.locator('input[name="TrialLessonSearch[date_from]"]')).toBeVisible();
+  });
+
+});
+
+test.describe('Homework Module', () => {
+
+  test('Homework index page loads without errors', async ({ page }) => {
+    await login(page);
+
+    await page.goto(BASE_URL + '/1/homework');
+    const content = await page.content();
+
+    expect(content).not.toContain('Fatal error');
+    expect(content).not.toContain('ErrorException');
+    expect(content).not.toContain('Class "yii\\bootstrap5');
+    expect(content).toContain('Домашние задания');
+  });
+
+  test('Homework create page loads without errors', async ({ page }) => {
+    await login(page);
+
+    await page.goto(BASE_URL + '/1/homework/create');
+    const content = await page.content();
+
+    expect(content).not.toContain('Fatal error');
+    expect(content).not.toContain('ErrorException');
+    expect(content).not.toContain('Class "yii\\bootstrap5');
+    expect(content).toContain('Создать');
+  });
+
+  test('Homework create form has required fields', async ({ page }) => {
+    await login(page);
+
+    await page.goto(BASE_URL + '/1/homework/create');
+
+    // Check form elements
+    await expect(page.locator('select[name="Homework[group_id]"]')).toBeVisible();
+    await expect(page.locator('input[name="Homework[title]"]')).toBeVisible();
+    await expect(page.locator('input[name="Homework[due_date]"]')).toBeVisible();
+  });
+
+  test('Homework filter form works', async ({ page }) => {
+    await login(page);
+
+    await page.goto(BASE_URL + '/1/homework');
+
+    // Check filter form elements exist
+    await expect(page.locator('select[name="HomeworkSearch[status]"]')).toBeVisible();
+  });
+
+});
+
+test.describe('Reports Analytics Page', () => {
+
+  test('Analytics page loads without errors', async ({ page }) => {
+    await login(page);
+
+    await page.goto(BASE_URL + '/1/reports/analytics');
+    const content = await page.content();
+
+    expect(content).not.toContain('Fatal error');
+    expect(content).not.toContain('ErrorException');
   });
 
 });

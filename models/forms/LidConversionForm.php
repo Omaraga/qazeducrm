@@ -3,6 +3,7 @@
 namespace app\models\forms;
 
 use app\models\relations\EducationGroup;
+use app\models\enum\StatusEnum;
 use app\models\Lids;
 use app\models\LidHistory;
 use app\models\Organizations;
@@ -360,7 +361,7 @@ class LidConversionForm extends Model
         $query = Group::find()
             ->byOrganization()
             ->notDeleted()
-            ->andWhere(['status' => Group::STATUS_ACTIVE]);
+            ->andWhere(['status' => StatusEnum::STATUS_ACTIVE]);
 
         // TODO: Фильтровать группы по предметам тарифа если нужно
 

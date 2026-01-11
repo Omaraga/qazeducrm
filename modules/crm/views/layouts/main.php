@@ -54,8 +54,10 @@ $menuConfig = [
                     ['label' => 'Скрипты продаж', 'url' => ['/crm/sales-script/index']],
                 ],
             ],
+            ['label' => 'Пробные занятия', 'icon' => 'star', 'url' => ['/crm/trial/index'], 'controller' => 'trial', 'visible' => $isAdminOrHigher],
             ['label' => 'Ученики', 'icon' => 'users', 'url' => ['/crm/pupil/index'], 'controller' => 'pupil', 'visible' => $isAdminOrHigher],
             ['label' => 'Группы', 'icon' => 'group', 'url' => ['/crm/group/index'], 'controller' => 'group', 'visible' => $isAdminOrHigher],
+            ['label' => 'Домашние задания', 'icon' => 'clipboard-document-list', 'url' => ['/crm/homework/index'], 'controller' => 'homework', 'visible' => $isAdminOrHigher || $isTeacherOnly],
             ['label' => 'Шаблоны расписания', 'icon' => 'template', 'url' => ['/crm/schedule-template/index'], 'controller' => 'schedule-template', 'visible' => $isAdminOrHigher],
             ['label' => 'Платежи', 'icon' => 'payment', 'url' => ['/crm/payment/index'], 'controller' => 'payment', 'visible' => $hasFinanceAccess],
             // Зарплаты - для админов и выше (полный список)
@@ -82,6 +84,7 @@ $menuConfig = [
                 'controller' => 'reports',
                 'items' => [
                     ['label' => 'Все отчёты', 'url' => ['/crm/reports/index']],
+                    ['label' => 'KPI Dashboard', 'url' => ['/crm/reports/analytics'], 'visible' => $isDirector],
                     // Финансовые отчёты - только для директоров
                     ['label' => '─── Финансы ───', 'header' => true, 'visible' => $hasFinanceAccess],
                     ['label' => 'Доходы', 'url' => ['/crm/reports/view', 'type' => 'finance-income'], 'visible' => $hasFinanceAccess],
@@ -137,6 +140,8 @@ $menuConfig = [
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <?php $this->registerCsrfMetaTags() ?>
     <title><?= Html::encode($this->title) ?> — Qazaq Education CRM</title>
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <?php $this->head() ?>
 </head>
 <body class="h-full bg-gray-50 font-sans antialiased" x-data="{
@@ -419,6 +424,24 @@ endforeach;
 <?= ConfirmModal::widget() ?>
 
 <?= WhatsappWidget::widget() ?>
+
+<!-- jQuery (required for Toastr) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<!-- Toastr JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script>
+    toastr.options = {
+        closeButton: true,
+        progressBar: true,
+        positionClass: 'toast-bottom-right',
+        timeOut: 3000,
+        extendedTimeOut: 1000,
+        showEasing: 'swing',
+        hideEasing: 'linear',
+        showMethod: 'fadeIn',
+        hideMethod: 'fadeOut'
+    };
+</script>
 
 <?php $this->endBody() ?>
 </body>
