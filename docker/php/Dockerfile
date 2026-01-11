@@ -11,7 +11,8 @@ RUN apk add --no-cache \
     libxml2-dev \
     git \
     unzip \
-    bash
+    bash \
+    mysql-client
 
 # Configure and install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -47,12 +48,15 @@ RUN echo "opcache.enable=1" > /usr/local/etc/php/conf.d/opcache.ini \
 # Set working directory
 WORKDIR /var/www/html
 
+# Copy entrypoint script
+COPY docker/php/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Create runtime directories with proper permissions
 RUN mkdir -p /var/www/html/runtime /var/www/html/web/assets \
     && chown -R www-data:www-data /var/www/html
 
-USER www-data
-
 EXPOSE 9000
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["php-fpm"]
