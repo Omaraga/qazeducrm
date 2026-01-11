@@ -3,7 +3,7 @@
 return [
     'adminEmail' => 'admin@example.com',
     'senderEmail' => 'noreply@example.com',
-    'senderName' => 'Example.com mailer',
+    'senderName' => 'Education CRM',
     'bsVersion' => '4.x',
 
     // Telegram Bot для авторизации в личном кабинете
@@ -16,11 +16,9 @@ return [
     // WhatsApp интеграция (Evolution API)
     'whatsapp' => [
         'apiUrl' => getenv('EVOLUTION_API_URL') ?: 'http://evolution-api:8080',
-        'apiKey' => getenv('EVOLUTION_API_KEY') ?: 'e3c45966ae4a13d15a1d580fa9e5468786c4d347b1a1065eb282f532814767e6',
+        'apiKey' => getenv('EVOLUTION_API_KEY') ?: 'qazeducrm-dev-api-key-2025',
         // Webhook URL (куда Evolution API будет слать события)
-        // ВАЖНО: Используем /webhook/whatsapp (WebhookController без авторизации),
-        // а не /1/whatsapp/webhook (CRM модуль с авторизацией)
-        'webhookUrl' => 'http://nginx/webhook/whatsapp',
+        'webhookUrl' => 'http://nginx/1/whatsapp/webhook',
         'webhookHost' => 'crm.qazaq.education',
         'autoCreateLids' => true, // Автоматически создавать лидов из новых контактов
     ],
