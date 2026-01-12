@@ -3,138 +3,123 @@
 # ===========================================
 # SSL Setup Script using Let's Encrypt
 # ===========================================
+# This script obtains SSL certificates for domains
+# without overwriting the nginx configuration.
+#
+# Usage:
+#   ./ssl-setup.sh crm.qazaq.education
+#   ./ssl-setup.sh crm.education
+#   ./ssl-setup.sh evo.qazaq.education
+#
+# The nginx config should already have server blocks
+# configured for the domain with correct SSL paths.
+# ===========================================
 
 set -e
 
 DOMAIN=$1
+EMAIL=${2:-"admin@qazaq.education"}
 
 if [ -z "$DOMAIN" ]; then
-    echo "Usage: ./ssl-setup.sh yourdomain.com"
+    echo "Usage: ./ssl-setup.sh domain.com [email@example.com]"
+    echo ""
+    echo "Examples:"
+    echo "  ./ssl-setup.sh crm.qazaq.education"
+    echo "  ./ssl-setup.sh crm.education admin@crm.education"
     exit 1
 fi
 
 # Colors
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${YELLOW}Setting up SSL for ${DOMAIN}...${NC}"
+echo -e "${YELLOW}Setting up SSL certificate for ${DOMAIN}...${NC}"
 
-# Install certbot
-if ! command -v certbot &> /dev/null; then
-    apt-get update
-    apt-get install -y certbot
+# Check if docker compose is running
+if ! docker compose ps | grep -q "nginx"; then
+    echo -e "${RED}Error: nginx container is not running. Start it first with 'docker compose up -d'${NC}"
+    exit 1
 fi
 
-# Stop nginx temporarily
-docker compose stop nginx
+# Create certbot webroot directory
+mkdir -p docker/nginx/ssl/live/$DOMAIN
 
-# Get certificate
-certbot certonly --standalone -d $DOMAIN --non-interactive --agree-tos --email admin@$DOMAIN
+# Create certbot webroot volume directory if needed
+docker compose exec nginx mkdir -p /var/www/certbot/.well-known/acme-challenge 2>/dev/null || true
 
-# Copy certificates to docker volume
-mkdir -p docker/nginx/ssl
-cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem docker/nginx/ssl/
-cp /etc/letsencrypt/live/$DOMAIN/privkey.pem docker/nginx/ssl/
+echo -e "${YELLOW}Obtaining certificate via webroot method...${NC}"
 
-# Create SSL nginx config
-cat > docker/nginx/default.conf << 'NGINXEOF'
-# HTTP -> HTTPS redirect
-server {
-    listen 80;
-    listen [::]:80;
-    server_name DOMAIN_PLACEHOLDER;
+# Get certificate using webroot method (nginx keeps running)
+docker run --rm \
+    -v "$(pwd)/docker/nginx/ssl:/etc/letsencrypt" \
+    -v "certbot_webroot:/var/www/certbot" \
+    certbot/certbot certonly \
+    --webroot \
+    -w /var/www/certbot \
+    -d $DOMAIN \
+    --email $EMAIL \
+    --agree-tos \
+    --non-interactive \
+    --key-type ecdsa
 
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Failed to obtain certificate. Trying standalone method...${NC}"
 
-    location / {
-        return 301 https://$host$request_uri;
-    }
-}
+    # Stop nginx temporarily
+    docker compose stop nginx
 
-# HTTPS server
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name DOMAIN_PLACEHOLDER;
+    # Get certificate using standalone method
+    docker run --rm \
+        -p 80:80 \
+        -v "$(pwd)/docker/nginx/ssl:/etc/letsencrypt" \
+        certbot/certbot certonly \
+        --standalone \
+        -d $DOMAIN \
+        --email $EMAIL \
+        --agree-tos \
+        --non-interactive \
+        --key-type ecdsa
 
-    ssl_certificate /etc/nginx/ssl/fullchain.pem;
-    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+    # Start nginx again
+    docker compose up -d nginx
+fi
 
-    # SSL configuration
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_prefer_server_ciphers on;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
+# Verify certificate was created
+if [ -f "docker/nginx/ssl/live/$DOMAIN/fullchain.pem" ]; then
+    echo -e "${GREEN}Certificate obtained successfully!${NC}"
+else
+    echo -e "${RED}Certificate files not found at expected location.${NC}"
+    exit 1
+fi
 
-    root /var/www/html/web;
-    index index.php;
+# Reload nginx to pick up new certificate
+echo -e "${YELLOW}Reloading nginx...${NC}"
+docker compose exec nginx nginx -s reload
 
-    charset utf-8;
-    client_max_body_size 50M;
+# Create renewal config
+mkdir -p docker/nginx/ssl/renewal
+cat > docker/nginx/ssl/renewal/$DOMAIN.conf << EOF
+# Options used in the renewal process
+[renewalparams]
+account = # will be filled by certbot
+authenticator = webroot
+server = https://acme-v02.api.letsencrypt.org/directory
+webroot_path = /var/www/certbot
+key_type = ecdsa
 
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+[[webroot_map]]
+$DOMAIN = /var/www/certbot
+EOF
 
-    # Gzip
-    gzip on;
-    gzip_vary on;
-    gzip_min_length 1024;
-    gzip_types text/plain text/css text/javascript application/javascript application/json application/xml;
-
-    # Static files
-    location ~* \.(jpg|jpeg|png|gif|ico|css|js|woff|woff2|ttf|svg|eot)$ {
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-        access_log off;
-    }
-
-    # Yii2
-    location / {
-        try_files $uri $uri/ /index.php$is_args$args;
-    }
-
-    # PHP-FPM
-    location ~ \.php$ {
-        fastcgi_pass php:9000;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-        fastcgi_read_timeout 300;
-    }
-
-    # WhatsApp API
-    location /whatsapp/ {
-        proxy_pass http://evolution-api:8080/;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location ~ /\. { deny all; }
-    location ~* (composer\.json|composer\.lock|\.env|\.git) { deny all; }
-
-    access_log /var/log/nginx/qazeducrm_access.log;
-    error_log /var/log/nginx/qazeducrm_error.log;
-}
-NGINXEOF
-
-# Replace domain placeholder
-sed -i "s/DOMAIN_PLACEHOLDER/$DOMAIN/g" docker/nginx/default.conf
-
-# Start nginx
-docker compose up -d nginx
-
-# Setup auto-renewal cron
-echo "0 0 1 * * certbot renew --quiet && cp /etc/letsencrypt/live/$DOMAIN/*.pem /opt/qazeducrm/docker/nginx/ssl/ && docker compose -f /opt/qazeducrm/docker-compose.yml restart nginx" | crontab -
-
-echo -e "${GREEN}SSL setup completed!${NC}"
-echo -e "Your site is now available at: https://$DOMAIN"
+echo -e "${GREEN}SSL setup completed for ${DOMAIN}!${NC}"
+echo ""
+echo "Certificate location: docker/nginx/ssl/live/$DOMAIN/"
+echo ""
+echo -e "${YELLOW}Don't forget to set up auto-renewal cron job:${NC}"
+echo ""
+echo "# Add to crontab (crontab -e):"
+echo "0 0 1 * * cd /opt/qazeducrm && docker run --rm -v \$(pwd)/docker/nginx/ssl:/etc/letsencrypt -v certbot_webroot:/var/www/certbot certbot/certbot renew --quiet && docker compose exec nginx nginx -s reload"
+echo ""
+echo "Your site should now be available at: https://$DOMAIN"
